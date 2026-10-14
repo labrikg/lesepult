@@ -338,3 +338,45 @@ export async function todoProgress(db: Db): Promise<Map<string, { done: number; 
   const rows = await db.select<Row>("SELECT course_id, SUM(done) AS done, COUNT(*) AS total FROM todos GROUP BY course_id");
   return new Map(rows.map((r) => [str(r.course_id), { done: num(r.done), total: num(r.total) }]));
 }
+
+/* ---------- Focus sessions (Pomodoro) ---------- */
+
+export interface FocusInput {
+  courseId: string | null;
+  startedAt: string;
+  endedAt: string;
+  minutes: number;
+  /** False when stopped before the timer ran out. */
+  completed: boolean;
+}
+
+export async function logFocus(db: Db, f: FocusInput) {
+  await db.execute(
+    `INSERT INTO focus_sessions (id, course_id, started_at, ended_at, minutes, completed)
+     VALUES ($1, (SELECT id FROM courses WHERE id = $2), $3, $4, $5, $6)`,
+    [uid(), f.courseId, f.startedAt, f.endedAt, Math.round(f.minutes * 10) / 10, f.completed ? 1 : 0],
+  );
+}
+
+export interface FocusStats {
+  minutes: number;
+  /** Completed focus rounds. */
+  rounds: number;
+  /** Minutes per course (key "" = no course). */
+  byCourse: Map<string, number>;
+}
+
+/** Focus time since a moment (ISO), in total and per course. */
+export async function focusStats(db: Db, since: string): Promise<FocusStats> {
+  const rows = await db.select<Row>(
+    `SELECT COALESCE(course_id, '') AS course_id, SUM(minutes) AS minutes, SUM(completed) AS rounds
+       FROM focus_sessions WHERE started_at >= $1 GROUP BY COALESCE(course_id, '')`,
+    [since],
+  );
+  const byCourse = new Map(rows.map((r) => [str(r.course_id), num(r.minutes)]));
+  return {
+    minutes: rows.reduce((n, r) => n + num(r.minutes), 0),
+    rounds: rows.reduce((n, r) => n + num(r.rounds), 0),
+    byCourse,
+  };
+}

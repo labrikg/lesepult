@@ -10,6 +10,7 @@ import {
 import { locatePage, useStore, type ViewMode } from "../store";
 import { exportNoteMarkdown, exportNotePdf } from "../export/exporter";
 import { Popover } from "./Popover";
+import { TimerPill } from "../study/Timer";
 
 const MODES: { mode: ViewMode; label: string; Icon: typeof Columns2 }[] = [
   { mode: "pdf", label: "PDF", Icon: FileText },
@@ -68,6 +69,8 @@ export function TopBar() {
           </span>
         )}
       </nav>
+
+      <TimerPill />
 
       {onPage && (
         <div className="segmented" role="group" aria-label="View mode">

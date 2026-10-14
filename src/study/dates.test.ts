@@ -28,3 +28,15 @@ describe("dates", () => {
     expect(formatDate("2027-02-12", "2026-10-14", "de-DE")).toBe("Fr., 12. Feb. 2027");
   });
 });
+
+describe("week start", () => {
+  it("goes back to Monday midnight, local time", async () => {
+    const { weekStart, dayStart } = await import("./dates");
+    const wed = new Date(2026, 9, 14, 21, 30); // Wednesday
+    const mon = new Date(weekStart(wed));
+    expect([mon.getDay(), mon.getDate(), mon.getHours()]).toEqual([1, 12, 0]);
+    const sun = new Date(2026, 9, 18, 10, 0);
+    expect(new Date(weekStart(sun)).getDate()).toBe(12);
+    expect(new Date(dayStart(wed)).getHours()).toBe(0);
+  });
+});

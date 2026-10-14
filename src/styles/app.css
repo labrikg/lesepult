@@ -2284,12 +2284,34 @@ button.tag-chip-name:hover {
   height: 14px;
 }
 
-.exam-hero {
-  align-self: flex-start;
+.study-facts {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 10px;
   margin-top: 10px;
+}
+
+.study-facts:empty {
+  display: none;
+}
+
+.focus-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: var(--radius-lg);
+  background: var(--tag-moss-bg);
+  color: var(--tag-moss-fg);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.exam-hero {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   padding: 10px 14px;
   border-radius: var(--radius-lg);
   background: var(--tag-ochre-bg);
@@ -3123,4 +3145,251 @@ button.tag-chip-name:hover {
 
 .review-column .review-card {
   width: 100%;
+}
+
+/* ---------- Pomodoro timer ---------- */
+
+.timer-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 12px 0 9px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  --ring: var(--accent);
+}
+
+.timer-pill:hover,
+.timer-pill[aria-expanded="true"] {
+  border-color: var(--muted);
+  color: var(--ink);
+}
+
+.timer-pill.is-running {
+  border-color: color-mix(in srgb, var(--ring) 55%, transparent);
+  background: color-mix(in srgb, var(--ring) 10%, var(--surface));
+  color: var(--ink);
+}
+
+.timer-pill.is-break,
+.timer-face.is-break {
+  --ring: var(--tag-sky-fg);
+}
+
+.timer-pill-clock {
+  min-width: 38px;
+  text-align: left;
+}
+
+.timer-ring {
+  position: relative;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ring, var(--accent));
+}
+
+.timer-ring svg {
+  position: absolute;
+  inset: 0;
+}
+
+.timer-ring-track {
+  fill: none;
+  stroke: var(--line-strong);
+  stroke-width: 2.5;
+}
+
+.timer-ring-fill {
+  fill: none;
+  stroke: var(--ring, var(--accent));
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 450ms linear;
+}
+
+.timer-panel {
+  gap: 10px;
+  padding: 12px;
+}
+
+.timer-phases {
+  align-self: stretch;
+  justify-content: space-between;
+}
+
+.timer-phases button {
+  flex: 1;
+  justify-content: center;
+  padding: 0 6px;
+}
+
+.timer-face {
+  --ring: var(--accent);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0 2px;
+}
+
+.timer-face .timer-ring-track,
+.timer-face .timer-ring-fill {
+  stroke-width: 6;
+}
+
+.timer-clock {
+  font-family: var(--font-display);
+  font-size: 34px;
+  font-weight: 500;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.timer-rounds {
+  display: flex;
+  gap: 6px;
+}
+
+.timer-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--line-strong);
+}
+
+.timer-dot.is-done {
+  background: var(--accent);
+}
+
+.timer-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.timer-main {
+  min-width: 120px;
+}
+
+.timer-small {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+}
+
+.timer-course {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.timer-course select {
+  flex: 1;
+  max-width: none;
+}
+
+.timer-today {
+  font-size: 12.5px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.timer-today strong {
+  color: var(--ink);
+}
+
+.timer-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.timer-setting {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 0 4px;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.timer-setting > span:first-child {
+  flex: 1;
+  text-align: left;
+}
+
+.timer-number {
+  width: 62px;
+  min-height: 30px;
+  text-align: right;
+}
+
+.timer-unit {
+  width: 44px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.timer-toggle {
+  border: 0;
+  background: transparent;
+  border-radius: var(--radius-sm);
+}
+
+.timer-toggle:hover {
+  background: var(--hover-menu);
+}
+
+/* Focus time per course (Today) */
+.focus-bars {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.focus-bars li {
+  display: grid;
+  grid-template-columns: minmax(0, 150px) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.focus-bar-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.focus-bar-track {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--segment);
+  overflow: hidden;
+}
+
+.focus-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+}
+
+.focus-bar-value {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
 }

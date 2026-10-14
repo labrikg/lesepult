@@ -12,6 +12,7 @@ import { applyTheme, onSystemThemeChange } from "./lib/theme";
 import { TodayView } from "./study/TodayView";
 import { CourseView } from "./study/CourseView";
 import { ReviewSession } from "./study/ReviewSession";
+import { TimerHost } from "./study/Timer";
 
 export default function App() {
   const init = useStore((s) => s.init);
@@ -57,6 +58,7 @@ export default function App() {
         {ready ? <Workspace /> : <div className="loading" aria-busy="true" />}
       </main>
       <SearchDialog />
+      <TimerHost />
       {review && <ReviewSession courseId={review.courseId} />}
       {notice && !error && (
         <div className="toast toast--ok" role="status">

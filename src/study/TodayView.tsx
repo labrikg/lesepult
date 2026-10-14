@@ -6,6 +6,7 @@ import { TodoList } from "./TodoList";
 import { addDays, formatLongDate, todayISO } from "./dates";
 import { Stat } from "./CourseView";
 import { useStudy } from "./useStudy";
+import { FocusPanel } from "./FocusPanel";
 
 /** What's on today: cards to review, dates coming up, open to-dos, across all courses. */
 export function TodayView() {
@@ -108,6 +109,8 @@ export function TodayView() {
             emptyText={courses.length ? "Nothing open." : "Add a course first."}
           />
         </section>
+
+        <FocusPanel />
       </div>
     </section>
   );

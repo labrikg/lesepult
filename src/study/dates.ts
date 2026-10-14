@@ -50,3 +50,17 @@ export function formatLongDate(date: string, locale?: string): string {
     new Date(y, m - 1, d),
   );
 }
+
+/** Local midnight of today and of this week's Monday, as ISO timestamps (for "since" queries). */
+export function dayStart(now = new Date()): string {
+  const d = new Date(now);
+  d.setHours(0, 0, 0, 0);
+  return d.toISOString();
+}
+
+export function weekStart(now = new Date()): string {
+  const d = new Date(now);
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); // back to Monday
+  return d.toISOString();
+}

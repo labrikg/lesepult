@@ -56,6 +56,12 @@ Built with Tauri 2, React + TypeScript and SQLite. Runs on macOS and Linux.
     exams & deadlines (add, edit, tick off), to-dos with due dates and a progress bar.
   - **Today** (top of the sidebar): cards due per course, exams and deadlines in the next 60 days, all open to-dos.
     The badge counts cards due; a course shows "12 d" when its exam is within 30 days.
+  - **Pomodoro timer** (top bar): 25 min focus, 5 min breaks, a 15 min break after every 4th round (all adjustable
+    under *Settings* in the timer). Breaks start by themselves; a soft chime marks each switch, and a notification
+    appears when Lesepult isn't the front window. The countdown also shows in the window title.
+    Focus time counts for the course you're looking at when you press Start (or pick one under *Counts for*).
+    Rounds stopped early count from one minute on. *Today* shows your focus time per course this week;
+    a course's overview shows "X focused this week". The timer keeps running across restarts.
 - **App icon**: a layered macOS icon (`src-tauri/icons/Lesepult.icon`, made for Icon Composer) compiled into
   `Assets.car`, so macOS draws its default, dark, clear and tinted looks. After changing the `.icon`, rebuild on a Mac
   with Xcode 26+: `xcrun actool src-tauri/icons/Lesepult.icon --compile <out> --app-icon Lesepult --platform macosx
@@ -104,7 +110,7 @@ cd src-tauri && cargo test     # migration test on the same SQLite engine the ap
 
 - Database `studyhub.db` (notes, structure, highlights): the app's config folder
 - Imported PDFs: `documents/` in the app's data folder (the database stores paths relative to it)
-- Appearance settings: the app's web storage (so the theme applies before anything is drawn)
+- Appearance and timer settings: the app's web storage (so the theme applies before anything is drawn)
 
 | | Config folder | Data folder |
 |---|---|---|
@@ -130,8 +136,9 @@ src/
   lib/files.ts            PDF import / removal via the Rust commands
   export/                 Markdown converter, library layout, export + print actions
   study/                  Today and course overview, review session, FSRS scheduling (srs.ts),
-                          to-do and deadline lists, date helpers
-  lib/studyRepo.ts        SQL for cards, reviews, deadlines, to-dos
+                          to-do and deadline lists, date helpers, Pomodoro timer (pomodoro.ts:
+                          pure transitions, timerStore.ts: live timer + log, Timer.tsx: UI)
+  lib/studyRepo.ts        SQL for cards, reviews, deadlines, to-dos, focus time
   components/             Sidebar, TopBar, NotePane, PdfPane, SearchDialog, …
   styles/tokens.css       design tokens (colours, fonts): light theme + dark theme
   lib/theme.ts            theme preference, system light/dark, window title bar
@@ -141,6 +148,7 @@ src-tauri/
   migrations/0002_tag_colors.sql  tag colours
   migrations/0003_folders.sql     folders (nested) and pages.folder_id
   migrations/0004_study.sql       cards (mirrored from note blocks), reviews, deadlines, todos
+  migrations/0005_focus.sql       focus_sessions (Pomodoro log)
   src/lib.rs                registers plugins, migrations and commands
   src/files.rs              import_pdf / save_png / remove_stored_file / prune_stored_files
   src/export.rs             export_bundle (writes/copies files into a chosen folder) / print_window
@@ -159,3 +167,4 @@ New schema changes go in a new `migrations/000N_*.sql` file registered in `lib.r
 6. ~~Dark theme, tags~~ ✓
 7. ~~Folders, formulas from PDFs, app icon~~ ✓
 8. ~~v2: flashcards with spaced repetition, deadlines & exam dates, to-dos per course~~ ✓
+9. ~~Pomodoro timer with focus time per course~~ ✓

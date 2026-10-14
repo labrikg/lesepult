@@ -8,9 +8,11 @@
   "permissions": [
     "core:default",
     "core:window:allow-set-theme",
+    "core:window:allow-set-title",
     "sql:default",
     "sql:allow-execute",
     "dialog:allow-open",
-    "dialog:allow-save"
+    "dialog:allow-save",
+    "notification:default"
   ]
 }

@@ -167,4 +167,26 @@ describe("study tools", () => {
       expect((await study.listTodos(db)).length).toBe(1);
     });
   });
+
+  describe("focus sessions", () => {
+    it("adds up focus time per course since a moment", async () => {
+      const at = (h: number) => `2026-10-14T${String(h).padStart(2, "0")}:00:00.000Z`;
+      await study.logFocus(db, { courseId: course, startedAt: at(8), endedAt: at(9), minutes: 25, completed: true });
+      await study.logFocus(db, { courseId: course, startedAt: at(10), endedAt: at(10), minutes: 12.34, completed: false });
+      await study.logFocus(db, { courseId: other, startedAt: at(11), endedAt: at(11), minutes: 25, completed: true });
+      await study.logFocus(db, { courseId: null, startedAt: at(12), endedAt: at(12), minutes: 25, completed: true });
+      await study.logFocus(db, { courseId: "gone", startedAt: at(13), endedAt: at(13), minutes: 5, completed: true });
+
+      const all = await study.focusStats(db, at(0));
+      expect(all.minutes).toBeCloseTo(92.3);
+      expect(all.rounds).toBe(4);
+      expect(all.byCourse.get(course)).toBeCloseTo(37.3);
+      expect(all.byCourse.get("")).toBe(30); // no course, and a course that doesn't exist
+
+      expect((await study.focusStats(db, at(11))).minutes).toBe(55);
+
+      await repo.deleteCourse(db, other);
+      expect((await study.focusStats(db, at(0))).byCourse.get("")).toBe(55); // time is kept
+    });
+  });
 });

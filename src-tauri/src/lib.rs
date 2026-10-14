@@ -33,6 +33,12 @@ pub fn migrations() -> Vec<Migration> {
             sql: include_str!("../migrations/0004_study.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 5,
+            description: "focus sessions (Pomodoro)",
+            sql: include_str!("../migrations/0005_focus.sql"),
+            kind: MigrationKind::Up,
+        },
     ]
 }
 
@@ -40,6 +46,7 @@ pub fn migrations() -> Vec<Migration> {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_notification::init())
         .plugin(
             tauri_plugin_sql::Builder::default()
                 .add_migrations(DB_URL, migrations())
