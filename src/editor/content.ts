@@ -22,6 +22,10 @@ function inlineText(content: unknown): string {
 
 /** Text of one block's own content (paragraph text, code, LaTeX source, table cells, quoted highlights). */
 function blockOwnText(block: Json): string {
+  if (block.type === "flashcard" && isObj(block.props)) {
+    const { front, back } = block.props;
+    return [front, back].filter((t) => typeof t === "string" && t).join("\n");
+  }
   if (block.type === "pdfQuote" && isObj(block.props)) {
     const { text, comment } = block.props;
     return [text, comment].filter((t) => typeof t === "string" && t).join("\n");
@@ -98,4 +102,29 @@ export function extractNoteRefs(
   };
   walk(blocks);
   return refs;
+}
+
+/** The flashcard blocks of a note, for the cards table (see studyRepo.syncCards). */
+export function extractCards(
+  blocks: unknown,
+): { blockId: string; front: string; back: string; highlightId: string | null }[] {
+  const cards: { blockId: string; front: string; back: string; highlightId: string | null }[] = [];
+  const walk = (list: unknown) => {
+    if (!Array.isArray(list)) return;
+    for (const b of list) {
+      if (!isObj(b)) continue;
+      const props = isObj(b.props) ? b.props : {};
+      if (b.type === "flashcard" && typeof b.id === "string") {
+        cards.push({
+          blockId: b.id,
+          front: typeof props.front === "string" ? props.front : "",
+          back: typeof props.back === "string" ? props.back : "",
+          highlightId: typeof props.highlightId === "string" && props.highlightId ? props.highlightId : null,
+        });
+      }
+      walk(b.children);
+    }
+  };
+  walk(blocks);
+  return cards;
 }

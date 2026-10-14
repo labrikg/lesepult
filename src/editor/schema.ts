@@ -2,6 +2,7 @@ import { BlockNoteSchema, createCodeBlockSpec, defaultBlockSpecs } from "@blockn
 import { codeBlockOptions } from "@blocknote/code-block";
 import { createLatexBlock } from "./LatexBlock";
 import { createPdfQuoteBlock, createPdfSnipBlock } from "./PdfBlocks";
+import { createFlashcardBlock } from "./FlashcardBlock";
 
 // Media blocks (image, video, audio, file) are left out until files are stored in the
 // app's data folder; PDF snips will bring images back as their own block.
@@ -14,6 +15,7 @@ export const schema = BlockNoteSchema.create({
     latex: createLatexBlock(),
     pdfQuote: createPdfQuoteBlock(),
     pdfSnip: createPdfSnipBlock(),
+    flashcard: createFlashcardBlock(),
   },
 });
 

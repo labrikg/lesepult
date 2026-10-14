@@ -16,7 +16,7 @@ import { Destinations } from "./Destinations";
 import { endDrag, startDrag } from "./dnd";
 
 export function PageItem({ page }: { page: PageSummary }) {
-  const selectedPageId = useStore((s) => s.selectedPageId);
+  const selectedPageId = useStore((s) => (s.view.kind === "page" ? s.selectedPageId : null));
   const { selectPage, savePage } = useStore.getState();
   const [renaming, setRenaming] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);

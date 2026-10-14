@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { blocksToPlainText, extractNoteRefs, initialBlocks } from "./content";
+import { blocksToPlainText, extractCards, extractNoteRefs, initialBlocks } from "./content";
 
 describe("blocksToPlainText", () => {
   it("collects text from paragraphs, links, code, LaTeX, tables and nested children", () => {
@@ -107,5 +107,26 @@ describe("PDF blocks", () => {
       { blockId: "s1", snipId: "sn1" },
     ]);
     expect(extractNoteRefs(null)).toEqual([]);
+  });
+});
+
+describe("flashcards", () => {
+  const blocks = [
+    { id: "p", type: "paragraph", content: [{ type: "text", text: "Intro", styles: {} }], children: [
+      { id: "c2", type: "flashcard", props: { front: "Nested?", back: "Yes", highlightId: "" }, children: [] },
+    ] },
+    { id: "c1", type: "flashcard", props: { front: "Was ist $\\Sigma$?", back: "Das Alphabet", highlightId: "h1" }, children: [] },
+  ];
+
+  it("finds card blocks anywhere in a note", () => {
+    expect(extractCards(blocks)).toEqual([
+      { blockId: "c2", front: "Nested?", back: "Yes", highlightId: null },
+      { blockId: "c1", front: "Was ist $\\Sigma$?", back: "Das Alphabet", highlightId: "h1" },
+    ]);
+    expect(extractCards("nope")).toEqual([]);
+  });
+
+  it("makes both sides searchable", () => {
+    expect(blocksToPlainText(blocks)).toBe("Intro\nNested?\nYes\nWas ist $\\Sigma$?\nDas Alphabet");
   });
 });

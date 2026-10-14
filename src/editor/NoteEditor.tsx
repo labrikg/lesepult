@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { Sigma } from "lucide-react";
+import { Layers, Sigma } from "lucide-react";
 import { SourceBlockWithPreviewExtension } from "@blocknote/core";
 import {
   filterSuggestionItems,
@@ -20,6 +20,7 @@ import "@blocknote/mantine/style.css";
 import { schema, type NoteEditor as Editor, type NotePartialBlock } from "./schema";
 import { blocksToPlainText, initialBlocks } from "./content";
 import { findExactSlashItem } from "./slashMatch";
+import { requestCardEdit } from "./FlashcardBlock";
 import { useStore } from "../store";
 
 /**
@@ -67,9 +68,20 @@ function slashMenuItems(editor: Editor): DefaultReactSuggestionItem[] {
       editor.focus();
     },
   };
-  // Keep groups contiguous: put LaTeX right after the last "Basic blocks" item.
+  const flashcard: DefaultReactSuggestionItem = {
+    title: "Flashcard",
+    subtext: "Question and answer, reviewed with spaced repetition",
+    aliases: ["card", "flashcard", "karte", "karteikarte", "frage", "quiz", "anki"],
+    group: "Basic blocks",
+    icon: <Layers size={18} />,
+    onItemClick: () => {
+      const block = insertOrUpdateBlockForSlashMenu(editor, { type: "flashcard" } as NotePartialBlock);
+      requestCardEdit(block.id);
+    },
+  };
+  // Keep groups contiguous: put LaTeX and Flashcard right after the last "Basic blocks" item.
   const lastBasic = items.map((i) => i.group).lastIndexOf("Basic blocks");
-  items.splice(lastBasic + 1, 0, latex);
+  items.splice(lastBasic + 1, 0, latex, flashcard);
   return items;
 }
 
@@ -159,6 +171,8 @@ export function NoteEditor({ pageId, content, plainText, onChange, onReady }: Pr
     if (last) {
       lastBlockId.current = last;
       revealBlock(last);
+      // A card made from a highlight still needs its question.
+      if (editor.getBlock(last)?.type === "flashcard") requestCardEdit(last);
     }
   }, [noteQueue, editor]);
 

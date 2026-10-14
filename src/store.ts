@@ -3,7 +3,9 @@ import { getDb } from "./lib/db";
 import * as repo from "./lib/repo";
 import type { Document, Folder, Page, PagePatch, SemesterNode, Tag, TagColor, TagInfo } from "./lib/repo";
 import { pickAndImportPdf, pruneStoredFiles, removeStoredFile } from "./lib/files";
-import { extractNoteRefs } from "./editor/content";
+import { extractCards, extractNoteRefs } from "./editor/content";
+import * as study from "./lib/studyRepo";
+import { todayISO } from "./study/dates";
 import { repairOldPdfText } from "./lib/repair";
 import {
   applyTheme,
@@ -17,6 +19,9 @@ import {
 } from "./lib/theme";
 
 export type ViewMode = "pdf" | "split" | "note";
+
+/** What the main area shows: the open page, the Today overview, or a course's overview. */
+export type MainView = { kind: "page" } | { kind: "today" } | { kind: "course"; courseId: string };
 
 interface State {
   ready: boolean;
@@ -41,6 +46,20 @@ interface State {
   notice: string | null;
   /** Saves the open note right away (registered by the note pane); used before exporting. */
   flushNote: (() => Promise<void>) | null;
+
+  view: MainView;
+  /** Bumped whenever cards, dates or to-dos change, so study views reload. */
+  studyVersion: number;
+  /** An open review session (null: none); courseId null = all courses. */
+  review: { courseId: string | null } | null;
+  /** Small study facts the sidebar shows: cards due now, and each course's next exam. */
+  studyMeta: { dueCards: number; nextExam: Record<string, { date: string; title: string }> };
+  loadStudyMeta(): Promise<void>;
+  openToday(): void;
+  openCourse(courseId: string): void;
+  bumpStudy(): void;
+  startReview(courseId: string | null): void;
+  endReview(): void;
 
   /** Tags in use (with counts), the open page's tags, and the sidebar's tag filter. */
   tags: TagInfo[];
@@ -131,6 +150,42 @@ export const useStore = create<State>((set, get) => ({
   notice: null,
   flushNote: null,
 
+  view: { kind: "page" },
+  studyVersion: 0,
+  review: null,
+  openToday() {
+    set({ view: { kind: "today" } });
+    getDb().then((db) => repo.kvSet(db, "mainView", "today"));
+  },
+  openCourse(courseId) {
+    set({ view: { kind: "course", courseId } });
+    getDb().then((db) => repo.kvSet(db, "mainView", `course:${courseId}`));
+  },
+  bumpStudy() {
+    set((s) => ({ studyVersion: s.studyVersion + 1 }));
+    get().loadStudyMeta();
+  },
+  studyMeta: { dueCards: 0, nextExam: {} },
+  loadStudyMeta: guard(async () => {
+    const db = await getDb();
+    const [counts, exams] = await Promise.all([
+      study.cardCounts(db, new Date().toISOString()),
+      study.listDeadlines(db, { from: todayISO() }),
+    ]);
+    const nextExam: Record<string, { date: string; title: string }> = {};
+    for (const d of exams)
+      if (d.kind === "exam" && !nextExam[d.courseId]) nextExam[d.courseId] = { date: d.date, title: d.title };
+    set({ studyMeta: { dueCards: counts.reduce((n, c) => n + c.due, 0), nextExam } });
+  }),
+  startReview(courseId) {
+    get().flushNote?.().catch(() => {});
+    set({ review: { courseId } });
+  },
+  endReview() {
+    set({ review: null });
+    get().bumpStudy();
+  },
+
   tags: [],
   pageTags: [],
   tagFilter: null,
@@ -195,14 +250,21 @@ export const useStore = create<State>((set, get) => ({
     const db = await getDb();
     // Before anything is shown, so the open note loads the repaired text.
     await repairOldPdfText(db).catch((e) => console.warn("repair failed", e));
-    const [tree, lastPage, viewMode] = await Promise.all([
+    const [tree, lastPage, viewMode, mainView] = await Promise.all([
       repo.loadTree(db),
       repo.kvGet(db, "lastPageId"),
       repo.kvGet(db, "viewMode"),
+      repo.kvGet(db, "mainView"),
     ]);
     await repo.deleteUnusedTags(db);
     set({ tree, ready: true, viewMode: (viewMode as ViewMode | null) ?? "split", tags: await repo.listTags(db) });
     if (lastPage) await get().selectPage(lastPage);
+    // Reopen Today or a course overview if that was showing.
+    if (mainView === "today") set({ view: { kind: "today" } });
+    else if (mainView?.startsWith("course:")) {
+      const courseId = mainView.slice("course:".length);
+      if (tree.some((s) => s.courses.some((c) => c.id === courseId))) set({ view: { kind: "course", courseId } });
+    }
     // Housekeeping: drop snips no note uses, then files nothing refers to (e.g. from deleted courses).
     (async () => {
       await repo.deleteUnusedSnips(db);
@@ -214,6 +276,11 @@ export const useStore = create<State>((set, get) => ({
     const db = await getDb();
     const [tree, tags] = await Promise.all([repo.loadTree(db), repo.listTags(db)]);
     set({ tree, tags });
+    // A course overview whose course was deleted falls back to Today.
+    const view = get().view;
+    if (view.kind === "course" && !tree.some((s) => s.courses.some((c) => c.id === view.courseId)))
+      set({ view: { kind: "today" } });
+    get().bumpStudy();
     // A tag whose last page was deleted disappears; so does a filter on it.
     const filter = get().tagFilter;
     if (filter && !tags.some((t) => t.id === filter.tagId)) set({ tagFilter: null });
@@ -224,8 +291,9 @@ export const useStore = create<State>((set, get) => ({
     const page = id ? await repo.getPage(db, id) : null;
     const pdf = page?.documentId ? await repo.getDocument(db, page.documentId) : null;
     const pageTags = page ? await repo.pageTags(db, page.id) : [];
-    set({ selectedPageId: page?.id ?? null, page, pdf, pageTags });
+    set({ selectedPageId: page?.id ?? null, page, pdf, pageTags, ...(page && { view: { kind: "page" as const } }) });
     await repo.kvSet(db, "lastPageId", page?.id ?? "");
+    if (page) await repo.kvSet(db, "mainView", "page");
   }),
 
   setViewMode(mode) {
@@ -301,7 +369,9 @@ export const useStore = create<State>((set, get) => ({
         // keep empty
       }
       await repo.syncNoteRefs(db, id, extractNoteRefs(blocks));
+      await study.syncCards(db, id, extractCards(blocks));
       set((s) => ({ refsVersion: s.refsVersion + 1 }));
+      get().bumpStudy();
     }
     const current = get().page;
     if (current?.id === id) {

@@ -27,7 +27,7 @@ import { HighlightPopover, SelectionToolbar } from "./HighlightMenus";
 import { hitTest, HIGHLIGHT_COLORS } from "./highlights";
 import { createSnip, type Highlight, type HighlightColor, type NormRect } from "../lib/repo";
 import { useStore } from "../store";
-import { quoteBlock, renderAndStoreSnip, snipBlock } from "./toNote";
+import { cardBlock, quoteBlock, renderAndStoreSnip, snipBlock } from "./toNote";
 
 type Anchor = ViewerSelection["anchor"];
 
@@ -558,6 +558,10 @@ export function PdfViewer({ doc, onReplace, onRemove, onRename, isPageDoc, onSho
           inNote={linkedIds.has(openHighlight.id)}
           onSendToNote={(comment) => {
             sendToNote([{ ...openHighlight, comment: comment.trim() || null }]);
+            setOpen(null);
+          }}
+          onMakeCard={() => {
+            useStore.getState().sendToNote([cardBlock(openHighlight)]);
             setOpen(null);
           }}
         />

@@ -157,6 +157,13 @@ describe("block Markdown", () => {
     );
   });
 
+  it("exports flashcards as question and answer", () => {
+    const { markdown } = blocksToMarkdown([
+      { type: "flashcard", props: { front: "Was ist $\\Sigma$?", back: "Das *Alphabet*" } },
+    ]);
+    expect(markdown).toBe("> **Q:** Was ist $\\Sigma$?\n>\n> **A:** Das \\*Alphabet\\*\n");
+  });
+
   it("returns nothing for empty notes", () => {
     expect(blocksToMarkdown([p(), p()]).markdown).toBe("");
     expect(blocksToMarkdown(null).markdown).toBe("");

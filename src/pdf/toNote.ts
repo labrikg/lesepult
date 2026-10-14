@@ -19,6 +19,11 @@ export function quoteBlock(h: Highlight, doc: Document) {
   };
 }
 
+/** A flashcard with the highlighted text as its answer; the question is left to write. */
+export function cardBlock(h: Highlight) {
+  return { type: "flashcard", props: { front: "", back: h.text, highlightId: h.id } };
+}
+
 /** The note block for a snip. */
 export function snipBlock(s: Snip, doc: Document) {
   return {

@@ -180,6 +180,12 @@ function blockBody(b: Json, ctx: Ctx, listIndex: number): { text: string; listMa
       if (props.comment) parts.push("", `**Note:** ${escapeText(String(props.comment))}`);
       return { text: quoteLines(parts.join("\n")) };
     }
+    case "flashcard":
+      return {
+        text: quoteLines(
+          [`**Q:** ${quotedText(String(props.front ?? ""))}`, "", `**A:** ${quotedText(String(props.back ?? ""))}`].join("\n"),
+        ),
+      };
     case "pdfSnip": {
       const label = `Snip from ${props.source ? `${props.source}, ` : ""}page ${props.pageNumber ?? "?"}`;
       const stored = typeof props.imagePath === "string" ? props.imagePath : "";

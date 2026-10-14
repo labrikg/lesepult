@@ -1,5 +1,12 @@
 import { Fragment, useCallback, useRef, useState } from "react";
-import { Columns2, Download, FileDown, FileText, NotebookPen, Printer } from "lucide-react";
+import {
+  Columns2,
+  Download,
+  FileDown,
+  FileText,
+  NotebookPen,
+  Printer,
+} from "lucide-react";
 import { locatePage, useStore, type ViewMode } from "../store";
 import { exportNoteMarkdown, exportNotePdf } from "../export/exporter";
 import { Popover } from "./Popover";
@@ -15,7 +22,15 @@ export function TopBar() {
   const selectedPageId = useStore((s) => s.selectedPageId);
   const viewMode = useStore((s) => s.viewMode);
   const setViewMode = useStore((s) => s.setViewMode);
-  const where = locatePage(tree, selectedPageId);
+  const view = useStore((s) => s.view);
+  const onPage = view.kind === "page";
+  const where = onPage ? locatePage(tree, selectedPageId) : null;
+  const studyCourse =
+    view.kind === "course"
+      ? tree
+          .flatMap((s) => s.courses.map((c) => ({ semester: s, course: c })))
+          .find((x) => x.course.id === view.courseId)
+      : undefined;
   const [exportOpen, setExportOpen] = useState(false);
   const exportButton = useRef<HTMLButtonElement>(null);
   const closeExport = useCallback(() => setExportOpen(false), []);
@@ -35,42 +50,63 @@ export function TopBar() {
                 <span aria-hidden="true">/</span>
               </Fragment>
             ))}
-            <span className="breadcrumb-current">{where.page.title || "Untitled"}</span>
+            <span className="breadcrumb-current">
+              {where.page.title || "Untitled"}
+            </span>
+          </>
+        ) : studyCourse ? (
+          <>
+            <span>{studyCourse.semester.name}</span>
+            <span aria-hidden="true">/</span>
+            <span className="breadcrumb-current">
+              {studyCourse.course.name}
+            </span>
           </>
         ) : (
-          <span className="breadcrumb-current">Lesepult</span>
+          <span className="breadcrumb-current">
+            {view.kind === "today" ? "Today" : "Lesepult"}
+          </span>
         )}
       </nav>
 
-      <div className="segmented" role="group" aria-label="View mode">
-        {MODES.map(({ mode, label, Icon }) => (
-          <button
-            key={mode}
-            type="button"
-            aria-pressed={viewMode === mode}
-            disabled={!where}
-            onClick={() => setViewMode(mode)}
-          >
-            <Icon size={14} aria-hidden="true" />
-            {label}
-          </button>
-        ))}
-      </div>
+      {onPage && (
+        <div className="segmented" role="group" aria-label="View mode">
+          {MODES.map(({ mode, label, Icon }) => (
+            <button
+              key={mode}
+              type="button"
+              aria-pressed={viewMode === mode}
+              disabled={!where}
+              onClick={() => setViewMode(mode)}
+            >
+              <Icon size={14} aria-hidden="true" />
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
 
-      <button
-        ref={exportButton}
-        type="button"
-        className="btn btn--ghost"
-        disabled={!where}
-        aria-haspopup="menu"
-        aria-expanded={exportOpen}
-        onClick={() => setExportOpen((o) => !o)}
-      >
-        <Download size={15} aria-hidden="true" />
-        Export note
-      </button>
+      {onPage && (
+        <button
+          ref={exportButton}
+          type="button"
+          className="btn btn--ghost"
+          disabled={!where}
+          aria-haspopup="menu"
+          aria-expanded={exportOpen}
+          onClick={() => setExportOpen((o) => !o)}
+        >
+          <Download size={15} aria-hidden="true" />
+          Export note
+        </button>
+      )}
       {exportOpen && (
-        <Popover anchor={exportButton} onClose={closeExport} label="Export note" width={268}>
+        <Popover
+          anchor={exportButton}
+          onClose={closeExport}
+          label="Export note"
+          width={268}
+        >
           <button
             type="button"
             role="menuitem"
@@ -83,7 +119,9 @@ export function TopBar() {
             <FileDown size={16} aria-hidden="true" />
             <span>
               <span className="menu-item-title">Markdown file…</span>
-              <span className="menu-item-sub">Text, formulas and quotes; snips as images</span>
+              <span className="menu-item-sub">
+                Text, formulas and quotes; snips as images
+              </span>
             </span>
           </button>
           <button
@@ -98,7 +136,9 @@ export function TopBar() {
             <Printer size={16} aria-hidden="true" />
             <span>
               <span className="menu-item-title">PDF…</span>
-              <span className="menu-item-sub">Opens the print dialog, choose “Save as PDF”</span>
+              <span className="menu-item-sub">
+                Opens the print dialog, choose “Save as PDF”
+              </span>
             </span>
           </button>
         </Popover>

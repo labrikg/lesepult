@@ -46,6 +46,22 @@ Built with Tauri 2, React + TypeScript and SQLite. Runs on macOS and Linux.
     `Semester/Course/[Folder/…]/Page.md`, each course's PDFs in `PDFs/` (linked from the notes) and snips in `assets/`.
   - Exported notes list their tags as hashtags (`Tags: #exam #AVL-trees`), which Obsidian and similar apps pick up.
 
+- **Study tools (v2)**:
+  - **Flashcards**: type `/card` in a note (or click a highlight → *Flashcard*: the highlighted text becomes the answer).
+    Click a side to edit it; Tab or Enter moves on; formulas go between `$…$`. Cards live in the note and are reviewed
+    with spaced repetition (FSRS, as in modern Anki).
+  - **Review**: *Today* or a course's overview → *Review*. Space shows the answer, **1–4** rate it (Again, Hard, Good,
+    Easy; each shows when you'll see the card next). Missed cards come back in the same session; *Open note* jumps to the card.
+  - **Course overview**: click a course's name (the chevron folds it). Next exam with countdown, flashcard numbers,
+    exams & deadlines (add, edit, tick off), to-dos with due dates and a progress bar.
+  - **Today** (top of the sidebar): cards due per course, exams and deadlines in the next 60 days, all open to-dos.
+    The badge counts cards due; a course shows "12 d" when its exam is within 30 days.
+- **App icon**: a layered macOS icon (`src-tauri/icons/Lesepult.icon`, made for Icon Composer) compiled into
+  `Assets.car`, so macOS draws its default, dark, clear and tinted looks. After changing the `.icon`, rebuild on a Mac
+  with Xcode 26+: `xcrun actool src-tauri/icons/Lesepult.icon --compile <out> --app-icon Lesepult --platform macosx
+  --target-device mac --minimum-deployment-target 11.0 --output-partial-info-plist <out>/p.plist` and copy
+  `Assets.car` (and `Lesepult.icns` as `icon.icns`) into `src-tauri/icons/`.
+
 ## Setup
 
 You need **Node.js 20+** and **Rust** (stable).
@@ -113,6 +129,9 @@ src/
                           mathText.ts: selected text → text with inline LaTeX, umlaut repair
   lib/files.ts            PDF import / removal via the Rust commands
   export/                 Markdown converter, library layout, export + print actions
+  study/                  Today and course overview, review session, FSRS scheduling (srs.ts),
+                          to-do and deadline lists, date helpers
+  lib/studyRepo.ts        SQL for cards, reviews, deadlines, to-dos
   components/             Sidebar, TopBar, NotePane, PdfPane, SearchDialog, …
   styles/tokens.css       design tokens (colours, fonts): light theme + dark theme
   lib/theme.ts            theme preference, system light/dark, window title bar
@@ -121,6 +140,7 @@ src-tauri/
                             snips, note_refs, tags, kv, pages_fts (FTS5)
   migrations/0002_tag_colors.sql  tag colours
   migrations/0003_folders.sql     folders (nested) and pages.folder_id
+  migrations/0004_study.sql       cards (mirrored from note blocks), reviews, deadlines, todos
   src/lib.rs                registers plugins, migrations and commands
   src/files.rs              import_pdf / save_png / remove_stored_file / prune_stored_files
   src/export.rs             export_bundle (writes/copies files into a chosen folder) / print_window
@@ -137,4 +157,5 @@ New schema changes go in a new `migrations/000N_*.sql` file registered in `lib.r
 4. ~~"Send to note", "Jump to page", snip tool~~ ✓
 5. ~~Export notes to Markdown / PDF~~ ✓ (v1 complete)
 6. ~~Dark theme, tags~~ ✓
-7. v2: flashcards with spaced repetition, deadlines & exam dates, to-dos per course
+7. ~~Folders, formulas from PDFs, app icon~~ ✓
+8. ~~v2: flashcards with spaced repetition, deadlines & exam dates, to-dos per course~~ ✓

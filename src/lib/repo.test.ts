@@ -1,39 +1,8 @@
-import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-import BetterSqlite from "better-sqlite3";
 import { beforeEach, describe, expect, it } from "vitest";
 import type { Db } from "./db";
 import * as repo from "./repo";
+import { memoryDb } from "./testDb";
 
-/** All migrations, in order, as the app runs them. */
-const migrations = ["0001_init.sql", "0002_tag_colors.sql", "0003_folders.sql"].map((f) =>
-  readFileSync(fileURLToPath(new URL(`../../src-tauri/migrations/${f}`, import.meta.url)), "utf8"),
-);
-
-/** Adapter: runs the app's `$1`-style SQL on an in-memory better-sqlite3 database. */
-function memoryDb(): Db {
-  const sqlite = new BetterSqlite(":memory:");
-  sqlite.pragma("foreign_keys = ON");
-  for (const m of migrations) sqlite.exec(m);
-  const prepare = (sql: string, params: unknown[]) => {
-    const ordered: unknown[] = [];
-    const text = sql.replace(/\$(\d+)/g, (_, n) => {
-      ordered.push(params[Number(n) - 1]);
-      return "?";
-    });
-    return { stmt: sqlite.prepare(text), args: ordered };
-  };
-  return {
-    async select<T>(sql: string, params: unknown[] = []) {
-      const { stmt, args } = prepare(sql, params);
-      return stmt.all(...args) as T[];
-    },
-    async execute(sql: string, params: unknown[] = []) {
-      const { stmt, args } = prepare(sql, params);
-      stmt.run(...args);
-    },
-  };
-}
 
 describe("repository", () => {
   let db: Db;

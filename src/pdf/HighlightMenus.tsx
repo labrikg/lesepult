@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { MathText } from "../editor/MathText";
 import { createPortal } from "react-dom";
-import { MessageSquarePlus, NotebookPen, Trash2 } from "lucide-react";
+import { Layers, MessageSquarePlus, NotebookPen, Trash2 } from "lucide-react";
 import type { Highlight, HighlightColor } from "../lib/repo";
 import { HIGHLIGHT_COLORS } from "./highlights";
 
@@ -83,6 +83,8 @@ interface PopoverProps {
   onSendToNote(comment: string): void;
   /** Whether the open page's note already quotes this highlight. */
   inNote: boolean;
+  /** Adds a flashcard to the note with the highlighted text as the answer. */
+  onMakeCard(): void;
 }
 
 /** Opens when clicking an existing highlight: recolour, comment, delete. */
@@ -96,6 +98,7 @@ export function HighlightPopover({
   onClose,
   onSendToNote,
   inNote,
+  onMakeCard,
 }: PopoverProps) {
   const { ref, pos } = useFloatingPosition(anchor, 300);
   const [comment, setComment] = useState(highlight.comment ?? "");
@@ -185,7 +188,19 @@ export function HighlightPopover({
         />
       </label>
       <div className="hl-popover-foot">
-        <span className="hl-hint">p. {highlight.pageNumber} · ⌘/Ctrl + Enter to save</span>
+        <span className="hl-hint">p. {highlight.pageNumber}</span>
+        <button
+          type="button"
+          className="btn btn--ghost btn--sm"
+          title="A flashcard in the note, with this text as the answer"
+          onClick={() => {
+            saveRef.current();
+            onMakeCard();
+          }}
+        >
+          <Layers size={14} aria-hidden="true" />
+          Flashcard
+        </button>
         <button
           type="button"
           className="btn btn--primary btn--sm"

@@ -27,6 +27,12 @@ pub fn migrations() -> Vec<Migration> {
             sql: include_str!("../migrations/0003_folders.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 4,
+            description: "study tools: cards, reviews, deadlines, todos",
+            sql: include_str!("../migrations/0004_study.sql"),
+            kind: MigrationKind::Up,
+        },
     ]
 }
 

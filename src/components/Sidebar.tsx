@@ -9,8 +9,10 @@ import {
   Plus,
   Search,
   Settings,
+  Sun,
   X,
 } from "lucide-react";
+import { countdown, daysBetween, todayISO } from "../study/dates";
 import { folderPath, useStore } from "../store";
 import type { CourseNode, SemesterNode, TagInfo } from "../lib/repo";
 import { InlineInput } from "./InlineInput";
@@ -66,6 +68,8 @@ export function Sidebar() {
         <span>Search notes</span>
         <kbd>{isMac ? "⌘K" : "Ctrl K"}</kbd>
       </button>
+
+      <TodayButton />
 
       <div className="tree">
         {filterTag && (
@@ -218,8 +222,9 @@ function SemesterSection({ semester, filtered }: { semester: SemesterNode; filte
 }
 
 function CourseItem({ course, filtered }: { course: CourseNode; filtered: boolean }) {
-  const { toggleCourse, renameCourse, deleteCourse, addPage, addFolder, movePage, moveFolder } =
+  const { toggleCourse, renameCourse, deleteCourse, addPage, addFolder, movePage, moveFolder, openCourse } =
     useStore.getState();
+  const isOpen = useStore((s) => s.view.kind === "course" && s.view.courseId === course.id);
   const [renaming, setRenaming] = useState(false);
   const [creatingFolder, setCreatingFolder] = useState(false);
   const dropKey = `course:${course.id}`;
@@ -248,18 +253,29 @@ function CourseItem({ course, filtered }: { course: CourseNode; filtered: boolea
             onCancel={() => setRenaming(false)}
           />
         ) : (
-          <button
-            type="button"
-            className="row-main course-label"
-            aria-expanded={!course.collapsed}
-            onClick={() => !filtered && toggleCourse(course.id)}
-            onDoubleClick={() => setRenaming(true)}
-            title="Double-click to rename"
-          >
-            <Chevron size={14} strokeWidth={2} aria-hidden="true" />
-            <span className="course-dot" style={{ background: course.color }} aria-hidden="true" />
-            <span className="truncate">{course.name}</span>
-          </button>
+          <>
+            <button
+              type="button"
+              className="row-toggle"
+              aria-expanded={!course.collapsed}
+              aria-label={course.collapsed ? `Show ${course.name}` : `Hide ${course.name}`}
+              onClick={() => !filtered && toggleCourse(course.id)}
+            >
+              <Chevron size={14} strokeWidth={2} aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              className="row-main course-label"
+              aria-current={isOpen ? "page" : undefined}
+              onClick={() => openCourse(course.id)}
+              onDoubleClick={() => setRenaming(true)}
+              title="Overview: flashcards, exams, to-dos · double-click to rename"
+            >
+              <span className="course-dot" style={{ background: course.color }} aria-hidden="true" />
+              <span className="truncate">{course.name}</span>
+              <ExamChip courseId={course.id} />
+            </button>
+          </>
         )}
         {!filtered && (
           <div className="row-actions">
@@ -392,5 +408,39 @@ function SidebarTag({ tag }: { tag: TagInfo }) {
       </div>
       {menuOpen && <TagMenu tag={tag} anchor={menuButton} onClose={closeMenu} />}
     </div>
+  );
+}
+
+function TodayButton() {
+  const active = useStore((s) => s.view.kind === "today");
+  const due = useStore((s) => s.studyMeta.dueCards);
+  return (
+    <button
+      type="button"
+      className="today-item"
+      aria-current={active ? "page" : undefined}
+      onClick={() => useStore.getState().openToday()}
+    >
+      <Sun size={16} aria-hidden="true" />
+      <span>Today</span>
+      {due > 0 && (
+        <span className="today-badge" title={`${due} ${due === 1 ? "card" : "cards"} to review`}>
+          {due}
+        </span>
+      )}
+    </button>
+  );
+}
+
+/** "Exam in 12 d" next to a course whose exam is within 30 days. */
+function ExamChip({ courseId }: { courseId: string }) {
+  const exam = useStore((s) => s.studyMeta.nextExam[courseId]);
+  if (!exam) return null;
+  const days = daysBetween(todayISO(), exam.date);
+  if (days > 30) return null;
+  return (
+    <span className={`exam-chip${days <= 7 ? " is-close" : ""}`} title={`${exam.title}: ${countdown(exam.date)}`}>
+      {days === 0 ? "today" : `${days} d`}
+    </span>
   );
 }

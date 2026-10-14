@@ -9,6 +9,9 @@ import { NotePane } from "./components/NotePane";
 import { SearchDialog } from "./components/SearchDialog";
 import { InlineInput } from "./components/InlineInput";
 import { applyTheme, onSystemThemeChange } from "./lib/theme";
+import { TodayView } from "./study/TodayView";
+import { CourseView } from "./study/CourseView";
+import { ReviewSession } from "./study/ReviewSession";
 
 export default function App() {
   const init = useStore((s) => s.init);
@@ -23,8 +26,21 @@ export default function App() {
   }, [notice]);
 
   useEffect(() => {
-    init();
+    init().then(() => useStore.getState().loadStudyMeta());
   }, [init]);
+
+  // Learning cards come due within minutes: keep the counts fresh.
+  useEffect(() => {
+    const refresh = () => useStore.getState().loadStudyMeta();
+    const t = window.setInterval(refresh, 5 * 60_000);
+    window.addEventListener("focus", refresh);
+    return () => {
+      window.clearInterval(t);
+      window.removeEventListener("focus", refresh);
+    };
+  }, []);
+
+  const review = useStore((s) => s.review);
 
   // Theme: match the window to the saved choice, and follow the system when set to "System".
   useEffect(() => {
@@ -41,11 +57,16 @@ export default function App() {
         {ready ? <Workspace /> : <div className="loading" aria-busy="true" />}
       </main>
       <SearchDialog />
+      {review && <ReviewSession courseId={review.courseId} />}
       {notice && !error && (
         <div className="toast toast--ok" role="status">
           <Check size={15} aria-hidden="true" />
           <span>{notice}</span>
-          <button type="button" aria-label="Dismiss" onClick={() => useStore.setState({ notice: null })}>
+          <button
+            type="button"
+            aria-label="Dismiss"
+            onClick={() => useStore.setState({ notice: null })}
+          >
             <X size={14} aria-hidden="true" />
           </button>
         </div>
@@ -53,7 +74,11 @@ export default function App() {
       {error && (
         <div className="toast" role="alert">
           <span>Something went wrong: {error}</span>
-          <button type="button" aria-label="Dismiss" onClick={() => useStore.setState({ error: null })}>
+          <button
+            type="button"
+            aria-label="Dismiss"
+            onClick={() => useStore.setState({ error: null })}
+          >
             <X size={14} aria-hidden="true" />
           </button>
         </div>
@@ -65,7 +90,20 @@ export default function App() {
 function Workspace() {
   const page = useStore((s) => s.page);
   const viewMode = useStore((s) => s.viewMode);
+  const view = useStore((s) => s.view);
 
+  if (view.kind === "today")
+    return (
+      <div className="study-pane">
+        <TodayView />
+      </div>
+    );
+  if (view.kind === "course")
+    return (
+      <div className="study-pane">
+        <CourseView courseId={view.courseId} />
+      </div>
+    );
   if (!page) return <Welcome />;
 
   return (
@@ -104,7 +142,11 @@ function Welcome() {
               onCancel={() => setAdding(false)}
             />
           ) : (
-            <button type="button" className="btn btn--primary" onClick={() => setAdding(true)}>
+            <button
+              type="button"
+              className="btn btn--primary"
+              onClick={() => setAdding(true)}
+            >
               Add your first semester
             </button>
           ))}
