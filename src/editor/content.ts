@@ -20,8 +20,12 @@ function inlineText(content: unknown): string {
     .join("");
 }
 
-/** Text of one block's own content (paragraph text, code, LaTeX source, table cells). */
+/** Text of one block's own content (paragraph text, code, LaTeX source, table cells, quoted highlights). */
 function blockOwnText(block: Json): string {
+  if (block.type === "pdfQuote" && isObj(block.props)) {
+    const { text, comment } = block.props;
+    return [text, comment].filter((t) => typeof t === "string" && t).join("\n");
+  }
   const content = block.content;
   if (Array.isArray(content)) return inlineText(content);
   if (isObj(content) && content.type === "tableContent" && Array.isArray(content.rows)) {
@@ -71,4 +75,27 @@ export function initialBlocks(content: string, plainText: string): Json[] | unde
   const lines = plainText.split(/\r?\n/);
   if (!plainText.trim()) return undefined;
   return lines.map((line) => ({ type: "paragraph", content: line }));
+}
+
+/** Links from note blocks to the highlights and snips they show (see repo.syncNoteRefs). */
+export function extractNoteRefs(
+  blocks: unknown,
+): { blockId: string; highlightId?: string; snipId?: string }[] {
+  const refs: { blockId: string; highlightId?: string; snipId?: string }[] = [];
+  const walk = (list: unknown) => {
+    if (!Array.isArray(list)) return;
+    for (const b of list) {
+      if (!isObj(b)) continue;
+      const props = isObj(b.props) ? b.props : {};
+      if (typeof b.id === "string") {
+        if (b.type === "pdfQuote" && typeof props.highlightId === "string" && props.highlightId)
+          refs.push({ blockId: b.id, highlightId: props.highlightId });
+        if (b.type === "pdfSnip" && typeof props.snipId === "string" && props.snipId)
+          refs.push({ blockId: b.id, snipId: props.snipId });
+      }
+      walk(b.children);
+    }
+  };
+  walk(blocks);
+  return refs;
 }

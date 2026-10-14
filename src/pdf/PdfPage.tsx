@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { TextLayer } from "pdfjs-dist";
-import { MessageSquare } from "lucide-react";
+import { ArrowUpRight, MessageSquare } from "lucide-react";
 import type { PDFDocumentProxy } from "./pdfjs";
-import type { Highlight } from "../lib/repo";
+import type { Highlight, NormRect } from "../lib/repo";
 import { fillFor } from "./highlights";
 import { registerTextLayer } from "./textSelection";
 
@@ -16,6 +16,10 @@ interface Props {
   height: number;
   highlights: Highlight[];
   activeHighlightId: string | null;
+  flashHighlightId: string | null;
+  linkedIds: Set<string>;
+  onOpenLink(highlightId: string): void;
+  snipRect: NormRect | null;
   onOpenHighlight(id: string, anchor: { left: number; top: number; right: number; bottom: number }): void;
 }
 
@@ -32,6 +36,10 @@ export function PdfPage({
   height,
   highlights,
   activeHighlightId,
+  flashHighlightId,
+  linkedIds,
+  onOpenLink,
+  snipRect,
   onOpenHighlight,
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -110,7 +118,9 @@ export function PdfPage({
           h.rects.map((r, i) => (
             <div
               key={`${h.id}-${i}`}
-              className={`hl-rect${h.id === activeHighlightId ? " is-active" : ""}`}
+              className={`hl-rect${h.id === activeHighlightId ? " is-active" : ""}${
+                h.id === flashHighlightId ? " is-flash" : ""
+              }`}
               style={{
                 left: `${r.x * 100}%`,
                 top: `${r.y * 100}%`,
@@ -125,27 +135,55 @@ export function PdfPage({
       <div ref={textRef} className="textLayer" />
       <div className="hl-badges">
         {highlights
-          .filter((h) => h.comment && h.rects.length)
+          .filter((h) => h.rects.length && (h.comment || linkedIds.has(h.id)))
           .map((h) => {
             const last = h.rects[h.rects.length - 1];
             return (
-              <button
+              <span
                 key={h.id}
-                type="button"
-                className="hl-badge"
+                className="hl-markers"
                 style={{ left: `${(last.x + last.w) * 100}%`, top: `${last.y * 100}%` }}
-                aria-label={`Comment: ${h.comment}`}
-                title={h.comment ?? undefined}
-                onClick={(e) => {
-                  const r = e.currentTarget.getBoundingClientRect();
-                  onOpenHighlight(h.id, { left: r.left, top: r.top, right: r.right, bottom: r.bottom });
-                }}
               >
-                <MessageSquare size={11} aria-hidden="true" />
-              </button>
+                {h.comment && (
+                  <button
+                    type="button"
+                    className="hl-badge"
+                    aria-label={`Comment: ${h.comment}`}
+                    title={h.comment}
+                    onClick={(e) => {
+                      const r = e.currentTarget.getBoundingClientRect();
+                      onOpenHighlight(h.id, { left: r.left, top: r.top, right: r.right, bottom: r.bottom });
+                    }}
+                  >
+                    <MessageSquare size={11} aria-hidden="true" />
+                  </button>
+                )}
+                {linkedIds.has(h.id) && (
+                  <button
+                    type="button"
+                    className="hl-innote"
+                    title="Show it in the note"
+                    onClick={() => onOpenLink(h.id)}
+                  >
+                    In note
+                    <ArrowUpRight size={10} aria-hidden="true" />
+                  </button>
+                )}
+              </span>
             );
           })}
       </div>
+      {snipRect && (
+        <div
+          className="snip-box"
+          style={{
+            left: `${snipRect.x * 100}%`,
+            top: `${snipRect.y * 100}%`,
+            width: `${snipRect.w * 100}%`,
+            height: `${snipRect.h * 100}%`,
+          }}
+        />
+      )}
     </div>
   );
 }

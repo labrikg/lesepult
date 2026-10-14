@@ -23,6 +23,25 @@ export function useHighlights(documentId: string) {
     };
   }, [documentId]);
 
+  // Which highlights are quoted in a note (for the "In note" chips).
+  const refsVersion = useStore((s) => s.refsVersion);
+  const [links, setLinks] = useState<Map<string, repo.HighlightLink[]>>(new Map());
+  useEffect(() => {
+    let cancelled = false;
+    getDb()
+      .then((db) => repo.highlightLinks(db, documentId))
+      .then((list) => {
+        if (cancelled) return;
+        const m = new Map<string, repo.HighlightLink[]>();
+        for (const l of list) m.set(l.highlightId, [...(m.get(l.highlightId) ?? []), l]);
+        setLinks(m);
+      })
+      .catch(report);
+    return () => {
+      cancelled = true;
+    };
+  }, [documentId, refsVersion]);
+
   const byPage = useMemo(() => {
     const m = new Map<number, Highlight[]>();
     for (const h of highlights) m.set(h.pageNumber, [...(m.get(h.pageNumber) ?? []), h]);
@@ -89,5 +108,5 @@ export function useHighlights(documentId: string) {
     }
   }, []);
 
-  return { highlights, byPage, create, update, remove };
+  return { highlights, byPage, links, create, update, remove };
 }

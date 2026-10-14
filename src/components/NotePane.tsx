@@ -85,6 +85,7 @@ export function NotePane({ page }: { page: Page }) {
 
         <NoteEditor
           key={page.id}
+          pageId={page.id}
           content={page.content}
           plainText={page.plainText}
           onChange={onEditorChange}

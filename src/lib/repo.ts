@@ -411,6 +411,85 @@ export async function deleteHighlight(db: Db, id: string) {
   await db.execute("DELETE FROM highlights WHERE id = $1", [id]);
 }
 
+/* ---------- Snips ---------- */
+
+export interface Snip {
+  id: string;
+  documentId: string;
+  pageNumber: number;
+  rect: NormRect;
+  imagePath: string;
+}
+
+export async function createSnip(db: Db, s: Omit<Snip, "id">): Promise<Snip> {
+  const id = uid();
+  await db.execute(
+    "INSERT INTO snips (id, document_id, page_number, rect, image_path) VALUES ($1, $2, $3, $4, $5)",
+    [id, s.documentId, s.pageNumber, JSON.stringify(s.rect), s.imagePath],
+  );
+  return { ...s, id };
+}
+
+/* ---------- Links between note blocks and highlights / snips ---------- */
+
+export interface NoteRef {
+  blockId: string;
+  highlightId?: string;
+  snipId?: string;
+}
+
+/**
+ * Replaces a page's links with the ones currently in its note. Links to highlights or snips
+ * that no longer exist are skipped (the block keeps its copy of the text or image).
+ */
+export async function syncNoteRefs(db: Db, pageId: string, refs: NoteRef[]) {
+  await db.execute("DELETE FROM note_refs WHERE page_id = $1", [pageId]);
+  for (const r of refs) {
+    if (r.highlightId) {
+      await db.execute(
+        `INSERT OR IGNORE INTO note_refs (page_id, block_id, highlight_id)
+         SELECT $1, $2, $3 WHERE EXISTS (SELECT 1 FROM highlights WHERE id = $3)`,
+        [pageId, r.blockId, r.highlightId],
+      );
+    } else if (r.snipId) {
+      await db.execute(
+        `INSERT OR IGNORE INTO note_refs (page_id, block_id, snip_id)
+         SELECT $1, $2, $3 WHERE EXISTS (SELECT 1 FROM snips WHERE id = $3)`,
+        [pageId, r.blockId, r.snipId],
+      );
+    }
+  }
+}
+
+export interface HighlightLink {
+  highlightId: string;
+  pageId: string;
+  blockId: string;
+}
+
+/** Which highlights of a PDF are quoted in a note, and where. */
+export async function highlightLinks(db: Db, documentId: string): Promise<HighlightLink[]> {
+  const rows = await db.select<Row>(
+    `SELECT r.highlight_id, r.page_id, r.block_id
+       FROM note_refs r JOIN highlights h ON h.id = r.highlight_id
+      WHERE h.document_id = $1
+      ORDER BY r.page_id, r.block_id`,
+    [documentId],
+  );
+  return rows.map((r) => ({
+    highlightId: str(r.highlight_id),
+    pageId: str(r.page_id),
+    blockId: str(r.block_id),
+  }));
+}
+
+/** Removes snips no note uses any more (their images are then pruned from disk). */
+export async function deleteUnusedSnips(db: Db) {
+  await db.execute(
+    "DELETE FROM snips WHERE id NOT IN (SELECT snip_id FROM note_refs WHERE snip_id IS NOT NULL)",
+  );
+}
+
 /** Every file path the database still refers to; anything else in the documents folder is an orphan. */
 export async function listStoredPaths(db: Db): Promise<string[]> {
   const rows = await db.select<Row>(

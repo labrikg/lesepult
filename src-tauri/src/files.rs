@@ -84,6 +84,20 @@ pub fn import_pdf_into(root: &Path, source: &Path) -> Result<ImportedFile, Strin
     })
 }
 
+const PNG_MAGIC: &[u8] = b"\x89PNG\r\n\x1a\n";
+
+/// Stores a PNG (a PDF snip) as `<root>/documents/<uuid>.png` and returns its stored path.
+pub fn save_png_into(root: &Path, bytes: &[u8]) -> Result<String, String> {
+    if !bytes.starts_with(PNG_MAGIC) {
+        return Err("not a PNG image".into());
+    }
+    let dir = root.join(DOCUMENTS_DIR);
+    fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    let name = format!("{}.png", uuid::Uuid::new_v4());
+    fs::write(dir.join(&name), bytes).map_err(|e| e.to_string())?;
+    Ok(format!("{DOCUMENTS_DIR}/{name}"))
+}
+
 /// Deletes files in the documents folder that no database row refers to. Returns how many were removed.
 pub fn prune_into(root: &Path, keep: &[String]) -> Result<usize, String> {
     let dir = root.join(DOCUMENTS_DIR);
@@ -117,6 +131,15 @@ pub fn remove_stored_file(app: AppHandle, stored_path: String) -> Result<(), Str
         Ok(()) => Ok(()),
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(()),
         Err(e) => Err(e.to_string()),
+    }
+}
+
+/// Receives the PNG bytes as the raw request body (no JSON/base64 round trip).
+#[tauri::command]
+pub fn save_png(app: AppHandle, request: tauri::ipc::Request<'_>) -> Result<String, String> {
+    match request.body() {
+        tauri::ipc::InvokeBody::Raw(bytes) => save_png_into(&data_dir(&app)?, bytes),
+        _ => Err("expected raw PNG bytes".into()),
     }
 }
 
@@ -156,6 +179,18 @@ mod tests {
         assert_eq!(prune_into(&root, &[a.stored_path.clone()]).unwrap(), 1);
         assert!(root.join(&a.stored_path).exists());
         assert!(!root.join(&b.stored_path).exists());
+    }
+
+    #[test]
+    fn saves_pngs_and_prunes_them_like_pdfs() {
+        let root = tmp();
+        let mut png = PNG_MAGIC.to_vec();
+        png.extend_from_slice(b"rest");
+        let path = save_png_into(&root, &png).unwrap();
+        assert!(path.starts_with("documents/") && path.ends_with(".png"));
+        assert_eq!(fs::read(root.join(&path)).unwrap(), png);
+        assert!(save_png_into(&root, b"GIF89a").is_err());
+        assert_eq!(prune_into(&root, &[]).unwrap(), 1);
     }
 
     #[test]

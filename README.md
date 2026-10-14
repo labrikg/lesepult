@@ -20,7 +20,13 @@ Built with Tauri 2, React + TypeScript and SQLite. Runs on macOS and Linux.
   write a note straight away. Click a highlight to recolour it, edit its comment (⌘/Ctrl + Enter saves) or delete it.
   Highlights with a comment show a small speech bubble.
 - View modes PDF / Split / Note; the app remembers the last page and view.
-- Next: "Send to note", "Jump to page" and the snip tool.
+- **Linking PDF and note**:
+  - *Send to note* (in a highlight's popover, *To note* on a fresh selection, or press **N**) adds the highlight as a quote
+    block where your cursor was in the note, with its comment and source page.
+  - *Jump to page* on a quote or snip scrolls the PDF to that spot and flashes the highlight.
+  - Highlights quoted in a note show an *In note* chip; clicking it scrolls the note to the quote.
+  - The **scissors** tool snips a region of a page into the note as a crisp image (rendered from the PDF, not a screenshot).
+  - Quoted text is searchable. Snips no note uses any more are cleaned up on the next start.
 
 ## Setup
 
@@ -80,7 +86,8 @@ src/
   store.ts                app state (zustand) + actions
   lib/db.ts               database connection
   lib/repo.ts             all SQL: tree, pages, search, UI state
-  editor/                 block editor: schema, LaTeX block, slash menu, content ↔ plain text
+  editor/                 block editor: schema, LaTeX block, PDF quote/snip blocks, slash menu,
+                          content ↔ plain text and note → highlight links
   pdf/                    PDF viewer: PDF.js setup, page rendering + text layer, layout maths,
                           highlights (selection → page-relative boxes, toolbar, popover)
   lib/files.ts            PDF import / removal via the Rust commands
@@ -90,7 +97,7 @@ src-tauri/
   migrations/0001_init.sql  schema: semesters, courses, documents, pages, highlights,
                             snips, note_refs, tags, kv, pages_fts (FTS5)
   src/lib.rs                registers plugins, migrations and commands
-  src/files.rs              import_pdf / remove_stored_file / prune_stored_files
+  src/files.rs              import_pdf / save_png / remove_stored_file / prune_stored_files
 scripts/copy-pdfjs-assets.mjs  copies PDF.js fonts, cmaps and decoders into public/ (runs before dev/build)
 ```
 
@@ -101,6 +108,6 @@ New schema changes go in a new `migrations/000N_*.sql` file registered in `lib.r
 1. ~~Block editor~~ ✓
 2. ~~PDF import + viewer~~ ✓
 3. ~~Highlights + comments~~ ✓
-4. **"Send to note", "Jump to page", snip tool**
-5. Export notes to Markdown / PDF
+4. ~~"Send to note", "Jump to page", snip tool~~ ✓
+5. **Export notes to Markdown / PDF**
 6. v2: flashcards with spaced repetition, deadlines & exam dates, to-dos per course

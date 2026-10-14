@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { MessageSquarePlus, Trash2 } from "lucide-react";
+import { MessageSquarePlus, NotebookPen, Trash2 } from "lucide-react";
 import type { Highlight, HighlightColor } from "../lib/repo";
 import { HIGHLIGHT_COLORS } from "./highlights";
 
@@ -24,11 +24,12 @@ interface ToolbarProps {
   anchor: Anchor;
   onPick(color: HighlightColor): void;
   onComment(): void;
+  onSendToNote(): void;
 }
 
 /** Appears next to a fresh text selection: pick a colour, or highlight and comment. */
-export function SelectionToolbar({ anchor, onPick, onComment }: ToolbarProps) {
-  const { ref, pos } = useFloatingPosition(anchor, 176);
+export function SelectionToolbar({ anchor, onPick, onComment, onSendToNote }: ToolbarProps) {
+  const { ref, pos } = useFloatingPosition(anchor, 290);
   return createPortal(
     <div
       ref={ref}
@@ -55,6 +56,15 @@ export function SelectionToolbar({ anchor, onPick, onComment }: ToolbarProps) {
         <MessageSquarePlus size={16} aria-hidden="true" />
         <span>Comment</span>
       </button>
+      <button
+        type="button"
+        className="hl-action"
+        onClick={onSendToNote}
+        title="Highlight and send to the note (N)"
+      >
+        <NotebookPen size={16} aria-hidden="true" />
+        <span>To note</span>
+      </button>
     </div>,
     document.body,
   );
@@ -68,6 +78,10 @@ interface PopoverProps {
   onComment(comment: string): void;
   onDelete(): void;
   onClose(): void;
+  /** Gets the comment as currently typed, so the quote includes it. */
+  onSendToNote(comment: string): void;
+  /** Whether the open page's note already quotes this highlight. */
+  inNote: boolean;
 }
 
 /** Opens when clicking an existing highlight: recolour, comment, delete. */
@@ -79,6 +93,8 @@ export function HighlightPopover({
   onComment,
   onDelete,
   onClose,
+  onSendToNote,
+  inNote,
 }: PopoverProps) {
   const { ref, pos } = useFloatingPosition(anchor, 300);
   const [comment, setComment] = useState(highlight.comment ?? "");
@@ -165,7 +181,20 @@ export function HighlightPopover({
           }}
         />
       </label>
-      <div className="hl-hint">p. {highlight.pageNumber} · ⌘/Ctrl + Enter to save</div>
+      <div className="hl-popover-foot">
+        <span className="hl-hint">p. {highlight.pageNumber} · ⌘/Ctrl + Enter to save</span>
+        <button
+          type="button"
+          className="btn btn--primary btn--sm"
+          onClick={() => {
+            saveRef.current();
+            onSendToNote(comment);
+          }}
+        >
+          <NotebookPen size={14} aria-hidden="true" />
+          {inNote ? "Send again" : "Send to note"}
+        </button>
+      </div>
     </div>,
     document.body,
   );

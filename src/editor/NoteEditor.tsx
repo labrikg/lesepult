@@ -20,6 +20,7 @@ import "@blocknote/mantine/style.css";
 import { schema, type NoteEditor as Editor, type NotePartialBlock } from "./schema";
 import { blocksToPlainText, initialBlocks } from "./content";
 import { findExactSlashItem } from "./slashMatch";
+import { useStore } from "../store";
 
 /** BlockNote colours mapped onto the library-desk tokens (studyhub-spec.md). */
 const libraryTheme: Theme = {
@@ -75,6 +76,7 @@ export interface NoteChange {
 }
 
 interface Props {
+  pageId: string;
   content: string;
   plainText: string;
   onChange(change: NoteChange): void;
@@ -91,8 +93,44 @@ function focusEnd(editor: Editor) {
   editor.focus();
 }
 
+/** Scrolls a block into view and briefly flashes it. */
+function revealBlock(blockId: string) {
+  window.setTimeout(() => {
+    const el = document.querySelector<HTMLElement>(
+      `.note-editor .bn-block-outer[data-id="${CSS.escape(blockId)}"]`,
+    );
+    if (!el) return;
+    el.scrollIntoView({ block: "center", behavior: "smooth" });
+    // Web Animations rather than a class: ProseMirror owns the block's attributes and may reset them.
+    const target = el.querySelector<HTMLElement>(".bn-block-content") ?? el;
+    target.animate(
+      [
+        { boxShadow: "0 0 0 3px rgba(74, 103, 65, 0.55)", borderRadius: "12px", offset: 0 },
+        { boxShadow: "0 0 0 3px rgba(74, 103, 65, 0.55)", borderRadius: "12px", offset: 0.35 },
+        { boxShadow: "0 0 0 3px rgba(74, 103, 65, 0)", borderRadius: "12px", offset: 1 },
+      ],
+      { duration: 1600, easing: "ease-out" },
+    );
+  }, 60);
+}
+
+/**
+ * Inserts blocks after the block the cursor was last in (or at the end). An empty paragraph
+ * there is replaced instead, so sending several highlights doesn't leave gaps.
+ */
+function insertNear(editor: Editor, blocks: NotePartialBlock[], afterId: string | null): string | null {
+  const doc = editor.document;
+  const ref = (afterId && editor.getBlock(afterId)) || doc[doc.length - 1];
+  if (!ref) return null;
+  const isEmptyParagraph = ref.type === "paragraph" && Array.isArray(ref.content) && ref.content.length === 0;
+  const inserted = isEmptyParagraph
+    ? editor.replaceBlocks([ref], blocks).insertedBlocks
+    : editor.insertBlocks(blocks, ref, "after");
+  return inserted[inserted.length - 1]?.id ?? null;
+}
+
 /** The block editor for one page. Mount with `key={page.id}` so each page gets a fresh editor. */
-export function NoteEditor({ content, plainText, onChange, onReady }: Props) {
+export function NoteEditor({ pageId, content, plainText, onChange, onReady }: Props) {
   const editor = useCreateBlockNote({
     schema,
     initialContent: initialBlocks(content, plainText) as NotePartialBlock[] | undefined,
@@ -105,6 +143,29 @@ export function NoteEditor({ content, plainText, onChange, onReady }: Props) {
   useEffect(() => {
     onReady?.(editor);
   }, [editor, onReady]);
+
+  // Remember where the cursor last was, so "Send to note" lands there.
+  const lastBlockId = useRef<string | null>(null);
+
+  // Blocks sent from the PDF ("Send to note", snips).
+  const noteQueue = useStore((s) => s.noteQueue);
+  useEffect(() => {
+    if (!noteQueue.length) return;
+    const blocks = useStore.getState().takeNoteQueue() as NotePartialBlock[];
+    const last = insertNear(editor, blocks, lastBlockId.current);
+    if (last) {
+      lastBlockId.current = last;
+      revealBlock(last);
+    }
+  }, [noteQueue, editor]);
+
+  // "In note" chips in the PDF ask to show a block.
+  const focusBlock = useStore((s) => s.focusBlock);
+  useEffect(() => {
+    if (!focusBlock || focusBlock.pageId !== pageId) return;
+    useStore.setState({ focusBlock: null });
+    revealBlock(focusBlock.blockId);
+  }, [focusBlock, pageId]);
 
   return (
     <BlockNoteContext.Provider value={lightOnly}>
@@ -147,6 +208,9 @@ export function NoteEditor({ content, plainText, onChange, onReady }: Props) {
           theme={libraryTheme}
           slashMenu={false}
           className="note-editor"
+          onSelectionChange={() => {
+            if (editor.isFocused()) lastBlockId.current = editor.getTextCursorPosition().block.id;
+          }}
           onChange={() => {
             const doc = editor.document;
             onChangeRef.current({ content: JSON.stringify(doc), plainText: blocksToPlainText(doc) });

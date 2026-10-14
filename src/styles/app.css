@@ -1197,11 +1197,18 @@ kbd {
   z-index: 2;
 }
 
-.hl-badge {
+.hl-markers {
   position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin: -7px 0 0 3px;
+  white-space: nowrap;
+}
+
+.hl-badge {
   width: 18px;
   height: 18px;
-  margin: -6px 0 0 2px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1354,4 +1361,234 @@ kbd {
   overflow: hidden;
   clip: rect(0 0 0 0);
   white-space: nowrap;
+}
+
+.btn--sm {
+  min-height: 30px;
+  padding: 0 10px;
+  font-size: 12.5px;
+}
+
+.hl-popover-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* "In note" chip on a quoted highlight */
+.hl-innote {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 18px;
+  padding: 0 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink-soft);
+  font-size: 10.5px;
+  font-weight: 600;
+  pointer-events: auto;
+  box-shadow: 0 1px 2px rgba(40, 30, 20, 0.12);
+}
+
+.hl-innote:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+
+.hl-rect.is-flash {
+  animation: hl-flash 1.6s ease-out;
+}
+
+@keyframes hl-flash {
+  0%,
+  40% {
+    box-shadow: 0 0 0 4px rgba(74, 103, 65, 0.6);
+    opacity: 1;
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(74, 103, 65, 0);
+  }
+}
+
+/* ---------- Snip tool ---------- */
+
+.pdf-scroll.is-snipping {
+  cursor: crosshair;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.pdf-scroll.is-snipping .textLayer,
+.pdf-scroll.is-snipping .hl-badges {
+  pointer-events: none;
+}
+
+.pane-toolbar .tool-btn[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.snip-box {
+  position: absolute;
+  z-index: 3;
+  border: 2px dashed var(--accent);
+  border-radius: 4px;
+  background: rgba(74, 103, 65, 0.08);
+  box-shadow: 0 0 0 9999px rgba(42, 36, 32, 0.12);
+  pointer-events: none;
+}
+
+.snip-hint {
+  position: absolute;
+  z-index: 5;
+  left: 50%;
+  transform: translate(-50%, 58px);
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--surface);
+  font-size: 12px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.pdf-pane {
+  position: relative;
+}
+
+.snip-toolbar {
+  position: fixed;
+  z-index: 60;
+  display: flex;
+  gap: 6px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--paper);
+  box-shadow: var(--shadow-pop);
+}
+
+/* ---------- PDF blocks in notes ---------- */
+
+.pdf-quote,
+.pdf-snip {
+  margin: 4px 0;
+  width: 100%;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.pdf-quote {
+  --tint: #fbf0d2;
+  --swatch: #e2b649;
+  --head: #5a4a2a;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 16px 14px;
+  border-radius: var(--radius-lg);
+  background: var(--tint);
+}
+
+.pdf-quote[data-color="blue"] {
+  --tint: #e3eef6;
+  --swatch: #8fb4d2;
+  --head: #23465e;
+}
+
+.pdf-quote[data-color="green"] {
+  --tint: #e8f0e0;
+  --swatch: #9dbf85;
+  --head: #2f4529;
+}
+
+.pdf-block-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--head, var(--muted));
+}
+
+.pdf-quote-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  background: var(--swatch);
+}
+
+.pdf-block-kind {
+  font-weight: 600;
+}
+
+.pdf-block-spacer {
+  flex: 1;
+}
+
+.pdf-block-jump {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 6px;
+  margin: -2px -6px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.pdf-block-jump:hover {
+  background: rgba(42, 36, 32, 0.08);
+}
+
+.pdf-quote-text {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 18px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+.pdf-quote-comment {
+  font-size: 14px;
+  color: var(--ink-soft);
+  font-style: italic;
+}
+
+.pdf-snip {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pdf-snip-frame {
+  padding: 12px;
+  border: 1px solid #e6dccb;
+  border-radius: var(--radius-md);
+  background: var(--paper);
+}
+
+.pdf-snip-img {
+  display: block;
+  max-width: 100%;
+  max-height: 480px;
+  margin: 0 auto;
+  object-fit: contain;
+}
+
+.pdf-snip-img.is-loading {
+  height: 120px;
+  background: var(--toolbar);
+  border-radius: 6px;
+}
+
+.pdf-snip .pdf-block-head {
+  color: var(--muted);
 }

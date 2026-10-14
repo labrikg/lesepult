@@ -239,6 +239,74 @@ describe("repository", () => {
     ).rejects.toThrow();
   });
 
+  it("tracks which highlights and snips a note uses", async () => {
+    const s = await repo.createSemester(db, "S");
+    const c = await repo.createCourse(db, s, "C");
+    const page = await repo.createPage(db, c, "Hashing");
+    const other = await repo.createPage(db, c, "Summary");
+    const doc = await repo.createDocument(db, c, {
+      fileName: "a.pdf",
+      storedPath: "documents/a.pdf",
+      sha256: "1",
+    });
+    const rects = [{ x: 0, y: 0, w: 0.5, h: 0.05 }];
+    const h1 = await repo.createHighlight(db, {
+      documentId: doc,
+      pageNumber: 1,
+      rects,
+      color: "yellow",
+      text: "a",
+    });
+    const h2 = await repo.createHighlight(db, {
+      documentId: doc,
+      pageNumber: 2,
+      rects,
+      color: "blue",
+      text: "b",
+    });
+    const snip = await repo.createSnip(db, {
+      documentId: doc,
+      pageNumber: 3,
+      rect: rects[0],
+      imagePath: "documents/s.png",
+    });
+    const unused = await repo.createSnip(db, {
+      documentId: doc,
+      pageNumber: 4,
+      rect: rects[0],
+      imagePath: "documents/u.png",
+    });
+
+    await repo.syncNoteRefs(db, page, [
+      { blockId: "b1", highlightId: h1.id },
+      { blockId: "b2", snipId: snip.id },
+      { blockId: "b3", highlightId: "deleted-highlight" },
+    ]);
+    await repo.syncNoteRefs(db, other, [{ blockId: "b9", highlightId: h2.id }]);
+    // Order follows the (random) page ids, so compare without relying on it.
+    expect((await repo.highlightLinks(db, doc)).sort((a, b) => a.blockId.localeCompare(b.blockId))).toEqual([
+      { highlightId: h1.id, pageId: page, blockId: "b1" },
+      { highlightId: h2.id, pageId: other, blockId: "b9" },
+    ]);
+
+    // Re-syncing replaces the page's links.
+    await repo.syncNoteRefs(db, page, [{ blockId: "b2", snipId: snip.id }]);
+    expect((await repo.highlightLinks(db, doc)).map((l) => l.blockId)).toEqual(["b9"]);
+
+    expect((await repo.listStoredPaths(db)).sort()).toEqual([
+      "documents/a.pdf",
+      "documents/s.png",
+      "documents/u.png",
+    ]);
+    await repo.deleteUnusedSnips(db);
+    expect((await repo.listStoredPaths(db)).sort()).toEqual(["documents/a.pdf", "documents/s.png"]);
+    expect(unused.id).toBeTruthy();
+
+    // Deleting the page drops its links.
+    await repo.deletePage(db, other);
+    expect(await repo.highlightLinks(db, doc)).toEqual([]);
+  });
+
   it("drops a page's PDF link when the course's document is deleted", async () => {
     const s = await repo.createSemester(db, "S");
     const c = await repo.createCourse(db, s, "C");

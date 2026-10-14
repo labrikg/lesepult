@@ -1,6 +1,7 @@
 import { BlockNoteSchema, createCodeBlockSpec, defaultBlockSpecs } from "@blocknote/core";
 import { codeBlockOptions } from "@blocknote/code-block";
 import { createLatexBlock } from "./LatexBlock";
+import { createPdfQuoteBlock, createPdfSnipBlock } from "./PdfBlocks";
 
 // Media blocks (image, video, audio, file) are left out until files are stored in the
 // app's data folder; PDF snips will bring images back as their own block.
@@ -11,6 +12,8 @@ export const schema = BlockNoteSchema.create({
     ...textBlocks,
     codeBlock: createCodeBlockSpec({ ...codeBlockOptions, defaultLanguage: "text" }),
     latex: createLatexBlock(),
+    pdfQuote: createPdfQuoteBlock(),
+    pdfSnip: createPdfSnipBlock(),
   },
 });
 

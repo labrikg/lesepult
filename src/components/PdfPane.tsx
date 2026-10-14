@@ -7,10 +7,20 @@ export function PdfPane() {
   const attachPdf = useStore((s) => s.attachPdf);
   const removePdf = useStore((s) => s.removePdf);
   const renamePdf = useStore((s) => s.renamePdf);
+  const showPagePdf = useStore((s) => s.showPagePdf);
+  const pageDocId = useStore((s) => s.page?.documentId ?? null);
 
   if (pdf)
     return (
-      <PdfViewer key={pdf.id} doc={pdf} onReplace={attachPdf} onRemove={removePdf} onRename={renamePdf} />
+      <PdfViewer
+        key={pdf.id}
+        doc={pdf}
+        onReplace={attachPdf}
+        onRemove={removePdf}
+        onRename={renamePdf}
+        isPageDoc={pdf.id === pageDocId}
+        onShowPagePdf={showPagePdf}
+      />
     );
 
   return (

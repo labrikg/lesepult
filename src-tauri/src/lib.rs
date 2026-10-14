@@ -27,6 +27,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             files::import_pdf,
             files::remove_stored_file,
+            files::save_png,
             files::prune_stored_files
         ])
         .run(tauri::generate_context!())

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { blocksToPlainText, initialBlocks } from "./content";
+import { blocksToPlainText, extractNoteRefs, initialBlocks } from "./content";
 
 describe("blocksToPlainText", () => {
   it("collects text from paragraphs, links, code, LaTeX, tables and nested children", () => {
@@ -75,5 +75,37 @@ describe("initialBlocks", () => {
   it("starts empty pages with the editor default", () => {
     expect(initialBlocks("[]", "   ")).toBeUndefined();
     expect(initialBlocks("not json", "")).toBeUndefined();
+  });
+});
+
+describe("PDF blocks", () => {
+  const blocks = [
+    {
+      id: "q1",
+      type: "pdfQuote",
+      props: { highlightId: "h1", text: "On a collision, probe a sequence", comment: "exam!" },
+      children: [],
+    },
+    {
+      id: "p",
+      type: "paragraph",
+      content: [],
+      children: [
+        { id: "s1", type: "pdfSnip", props: { snipId: "sn1", imagePath: "documents/x.png" }, children: [] },
+      ],
+    },
+    { id: "q2", type: "pdfQuote", props: { highlightId: "", text: "orphan" }, children: [] },
+  ];
+
+  it("makes quoted highlights searchable", () => {
+    expect(blocksToPlainText(blocks)).toBe("On a collision, probe a sequence\nexam!\norphan");
+  });
+
+  it("extracts links to highlights and snips, including nested blocks", () => {
+    expect(extractNoteRefs(blocks)).toEqual([
+      { blockId: "q1", highlightId: "h1" },
+      { blockId: "s1", snipId: "sn1" },
+    ]);
+    expect(extractNoteRefs(null)).toEqual([]);
   });
 });

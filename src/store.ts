@@ -3,6 +3,7 @@ import { getDb } from "./lib/db";
 import * as repo from "./lib/repo";
 import type { Document, Page, PagePatch, SemesterNode } from "./lib/repo";
 import { pickAndImportPdf, pruneStoredFiles, removeStoredFile } from "./lib/files";
+import { extractNoteRefs } from "./editor/content";
 
 export type ViewMode = "pdf" | "split" | "note";
 
@@ -16,6 +17,15 @@ interface State {
   pdf: Document | null;
   viewMode: ViewMode;
   searchOpen: boolean;
+
+  /** Blocks waiting to be inserted into the open note (e.g. "Send to note" from the PDF). */
+  noteQueue: unknown[];
+  /** Ask the note editor to scroll to and flash a block. */
+  focusBlock: { pageId: string; blockId: string; nonce: number } | null;
+  /** Ask the PDF viewer to scroll to a page (and highlight). */
+  pdfJump: { documentId: string; pageNumber: number; highlightId?: string; nonce: number } | null;
+  /** Bumped whenever note ↔ highlight links change, so the viewer reloads its "In note" chips. */
+  refsVersion: number;
 
   init(): Promise<void>;
   refresh(): Promise<void>;
@@ -42,6 +52,13 @@ interface State {
   attachPdf(): Promise<void>;
   removePdf(): Promise<void>;
   renamePdf(title: string): Promise<void>;
+  /** Shows the open page's own PDF again after jumping to another one. */
+  showPagePdf(): Promise<void>;
+
+  sendToNote(blocks: unknown[]): void;
+  takeNoteQueue(): unknown[];
+  focusNoteBlock(pageId: string, blockId: string): Promise<void>;
+  jumpToPdf(documentId: string, pageNumber: number, highlightId?: string): Promise<void>;
 }
 
 /** Wraps an action so a database failure shows up in the UI instead of vanishing. */
@@ -65,6 +82,10 @@ export const useStore = create<State>((set, get) => ({
   pdf: null,
   viewMode: "split",
   searchOpen: false,
+  noteQueue: [],
+  focusBlock: null,
+  pdfJump: null,
+  refsVersion: 0,
 
   init: guard(async () => {
     const db = await getDb();
@@ -75,8 +96,11 @@ export const useStore = create<State>((set, get) => ({
     ]);
     set({ tree, ready: true, viewMode: (viewMode as ViewMode | null) ?? "split" });
     if (lastPage) await get().selectPage(lastPage);
-    // Housekeeping: remove PDFs left behind by deleted courses/semesters.
-    pruneStoredFiles(await repo.listStoredPaths(db)).catch((e) => console.warn("prune failed", e));
+    // Housekeeping: drop snips no note uses, then files nothing refers to (e.g. from deleted courses).
+    (async () => {
+      await repo.deleteUnusedSnips(db);
+      await pruneStoredFiles(await repo.listStoredPaths(db));
+    })().catch((e) => console.warn("cleanup failed", e));
   }),
 
   refresh: guard(async () => {
@@ -153,7 +177,18 @@ export const useStore = create<State>((set, get) => ({
     await get().selectPage(id);
   }),
   savePage: guard(async (id, patch) => {
-    await repo.updatePage(await getDb(), id, patch);
+    const db = await getDb();
+    await repo.updatePage(db, id, patch);
+    if (patch.content !== undefined) {
+      let blocks: unknown = [];
+      try {
+        blocks = JSON.parse(patch.content);
+      } catch {
+        // keep empty
+      }
+      await repo.syncNoteRefs(db, id, extractNoteRefs(blocks));
+      set((s) => ({ refsVersion: s.refsVersion + 1 }));
+    }
     const current = get().page;
     if (current?.id === id) {
       set({
@@ -203,6 +238,40 @@ export const useStore = create<State>((set, get) => ({
     await repo.renameDocument(await getDb(), pdf.id, title);
     set({ pdf: { ...pdf, title: title.trim() } });
     await get().refresh();
+  }),
+
+  showPagePdf: guard(async () => {
+    const page = get().page;
+    const db = await getDb();
+    set({ pdf: page?.documentId ? await repo.getDocument(db, page.documentId) : null });
+  }),
+
+  sendToNote(blocks) {
+    if (!get().page) return;
+    if (get().viewMode === "pdf") get().setViewMode("split");
+    set((s) => ({ noteQueue: [...s.noteQueue, ...blocks] }));
+  },
+
+  takeNoteQueue() {
+    const q = get().noteQueue;
+    if (q.length) set({ noteQueue: [] });
+    return q;
+  },
+
+  focusNoteBlock: guard(async (pageId, blockId) => {
+    if (get().selectedPageId !== pageId) await get().selectPage(pageId);
+    if (get().viewMode === "pdf") get().setViewMode("split");
+    set({ focusBlock: { pageId, blockId, nonce: Date.now() } });
+  }),
+
+  jumpToPdf: guard(async (documentId, pageNumber, highlightId) => {
+    if (get().pdf?.id !== documentId) {
+      const doc = await repo.getDocument(await getDb(), documentId);
+      if (!doc) throw new Error("That PDF has been removed.");
+      set({ pdf: doc });
+    }
+    if (get().viewMode === "note") get().setViewMode("split");
+    set({ pdfJump: { documentId, pageNumber, highlightId, nonce: Date.now() } });
   }),
 
   removePdf: guard(async () => {
