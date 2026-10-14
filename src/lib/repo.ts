@@ -490,6 +490,18 @@ export async function deleteUnusedSnips(db: Db) {
   );
 }
 
+/* ---------- Bulk reads for export ---------- */
+
+export async function listAllPages(db: Db): Promise<Page[]> {
+  const rows = await db.select<Row>("SELECT * FROM pages ORDER BY position");
+  return rows.map((r) => ({ ...toPageSummary(r), content: str(r.content), plainText: str(r.plain_text) }));
+}
+
+export async function listAllDocuments(db: Db): Promise<Document[]> {
+  const rows = await db.select<Row>("SELECT * FROM documents ORDER BY position");
+  return rows.map(toDocumentFull);
+}
+
 /** Every file path the database still refers to; anything else in the documents folder is an orphan. */
 export async function listStoredPaths(db: Db): Promise<string[]> {
   const rows = await db.select<Row>(

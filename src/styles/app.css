@@ -1592,3 +1592,125 @@ kbd {
 .pdf-snip .pdf-block-head {
   color: var(--muted);
 }
+
+/* ---------- Export ---------- */
+
+.menu-item--two-line {
+  align-items: flex-start;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.menu-item--two-line svg {
+  margin-top: 2px;
+}
+
+.menu-item--two-line > span {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.menu-item-title {
+  font-weight: 600;
+}
+
+.menu-item-sub {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.toast--ok {
+  background: var(--accent);
+}
+
+/* ---------- Print: the note alone, laid out for paper ("Export note → PDF") ---------- */
+
+@media print {
+  /* Vertical page margins come from @page; horizontal ones are padding on the note, because some
+     print paths (WebKitGTK, macOS with zero NSPrintInfo margins) don't apply @page side margins. */
+  @page {
+    size: A4;
+    margin: 14mm 0 16mm;
+  }
+
+  html,
+  body,
+  #root,
+  .app,
+  .main,
+  .workspace,
+  .note-pane {
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .sidebar,
+  .topbar,
+  .pdf-pane,
+  .toast,
+  .note-meta,
+  .popover,
+  .search-dialog,
+  .bn-side-menu,
+  .bn-formatting-toolbar,
+  .bn-suggestion-menu,
+  .bn-trailing-block,
+  .pdf-block-jump,
+  .bn-source-block-popup,
+  .hl-toolbar,
+  .hl-popover,
+  .snip-toolbar {
+    display: none !important;
+  }
+
+  .note-inner {
+    max-width: none;
+    padding: 0 14mm;
+    min-height: 0;
+  }
+
+  .note-title {
+    font-size: 26pt;
+    margin-bottom: 6pt;
+  }
+
+  .note-editor-area {
+    min-height: 0;
+  }
+
+  .note-editor .bn-editor {
+    padding: 0;
+    font-size: 11pt;
+    line-height: 1.55;
+  }
+
+  /* No "Type / for commands" placeholders on paper */
+  .note-editor .bn-block-content:has(.ProseMirror-trailingBreak:only-child)::after {
+    display: none !important;
+  }
+
+  .note-editor .bn-block-content[data-content-type="heading"] {
+    break-after: avoid;
+  }
+
+  .pdf-quote,
+  .pdf-snip,
+  .note-editor .bn-block-content[data-content-type="codeBlock"],
+  .note-editor .bn-block-content[data-content-type="latex"],
+  .note-editor .bn-block-content[data-content-type="table"] {
+    break-inside: avoid;
+  }
+
+  .pdf-snip-img {
+    max-height: 120mm;
+  }
+}

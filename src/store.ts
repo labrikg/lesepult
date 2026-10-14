@@ -26,6 +26,10 @@ interface State {
   pdfJump: { documentId: string; pageNumber: number; highlightId?: string; nonce: number } | null;
   /** Bumped whenever note ↔ highlight links change, so the viewer reloads its "In note" chips. */
   refsVersion: number;
+  /** Short confirmation shown in a toast (e.g. after an export). */
+  notice: string | null;
+  /** Saves the open note right away (registered by the note pane); used before exporting. */
+  flushNote: (() => Promise<void>) | null;
 
   init(): Promise<void>;
   refresh(): Promise<void>;
@@ -86,6 +90,8 @@ export const useStore = create<State>((set, get) => ({
   focusBlock: null,
   pdfJump: null,
   refsVersion: 0,
+  notice: null,
+  flushNote: null,
 
   init: guard(async () => {
     const db = await getDb();

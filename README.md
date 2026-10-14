@@ -27,6 +27,12 @@ Built with Tauri 2, React + TypeScript and SQLite. Runs on macOS and Linux.
   - Highlights quoted in a note show an *In note* chip; clicking it scrolls the note to the quote.
   - The **scissors** tool snips a region of a page into the note as a crisp image (rendered from the PDF, not a screenshot).
   - Quoted text is searchable. Snips no note uses any more are cleaned up on the next start.
+- **Export**:
+  - *Export note → Markdown file…* writes the note as `.md` (formulas as `$$…$$`, quotes with source and page,
+    code with its language) plus an `assets/` folder for snip images.
+  - *Export note → PDF…* opens the print dialog with just the note laid out for A4; on macOS choose **PDF → Save as PDF**.
+  - *Export everything…* (sidebar) writes your whole library as a folder you can read without Study Hub:
+    `Semester/Course/Page.md`, each course's PDFs in `PDFs/` (linked from the notes) and snips in `assets/`.
 
 ## Setup
 
@@ -91,6 +97,7 @@ src/
   pdf/                    PDF viewer: PDF.js setup, page rendering + text layer, layout maths,
                           highlights (selection → page-relative boxes, toolbar, popover)
   lib/files.ts            PDF import / removal via the Rust commands
+  export/                 Markdown converter, library layout, export + print actions
   components/             Sidebar, TopBar, NotePane, PdfPane, SearchDialog, …
   styles/tokens.css       design tokens (colours, fonts) from the approved mockup
 src-tauri/
@@ -98,6 +105,7 @@ src-tauri/
                             snips, note_refs, tags, kv, pages_fts (FTS5)
   src/lib.rs                registers plugins, migrations and commands
   src/files.rs              import_pdf / save_png / remove_stored_file / prune_stored_files
+  src/export.rs             export_bundle (writes/copies files into a chosen folder) / print_window
 scripts/copy-pdfjs-assets.mjs  copies PDF.js fonts, cmaps and decoders into public/ (runs before dev/build)
 ```
 
@@ -109,5 +117,5 @@ New schema changes go in a new `migrations/000N_*.sql` file registered in `lib.r
 2. ~~PDF import + viewer~~ ✓
 3. ~~Highlights + comments~~ ✓
 4. ~~"Send to note", "Jump to page", snip tool~~ ✓
-5. **Export notes to Markdown / PDF**
+5. ~~Export notes to Markdown / PDF~~ ✓ (v1 complete)
 6. v2: flashcards with spaced repetition, deadlines & exam dates, to-dos per course

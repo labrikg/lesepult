@@ -1,5 +1,6 @@
 use tauri_plugin_sql::{Migration, MigrationKind};
 
+pub mod export;
 pub mod files;
 
 /// Database URL shared with the frontend (`src/lib/db.ts`).
@@ -28,7 +29,9 @@ pub fn run() {
             files::import_pdf,
             files::remove_stored_file,
             files::save_png,
-            files::prune_stored_files
+            files::prune_stored_files,
+            export::export_bundle,
+            export::print_window
         ])
         .run(tauri::generate_context!())
         .expect("error while running Study Hub");

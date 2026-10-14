@@ -5,6 +5,7 @@ import type { CourseNode, SemesterNode } from "../lib/repo";
 import { InlineInput } from "./InlineInput";
 import { ConfirmDelete } from "./ConfirmDelete";
 import { PAGE_DRAG_TYPE, PageItem } from "./PageItem";
+import { exportLibrary } from "../export/exporter";
 
 const isMac = navigator.userAgent.includes("Mac");
 
@@ -53,9 +54,14 @@ export function Sidebar() {
       </div>
 
       <div className="sidebar-footer">
-        <button type="button" className="footer-item" disabled title="Coming soon">
+        <button
+          type="button"
+          className="footer-item"
+          onClick={exportLibrary}
+          title="All notes, PDFs and snips as Markdown files in a folder you choose"
+        >
           <Download size={16} aria-hidden="true" />
-          <span>Export</span>
+          <span>Export everything…</span>
         </button>
         <button type="button" className="footer-item" disabled title="Coming soon">
           <Settings size={16} aria-hidden="true" />

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { BookMarked, X } from "lucide-react";
+import { BookMarked, Check, X } from "lucide-react";
 import { useStore } from "./store";
 import { Sidebar } from "./components/Sidebar";
 import { TopBar } from "./components/TopBar";
@@ -12,6 +12,13 @@ export default function App() {
   const init = useStore((s) => s.init);
   const ready = useStore((s) => s.ready);
   const error = useStore((s) => s.error);
+  const notice = useStore((s) => s.notice);
+
+  useEffect(() => {
+    if (!notice) return;
+    const t = setTimeout(() => useStore.setState({ notice: null }), 5000);
+    return () => clearTimeout(t);
+  }, [notice]);
 
   useEffect(() => {
     init();
@@ -25,6 +32,15 @@ export default function App() {
         {ready ? <Workspace /> : <div className="loading" aria-busy="true" />}
       </main>
       <SearchDialog />
+      {notice && !error && (
+        <div className="toast toast--ok" role="status">
+          <Check size={15} aria-hidden="true" />
+          <span>{notice}</span>
+          <button type="button" aria-label="Dismiss" onClick={() => useStore.setState({ notice: null })}>
+            <X size={14} aria-hidden="true" />
+          </button>
+        </div>
+      )}
       {error && (
         <div className="toast" role="alert">
           <span>Something went wrong: {error}</span>

@@ -16,18 +16,18 @@ export function NotePane({ page }: { page: Page }) {
   const editorRef = useRef<Editor | null>(null);
 
   // Saves whatever is pending for this page right away (on page switch / unmount).
-  const flush = useRef(() => {});
-  flush.current = () => {
+  const flush = useRef<() => Promise<void>>(async () => {});
+  flush.current = async () => {
     window.clearTimeout(timer.current);
     const patch = pending.current;
     pending.current = {};
-    if (Object.keys(patch).length) savePage(page.id, patch);
+    if (Object.keys(patch).length) await savePage(page.id, patch);
   };
 
   useEffect(() => {
     setTitle(page.title);
     if (!page.title) titleRef.current?.focus();
-    return () => flush.current();
+    return () => void flush.current();
     // Only reset when a different page is opened, not on our own saves.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page.id]);
@@ -38,9 +38,14 @@ export function NotePane({ page }: { page: Page }) {
   }, [page.title]);
 
   useEffect(() => {
-    const onUnload = () => flush.current();
+    const onUnload = () => void flush.current();
     window.addEventListener("beforeunload", onUnload);
-    return () => window.removeEventListener("beforeunload", onUnload);
+    // Lets exports save the latest edits first.
+    useStore.setState({ flushNote: () => flush.current() });
+    return () => {
+      window.removeEventListener("beforeunload", onUnload);
+      useStore.setState({ flushNote: null });
+    };
   }, []);
 
   const queue = useCallback((patch: PagePatch) => {
