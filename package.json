@@ -11,11 +11,18 @@
     "tauri": "tauri"
   },
   "dependencies": {
+    "@blocknote/code-block": "^0.55.0",
+    "@blocknote/core": "^0.55.0",
+    "@blocknote/mantine": "^0.55.0",
+    "@blocknote/react": "^0.55.0",
     "@fontsource-variable/figtree": "^5.3.0",
     "@fontsource-variable/fraunces": "^5.3.0",
     "@fontsource/jetbrains-mono": "^5.3.0",
+    "@mantine/core": "^9.7.2",
+    "@mantine/hooks": "^9.7.2",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-sql": "^2.5.0",
+    "katex": "^0.19.0",
     "lucide-react": "^1.57.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

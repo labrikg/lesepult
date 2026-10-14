@@ -687,3 +687,167 @@ kbd {
   color: inherit;
   display: inline-flex;
 }
+
+/* ---------- Block editor (BlockNote) ---------- */
+
+.note-editor-area {
+  flex: 1;
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+  cursor: text;
+}
+
+.note-editor {
+  margin: 0 -2px;
+}
+
+.note-editor .bn-editor {
+  padding-inline: 2px;
+  padding-block: 0 24px;
+  background: transparent;
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+.note-editor .bn-block-content[data-content-type="heading"] {
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.note-editor .bn-block-content[data-content-type="heading"][data-level="3"],
+.note-editor .bn-block-content[data-content-type="heading"]:not([data-level]) {
+  font-family: var(--font-ui);
+  font-weight: 700;
+}
+
+.note-editor .bn-inline-content code {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--toolbar);
+}
+
+.note-editor .bn-block-content[data-content-type="quote"] blockquote {
+  font-family: var(--font-display);
+  font-size: 18px;
+  color: var(--ink);
+  border-left-color: var(--line-strong);
+}
+
+/* Code blocks: paper card, light syntax theme */
+.note-editor .bn-block-content[data-content-type="codeBlock"] {
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid #e6dccb;
+  border-radius: var(--radius-lg);
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+}
+
+.note-editor .bn-block-content[data-content-type="codeBlock"] select {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.note-editor .bn-block-content[data-content-type="codeBlock"] code {
+  font-family: var(--font-mono);
+}
+
+/* LaTeX blocks */
+.note-editor .bn-block-content[data-content-type="latex"] {
+  border: 1px solid #e6dccb;
+  border-radius: var(--radius-lg);
+  background: var(--paper);
+  padding: 10px 16px;
+}
+
+.latex-preview {
+  overflow-x: auto;
+  font-size: 1.05em;
+}
+
+.latex-preview .katex-display {
+  margin: 0.4em 0;
+}
+
+.note-editor .bn-source-block-popup pre,
+.note-editor .bn-code-block-source-popup-body pre {
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+/* Floating menus (slash menu, toolbars) render in portals outside .note-editor */
+.bn-suggestion-menu,
+.bn-toolbar {
+  font-family: var(--font-ui);
+}
+
+/* Slash menu: light icon tiles and quiet shortcut badges, as in the mockup */
+.bn-mantine .bn-mt-suggestion-menu-item-section[data-position="left"] {
+  background-color: var(--surface);
+  border: 1px solid #e0d5c3;
+  color: var(--ink);
+}
+
+.bn-mantine .bn-mt-suggestion-menu-item-section[data-position="right"] .mantine-Badge-root,
+.bn-mantine .bn-mt-suggestion-menu-item-section[data-position="right"] > * {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  font-family: var(--font-mono);
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.bn-mantine .bn-mt-suggestion-menu-item-subtitle {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.bn-mantine .bn-suggestion-menu-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* LaTeX source popup in the theme accent instead of BlockNote blue */
+.note-editor .bn-code-block-source-popup-ok-button {
+  background-color: var(--accent);
+  color: var(--on-accent);
+  font-family: var(--font-ui);
+  font-weight: 600;
+}
+
+.note-editor .bn-code-block-source-popup-ok-button:hover {
+  background-color: var(--accent-hover);
+}
+
+.note-editor .bn-preview-placeholder {
+  background-color: var(--toolbar);
+  color: var(--muted);
+}
+
+.note-editor .bn-block-content.ProseMirror-selectednode > *::after,
+.note-editor .ProseMirror-selectednode > .bn-block-content > *::after,
+.note-editor .bn-block-content .ProseMirror-selectednode::after {
+  background-color: rgba(74, 103, 65, 0.06);
+  box-shadow: inset 0 0 0 2px rgba(74, 103, 65, 0.35);
+  border-radius: 8px;
+}
+
+.note-editor .bn-block-content[data-content-type="codeBlock"],
+.note-editor .bn-block-content[data-content-type="latex"] {
+  margin-block: 6px;
+}
+
+/* Code blocks sit on light paper here, so use the light syntax colours. */
+.note-editor .bn-block-content[data-content-type="codeBlock"] .shiki {
+  color: var(--shiki-light);
+}

@@ -3,13 +3,15 @@
 A desktop app for all your study material: notes, lecture PDFs and (soon) flashcards, organised by semester and course.
 Built with Tauri 2, React + TypeScript and SQLite. Runs on macOS and Linux.
 
-## What works right now (scaffold)
+## What works right now
 
 - Sidebar: semesters → courses → pages. Add with **+**, rename with a double-click, delete with the bin (click twice to confirm).
-- Pages: title and text save automatically.
-- Full-text search across all notes: **⌘K** (macOS) / **Ctrl K** (Linux).
+- Block editor (BlockNote): type **/** for headings, lists, checklists, toggles, quotes, tables, code blocks and **LaTeX formulas**.
+  Markdown shortcuts work too (`# `, `- `, `1. `, `[] `, `> `). Drag blocks by the ⋮⋮ handle; click below the last block to add one.
+- LaTeX blocks render with KaTeX; click a formula to edit its source. Code blocks have syntax highlighting (pick the language at the top left of the block).
+- Everything saves automatically; full-text search covers titles, text, code and formulas: **⌘K** (macOS) / **Ctrl K** (Linux).
 - View modes PDF / Split / Note; the app remembers the last page and view.
-- The PDF pane is a placeholder; PDF import, highlights and snips are the next step. The text area is temporary until the block editor lands.
+- The PDF pane is a placeholder; PDF import, highlights and snips are the next step.
 
 ## Setup
 
@@ -66,6 +68,7 @@ src/
   store.ts                app state (zustand) + actions
   lib/db.ts               database connection
   lib/repo.ts             all SQL: tree, pages, search, UI state
+  editor/                 block editor: schema, LaTeX block, slash menu, content ↔ plain text
   components/             Sidebar, TopBar, NotePane, PdfPane, SearchDialog, …
   styles/tokens.css       design tokens (colours, fonts) from the approved mockup
 src-tauri/
@@ -78,7 +81,7 @@ New schema changes go in a new `migrations/000N_*.sql` file registered in `lib.r
 
 ## Roadmap
 
-1. **Block editor**: Notion-style blocks, slash menu, LaTeX and code blocks
+1. ~~Block editor~~ ✓
 2. **PDFs**: import, PDF.js viewer, highlights + comments, "Send to note", "Jump to page", snip tool
 3. Export notes to Markdown / PDF
 4. v2: flashcards with spaced repetition, deadlines & exam dates, to-dos per course

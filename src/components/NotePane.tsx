@@ -1,19 +1,21 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useStore } from "../store";
-import type { Page } from "../lib/repo";
+import type { Page, PagePatch } from "../lib/repo";
 import { relativeTime } from "../lib/time";
+import { NoteEditor, type NoteChange } from "../editor/NoteEditor";
+import type { NoteEditor as Editor } from "../editor/schema";
 
 const SAVE_DELAY_MS = 400;
 
 export function NotePane({ page }: { page: Page }) {
   const savePage = useStore((s) => s.savePage);
   const [title, setTitle] = useState(page.title);
-  const [body, setBody] = useState(page.plainText);
-  const pending = useRef<{ title?: string; plainText?: string }>({});
+  const pending = useRef<PagePatch>({});
   const timer = useRef<number | undefined>(undefined);
   const titleRef = useRef<HTMLInputElement>(null);
+  const editorRef = useRef<Editor | null>(null);
 
-  // Saves whatever is pending for this page right away (on switch / unmount).
+  // Saves whatever is pending for this page right away (on page switch / unmount).
   const flush = useRef(() => {});
   flush.current = () => {
     window.clearTimeout(timer.current);
@@ -24,18 +26,28 @@ export function NotePane({ page }: { page: Page }) {
 
   useEffect(() => {
     setTitle(page.title);
-    setBody(page.plainText);
     if (!page.title) titleRef.current?.focus();
     return () => flush.current();
     // Only reset when a different page is opened, not on our own saves.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page.id]);
 
-  const queue = (patch: { title?: string; plainText?: string }) => {
+  useEffect(() => {
+    const onUnload = () => flush.current();
+    window.addEventListener("beforeunload", onUnload);
+    return () => window.removeEventListener("beforeunload", onUnload);
+  }, []);
+
+  const queue = useCallback((patch: PagePatch) => {
     pending.current = { ...pending.current, ...patch };
     window.clearTimeout(timer.current);
     timer.current = window.setTimeout(() => flush.current(), SAVE_DELAY_MS);
-  };
+  }, []);
+
+  const onEditorChange = useCallback((c: NoteChange) => queue(c), [queue]);
+  const onReady = useCallback((e: Editor) => {
+    editorRef.current = e;
+  }, []);
 
   return (
     <section className="note-pane" aria-label="Note editor">
@@ -55,20 +67,23 @@ export function NotePane({ page }: { page: Page }) {
             queue({ title: e.target.value });
           }}
           onKeyDown={(e) => {
-            if (e.key === "Enter") document.getElementById("note-body")?.focus();
+            if (e.key === "Enter" || e.key === "ArrowDown") {
+              e.preventDefault();
+              const ed = editorRef.current;
+              if (ed) {
+                ed.setTextCursorPosition(ed.document[0], "start");
+                ed.focus();
+              }
+            }
           }}
         />
 
-        <textarea
-          id="note-body"
-          className="note-body"
-          aria-label="Note text"
-          placeholder="Start writing… (the block editor with slash commands replaces this next)"
-          value={body}
-          onChange={(e) => {
-            setBody(e.target.value);
-            queue({ plainText: e.target.value });
-          }}
+        <NoteEditor
+          key={page.id}
+          content={page.content}
+          plainText={page.plainText}
+          onChange={onEditorChange}
+          onReady={onReady}
         />
       </div>
     </section>
