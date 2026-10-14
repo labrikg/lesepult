@@ -101,4 +101,45 @@ describe("repository", () => {
     await repo.kvSet(db, "viewMode", "note");
     expect(await repo.kvGet(db, "viewMode")).toBe("note");
   });
+
+  it("attaches PDFs to pages and frees the file once no page uses it", async () => {
+    const s = await repo.createSemester(db, "Winter 26/27");
+    const c = await repo.createCourse(db, s, "Algorithms");
+    const p1 = await repo.createPage(db, c, "Lecture 07");
+    const p2 = await repo.createPage(db, c, "Exercise 4");
+    const file = { fileName: "07-Hashing.PDF", storedPath: "documents/abc.pdf", sha256: "ff" };
+    const doc = await repo.createDocument(db, c, file);
+    await repo.updatePage(db, p1, { documentId: doc });
+    await repo.updatePage(db, p2, { documentId: doc });
+
+    expect(await repo.getDocument(db, doc)).toMatchObject({
+      title: "07-Hashing",
+      fileName: "07-Hashing.PDF",
+      storedPath: "documents/abc.pdf",
+      pageCount: null,
+    });
+    await repo.setDocumentPageCount(db, doc, 38);
+    expect((await repo.getDocument(db, doc))?.pageCount).toBe(38);
+    expect((await repo.loadTree(db))[0].courses[0].pages[0].documentId).toBe(doc);
+    expect(await repo.listStoredPaths(db)).toEqual(["documents/abc.pdf"]);
+
+    // Still used by p2: row and file stay.
+    expect(await repo.detachDocument(db, p1)).toBeNull();
+    expect(await repo.getDocument(db, doc)).not.toBeNull();
+    // Last user gone: row deleted, file path handed back for deletion.
+    expect(await repo.detachDocument(db, p2)).toBe("documents/abc.pdf");
+    expect(await repo.getDocument(db, doc)).toBeNull();
+    expect(await repo.listStoredPaths(db)).toEqual([]);
+    expect(await repo.detachDocument(db, p2)).toBeNull();
+  });
+
+  it("drops a page's PDF link when the course's document is deleted", async () => {
+    const s = await repo.createSemester(db, "S");
+    const c = await repo.createCourse(db, s, "C");
+    const p = await repo.createPage(db, c, "P");
+    const doc = await repo.createDocument(db, c, { fileName: "a.pdf", storedPath: "documents/a.pdf", sha256: "1" });
+    await repo.updatePage(db, p, { documentId: doc });
+    await db.execute("DELETE FROM documents WHERE id = $1", [doc]);
+    expect((await repo.getPage(db, p))?.documentId).toBeNull();
+  });
 });

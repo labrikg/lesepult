@@ -1,5 +1,15 @@
 import { useState } from "react";
-import { BookMarked, ChevronDown, ChevronRight, Download, FileText, Plus, Search, Settings } from "lucide-react";
+import {
+  BookMarked,
+  ChevronDown,
+  ChevronRight,
+  Download,
+  FileText,
+  Paperclip,
+  Plus,
+  Search,
+  Settings,
+} from "lucide-react";
 import { useStore } from "../store";
 import type { CourseNode, SemesterNode } from "../lib/repo";
 import { InlineInput } from "./InlineInput";
@@ -205,7 +215,9 @@ function CourseItem({ course }: { course: CourseNode }) {
             >
               <FileText size={15} strokeWidth={1.8} aria-hidden="true" />
               <span className="truncate">{p.title || "Untitled"}</span>
-              {p.documentId && <span className="row-meta">PDF + note</span>}
+              {p.documentId && (
+                <Paperclip size={13} className="row-meta-icon" aria-label="Has a PDF" role="img" />
+              )}
             </button>
           ))}
           <button type="button" className="tree-add tree-add--muted" onClick={() => addPage(course.id)}>

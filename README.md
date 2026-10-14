@@ -10,8 +10,11 @@ Built with Tauri 2, React + TypeScript and SQLite. Runs on macOS and Linux.
   Markdown shortcuts work too (`# `, `- `, `1. `, `[] `, `> `). Drag blocks by the ⋮⋮ handle; click below the last block to add one.
 - LaTeX blocks render with KaTeX; click a formula to edit its source. Code blocks have syntax highlighting (pick the language at the top left of the block).
 - Everything saves automatically; full-text search covers titles, text, code and formulas: **⌘K** (macOS) / **Ctrl K** (Linux).
+- **PDFs**: "Attach PDF" copies a file into Study Hub and opens it next to the note (split view). Continuous scrolling,
+  page jump, zoom (− / + / fit width), selectable text. Each PDF remembers where you stopped reading.
+  Replace or remove it from the viewer toolbar; a paperclip in the sidebar marks pages with a PDF.
 - View modes PDF / Split / Note; the app remembers the last page and view.
-- The PDF pane is a placeholder; PDF import, highlights and snips are the next step.
+- Next: highlights, "Send to note", "Jump to page" and the snip tool.
 
 ## Setup
 
@@ -53,12 +56,15 @@ cd src-tauri && cargo test     # migration test on the same SQLite engine the ap
 
 ## Where your data lives
 
-One SQLite file, `studyhub.db`, in the app's config folder:
+- Database `studyhub.db` (notes, structure, highlights): the app's config folder
+- Imported PDFs: `documents/` in the app's data folder (the database stores paths relative to it)
 
-- macOS: `~/Library/Application Support/app.studyhub.desktop/`
-- Linux: `~/.config/app.studyhub.desktop/`
+| | Config folder | Data folder |
+|---|---|---|
+| macOS | `~/Library/Application Support/app.studyhub.desktop/` | same |
+| Linux | `~/.config/app.studyhub.desktop/` | `~/.local/share/app.studyhub.desktop/` |
 
-Delete it to start over.
+Delete both to start over. Files no longer referenced (e.g. after deleting a course) are cleaned up on the next start.
 
 ## Project layout
 
@@ -69,12 +75,16 @@ src/
   lib/db.ts               database connection
   lib/repo.ts             all SQL: tree, pages, search, UI state
   editor/                 block editor: schema, LaTeX block, slash menu, content ↔ plain text
+  pdf/                    PDF viewer: PDF.js setup, page rendering + text layer, layout maths
+  lib/files.ts            PDF import / removal via the Rust commands
   components/             Sidebar, TopBar, NotePane, PdfPane, SearchDialog, …
   styles/tokens.css       design tokens (colours, fonts) from the approved mockup
 src-tauri/
   migrations/0001_init.sql  schema: semesters, courses, documents, pages, highlights,
                             snips, note_refs, tags, kv, pages_fts (FTS5)
-  src/lib.rs                registers the SQL plugin + migrations
+  src/lib.rs                registers plugins, migrations and commands
+  src/files.rs              import_pdf / remove_stored_file / prune_stored_files
+scripts/copy-pdfjs-assets.mjs  copies PDF.js fonts, cmaps and decoders into public/ (runs before dev/build)
 ```
 
 New schema changes go in a new `migrations/000N_*.sql` file registered in `lib.rs`; never edit a migration that has already run.
@@ -82,6 +92,7 @@ New schema changes go in a new `migrations/000N_*.sql` file registered in `lib.r
 ## Roadmap
 
 1. ~~Block editor~~ ✓
-2. **PDFs**: import, PDF.js viewer, highlights + comments, "Send to note", "Jump to page", snip tool
-3. Export notes to Markdown / PDF
-4. v2: flashcards with spaced repetition, deadlines & exam dates, to-dos per course
+2. ~~PDF import + viewer~~ ✓
+3. **Highlights + comments**, "Send to note", "Jump to page", snip tool
+4. Export notes to Markdown / PDF
+5. v2: flashcards with spaced repetition, deadlines & exam dates, to-dos per course

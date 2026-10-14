@@ -231,6 +231,79 @@ export async function deletePage(db: Db, id: string) {
   await db.execute("DELETE FROM pages WHERE id = $1", [id]);
 }
 
+/* ---------- Documents (PDFs) ---------- */
+
+export interface Document extends DocumentSummary {
+  fileName: string;
+  storedPath: string;
+  pageCount: number | null;
+  sha256: string | null;
+}
+
+export interface StoredFile {
+  fileName: string;
+  storedPath: string;
+  sha256: string;
+}
+
+const toDocumentFull = (r: Row): Document => ({
+  ...toDocument(r),
+  fileName: str(r.file_name),
+  storedPath: str(r.stored_path),
+  pageCount: r.page_count == null ? null : num(r.page_count),
+  sha256: r.sha256 == null ? null : str(r.sha256),
+});
+
+/** "Lecture 07 - Hashing.pdf" → "Lecture 07 - Hashing" */
+export const titleFromFileName = (name: string) => name.replace(/\.pdf$/i, "").trim() || "Document";
+
+export async function createDocument(db: Db, courseId: string, file: StoredFile): Promise<string> {
+  const id = uid();
+  const position = await nextPosition(db, "documents", "course_id", courseId);
+  await db.execute(
+    `INSERT INTO documents (id, course_id, title, file_name, stored_path, sha256, position)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+    [id, courseId, titleFromFileName(file.fileName), file.fileName, file.storedPath, file.sha256, position],
+  );
+  return id;
+}
+
+export async function getDocument(db: Db, id: string): Promise<Document | null> {
+  const rows = await db.select<Row>("SELECT * FROM documents WHERE id = $1", [id]);
+  return rows[0] ? toDocumentFull(rows[0]) : null;
+}
+
+export async function setDocumentPageCount(db: Db, id: string, pageCount: number) {
+  await db.execute("UPDATE documents SET page_count = $1 WHERE id = $2 AND page_count IS NOT $1", [
+    pageCount,
+    id,
+  ]);
+}
+
+/**
+ * Detaches a page's PDF. If no other page uses that PDF any more, its row is deleted too and the
+ * stored file path is returned so the caller can delete the file.
+ */
+export async function detachDocument(db: Db, pageId: string): Promise<string | null> {
+  const page = await getPage(db, pageId);
+  if (!page?.documentId) return null;
+  const docId = page.documentId;
+  await updatePage(db, pageId, { documentId: null });
+  const users = await db.select<Row>("SELECT COUNT(*) AS n FROM pages WHERE document_id = $1", [docId]);
+  if (num(users[0]?.n) > 0) return null;
+  const doc = await getDocument(db, docId);
+  await db.execute("DELETE FROM documents WHERE id = $1", [docId]);
+  return doc?.storedPath ?? null;
+}
+
+/** Every file path the database still refers to; anything else in the documents folder is an orphan. */
+export async function listStoredPaths(db: Db): Promise<string[]> {
+  const rows = await db.select<Row>(
+    "SELECT stored_path AS p FROM documents UNION SELECT image_path AS p FROM snips",
+  );
+  return rows.map((r) => str(r.p));
+}
+
 /* ---------- Search ---------- */
 
 /** Turns free text into a safe FTS5 query: every word becomes a quoted prefix term. */

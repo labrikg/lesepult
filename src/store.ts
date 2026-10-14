@@ -1,7 +1,8 @@
 import { create } from "zustand";
 import { getDb } from "./lib/db";
 import * as repo from "./lib/repo";
-import type { Page, PagePatch, SemesterNode } from "./lib/repo";
+import type { Document, Page, PagePatch, SemesterNode } from "./lib/repo";
+import { pickAndImportPdf, pruneStoredFiles, removeStoredFile } from "./lib/files";
 
 export type ViewMode = "pdf" | "split" | "note";
 
@@ -11,6 +12,8 @@ interface State {
   tree: SemesterNode[];
   selectedPageId: string | null;
   page: Page | null;
+  /** The PDF attached to the open page, if any. */
+  pdf: Document | null;
   viewMode: ViewMode;
   searchOpen: boolean;
 
@@ -33,6 +36,9 @@ interface State {
   addPage(courseId: string): Promise<void>;
   savePage(id: string, patch: PagePatch): Promise<void>;
   deletePage(id: string): Promise<void>;
+
+  attachPdf(): Promise<void>;
+  removePdf(): Promise<void>;
 }
 
 /** Wraps an action so a database failure shows up in the UI instead of vanishing. */
@@ -53,6 +59,7 @@ export const useStore = create<State>((set, get) => ({
   tree: [],
   selectedPageId: null,
   page: null,
+  pdf: null,
   viewMode: "split",
   searchOpen: false,
 
@@ -65,6 +72,8 @@ export const useStore = create<State>((set, get) => ({
     ]);
     set({ tree, ready: true, viewMode: (viewMode as ViewMode | null) ?? "split" });
     if (lastPage) await get().selectPage(lastPage);
+    // Housekeeping: remove PDFs left behind by deleted courses/semesters.
+    pruneStoredFiles(await repo.listStoredPaths(db)).catch((e) => console.warn("prune failed", e));
   }),
 
   refresh: guard(async () => {
@@ -74,7 +83,8 @@ export const useStore = create<State>((set, get) => ({
   selectPage: guard(async (id) => {
     const db = await getDb();
     const page = id ? await repo.getPage(db, id) : null;
-    set({ selectedPageId: page?.id ?? null, page });
+    const pdf = page?.documentId ? await repo.getDocument(db, page.documentId) : null;
+    set({ selectedPageId: page?.id ?? null, page, pdf });
     await repo.kvSet(db, "lastPageId", page?.id ?? "");
   }),
 
@@ -160,7 +170,37 @@ export const useStore = create<State>((set, get) => ({
     await get().refresh();
     await reselectIfGone(get);
   }),
+
+  attachPdf: guard(async () => {
+    const page = get().page;
+    if (!page) return;
+    const file = await pickAndImportPdf();
+    if (!file) return;
+    const db = await getDb();
+    const previous = await repo.detachDocument(db, page.id);
+    if (previous) await removeStoredFile(previous);
+    const docId = await repo.createDocument(db, page.courseId, file);
+    await repo.updatePage(db, page.id, { documentId: docId });
+    if (get().viewMode === "note") get().setViewMode("split");
+    await get().refresh();
+    await reloadOpenPage(get);
+  }),
+
+  removePdf: guard(async () => {
+    const page = get().page;
+    if (!page) return;
+    const freed = await repo.detachDocument(await getDb(), page.id);
+    if (freed) await removeStoredFile(freed);
+    await get().refresh();
+    await reloadOpenPage(get);
+  }),
 }));
+
+/** Reloads the open page and its PDF from the database (after attaching/removing). */
+async function reloadOpenPage(get: () => State) {
+  const id = get().selectedPageId;
+  if (id) await get().selectPage(id);
+}
 
 async function reselectIfGone(get: () => State) {
   const { selectedPageId, tree, selectPage } = get();
