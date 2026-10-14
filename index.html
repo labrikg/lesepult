@@ -5,6 +5,19 @@
     
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Lesepult</title>
+    <script>
+      // Apply the saved theme before the first paint (see src/lib/theme.ts).
+      (function () {
+        var pref = null, pdf = null;
+        try {
+          pref = localStorage.getItem("lesepult.theme");
+          pdf = localStorage.getItem("lesepult.darkPdf");
+        } catch (e) {}
+        var dark = pref === "dark" || (pref !== "light" && matchMedia("(prefers-color-scheme: dark)").matches);
+        document.documentElement.dataset.theme = dark ? "dark" : "light";
+        document.documentElement.dataset.darkPdf = pdf === "on" ? "on" : "off";
+      })();
+    </script>
   </head>
 
   <body>

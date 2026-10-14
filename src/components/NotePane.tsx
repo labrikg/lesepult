@@ -4,6 +4,7 @@ import type { Page, PagePatch } from "../lib/repo";
 import { relativeTime } from "../lib/time";
 import { NoteEditor, type NoteChange } from "../editor/NoteEditor";
 import type { NoteEditor as Editor } from "../editor/schema";
+import { NoteTags } from "./Tags";
 
 const SAVE_DELAY_MS = 400;
 
@@ -87,6 +88,8 @@ export function NotePane({ page }: { page: Page }) {
             }
           }}
         />
+
+        <NoteTags />
 
         <NoteEditor
           key={page.id}

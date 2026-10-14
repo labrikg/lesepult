@@ -5,16 +5,16 @@ import { beforeEach, describe, expect, it } from "vitest";
 import type { Db } from "./db";
 import * as repo from "./repo";
 
-const migration = readFileSync(
-  fileURLToPath(new URL("../../src-tauri/migrations/0001_init.sql", import.meta.url)),
-  "utf8",
+/** All migrations, in order, as the app runs them. */
+const migrations = ["0001_init.sql", "0002_tag_colors.sql"].map((f) =>
+  readFileSync(fileURLToPath(new URL(`../../src-tauri/migrations/${f}`, import.meta.url)), "utf8"),
 );
 
 /** Adapter: runs the app's `$1`-style SQL on an in-memory better-sqlite3 database. */
 function memoryDb(): Db {
   const sqlite = new BetterSqlite(":memory:");
   sqlite.pragma("foreign_keys = ON");
-  sqlite.exec(migration);
+  for (const m of migrations) sqlite.exec(m);
   const prepare = (sql: string, params: unknown[]) => {
     const ordered: unknown[] = [];
     const text = sql.replace(/\$(\d+)/g, (_, n) => {
@@ -319,5 +319,88 @@ describe("repository", () => {
     await repo.updatePage(db, p, { documentId: doc });
     await db.execute("DELETE FROM documents WHERE id = $1", [doc]);
     expect((await repo.getPage(db, p))?.documentId).toBeNull();
+  });
+
+  describe("tags", () => {
+    async function pages() {
+      const s = await repo.createSemester(db, "S");
+      const c = await repo.createCourse(db, s, "Algorithms");
+      const hashing = await repo.createPage(db, c, "Hashing");
+      const trees = await repo.createPage(db, c, "Trees");
+      await repo.updatePage(db, hashing, { plainText: "open addressing and probe sequences" });
+      await repo.updatePage(db, trees, { plainText: "AVL rotations keep trees balanced" });
+      return { hashing, trees };
+    }
+
+    it("tags pages, reusing tags regardless of case and #", async () => {
+      const { hashing, trees } = await pages();
+      const exam = await repo.tagPage(db, hashing, "  #Exam  ");
+      expect(exam?.name).toBe("Exam");
+      expect(exam?.color).toBe("moss");
+      const again = await repo.tagPage(db, trees, "exam");
+      expect(again?.id).toBe(exam?.id);
+      await repo.tagPage(db, trees, "exam"); // twice is a no-op
+      const second = await repo.tagPage(db, trees, "AVL");
+      expect(second?.color).toBe("clay"); // next palette colour
+      expect(await repo.tagPage(db, trees, "  # ")).toBeNull();
+
+      expect((await repo.listTags(db)).map((t) => [t.name, t.count])).toEqual([
+        ["AVL", 1],
+        ["Exam", 2],
+      ]);
+      expect((await repo.pageTags(db, trees)).map((t) => t.name)).toEqual(["AVL", "Exam"]);
+      expect((await repo.pageIdsWithTag(db, exam!.id)).sort()).toEqual([hashing, trees].sort());
+    });
+
+    it("hides unused tags and cleans them up", async () => {
+      const { hashing } = await pages();
+      const t = await repo.tagPage(db, hashing, "todo");
+      await repo.untagPage(db, hashing, t!.id);
+      expect(await repo.listTags(db)).toEqual([]);
+      await repo.deleteUnusedTags(db);
+      expect(await db.select("SELECT * FROM tags")).toEqual([]);
+    });
+
+    it("renames, merges, recolours and deletes tags", async () => {
+      const { hashing, trees } = await pages();
+      const a = await repo.tagPage(db, hashing, "exam");
+      const b = await repo.tagPage(db, trees, "Klausur");
+      await repo.tagPage(db, hashing, "Klausur");
+
+      expect(await repo.renameTag(db, a!.id, "Exam!")).toBe(a!.id);
+      expect((await repo.pageTags(db, hashing)).map((t) => t.name)).toEqual(["Exam!", "Klausur"]);
+
+      // Renaming onto an existing name merges: every page keeps exactly one of them.
+      expect(await repo.renameTag(db, b!.id, "exam!")).toBe(a!.id);
+      expect((await repo.listTags(db)).map((t) => [t.name, t.count])).toEqual([["Exam!", 2]]);
+
+      await repo.setTagColor(db, a!.id, "plum");
+      expect((await repo.pageTags(db, trees))[0].color).toBe("plum");
+
+      await repo.deleteTag(db, a!.id);
+      expect(await repo.pageTags(db, trees)).toEqual([]);
+    });
+
+    it("filters search results by #tag", async () => {
+      const { hashing, trees } = await pages();
+      await repo.tagPage(db, hashing, "Exam");
+      await repo.tagPage(db, trees, "Exam");
+      await repo.tagPage(db, trees, "AVL trees");
+
+      expect(repo.parseSearch("#exam open  #avl")).toEqual({ text: "open", tags: ["exam", "avl"] });
+
+      // Only tags: all pages with them, with a plain-text preview.
+      const tagged = await repo.searchPages(db, "#exa");
+      expect(tagged.map((h) => h.pageId).sort()).toEqual([hashing, trees].sort());
+      expect(tagged.find((h) => h.pageId === trees)?.tags.map((t) => t.name)).toEqual(["AVL trees", "Exam"]);
+      expect(tagged.find((h) => h.pageId === trees)?.snippet).toContain("AVL rotations");
+
+      // Words and tags together.
+      expect((await repo.searchPages(db, "#avl balanced")).map((h) => h.pageId)).toEqual([trees]);
+      expect(await repo.searchPages(db, "#avl probe")).toEqual([]);
+      expect(await repo.searchPages(db, "#nothing")).toEqual([]);
+      // LIKE wildcards in a tag search are literal.
+      expect(await repo.searchPages(db, "#%")).toEqual([]);
+    });
   });
 });

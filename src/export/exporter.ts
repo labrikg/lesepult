@@ -53,6 +53,7 @@ export async function exportNoteMarkdown() {
         semesterName: where?.semester.name,
         courseName: where?.course.name,
         pdfLink: doc ? { title: doc.title } : undefined,
+        tags: useStore.getState().pageTags.map((t) => t.name),
       },
       { assetDir: "assets" },
     );
@@ -93,13 +94,19 @@ export async function exportLibrary() {
     const picked = await open({ title: "Choose where to put the export", directory: true, multiple: false });
     if (!picked || Array.isArray(picked)) return;
     const db = await getDb();
-    const [pages, documents] = await Promise.all([repo.listAllPages(db), repo.listAllDocuments(db)]);
+    const [pages, documents, tagsByPage] = await Promise.all([
+      repo.listAllPages(db),
+      repo.listAllDocuments(db),
+      repo.allPageTags(db),
+    ]);
     const { tree } = useStore.getState();
     const semesters: LibrarySemester[] = tree.map((s) => ({
       name: s.name,
       courses: s.courses.map((c) => ({
         name: c.name,
-        pages: pages.filter((p) => p.courseId === c.id),
+        pages: pages
+          .filter((p) => p.courseId === c.id)
+          .map((p) => ({ ...p, tags: tagsByPage.get(p.id) ?? [] })),
         documents: documents.filter((d) => d.courseId === c.id),
       })),
     }));

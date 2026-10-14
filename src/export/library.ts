@@ -38,6 +38,7 @@ export interface LibraryPage {
   content: string;
   plainText: string;
   documentId: string | null;
+  tags?: string[];
 }
 
 export interface LibraryDocument {
@@ -91,6 +92,7 @@ export function buildLibraryExport(semesters: LibrarySemester[]): ExportEntry[] 
             semesterName: semester.name,
             courseName: course.name,
             pdfLink: doc ? { title: doc.title, path: pdfPath.get(doc.id)! } : undefined,
+            tags: page.tags,
           },
           { assetDir: "assets" },
         );

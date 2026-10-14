@@ -55,6 +55,7 @@ export interface SearchHit {
   courseColor: string;
   /** Excerpt with matches wrapped in \u0002 … \u0003. */
   snippet: string;
+  tags: Tag[];
 }
 
 /** Course colours from the design spec, assigned in turn. */
@@ -510,6 +511,129 @@ export async function listStoredPaths(db: Db): Promise<string[]> {
   return rows.map((r) => str(r.p));
 }
 
+/* ---------- Tags ---------- */
+
+/** Tag colours: palette names the UI turns into theme-aware chip colours. */
+export const TAG_COLORS = ["moss", "clay", "sky", "ochre", "plum", "sand"] as const;
+export type TagColor = (typeof TAG_COLORS)[number];
+
+export interface Tag {
+  id: string;
+  name: string;
+  color: TagColor;
+}
+
+export interface TagInfo extends Tag {
+  /** How many pages carry the tag. */
+  count: number;
+}
+
+const toTagColor = (v: unknown): TagColor =>
+  (TAG_COLORS as readonly string[]).includes(str(v)) ? (str(v) as TagColor) : "sand";
+const toTag = (r: Row): Tag => ({ id: str(r.id), name: str(r.name), color: toTagColor(r.color) });
+
+/** "#Exam  prep " → "Exam prep". Tags are single-line and short; a leading # is optional. */
+export function cleanTagName(input: string): string {
+  return input.trim().replace(/^#+/, "").replace(/\s+/g, " ").trim().slice(0, 40);
+}
+
+/** Tags that are in use, alphabetically, with their page counts. */
+export async function listTags(db: Db): Promise<TagInfo[]> {
+  const rows = await db.select<Row>(
+    `SELECT t.id, t.name, t.color, COUNT(pt.page_id) AS n
+       FROM tags t JOIN page_tags pt ON pt.tag_id = t.id
+      GROUP BY t.id
+      ORDER BY t.name COLLATE NOCASE`,
+  );
+  return rows.map((r) => ({ ...toTag(r), count: num(r.n) }));
+}
+
+export async function pageTags(db: Db, pageId: string): Promise<Tag[]> {
+  const rows = await db.select<Row>(
+    `SELECT t.id, t.name, t.color FROM tags t JOIN page_tags pt ON pt.tag_id = t.id
+      WHERE pt.page_id = $1 ORDER BY t.name COLLATE NOCASE`,
+    [pageId],
+  );
+  return rows.map(toTag);
+}
+
+export async function pageIdsWithTag(db: Db, tagId: string): Promise<string[]> {
+  const rows = await db.select<Row>("SELECT page_id FROM page_tags WHERE tag_id = $1", [tagId]);
+  return rows.map((r) => str(r.page_id));
+}
+
+/** Finds a tag by name (ignoring case). */
+async function findTag(db: Db, name: string): Promise<Tag | null> {
+  const rows = await db.select<Row>("SELECT id, name, color FROM tags WHERE name = $1", [name]);
+  return rows[0] ? toTag(rows[0]) : null;
+}
+
+/**
+ * Tags a page, creating the tag if it doesn't exist yet (new tags take the next palette colour).
+ * Returns the tag, or null for an empty name.
+ */
+export async function tagPage(db: Db, pageId: string, name: string): Promise<Tag | null> {
+  const clean = cleanTagName(name);
+  if (!clean) return null;
+  let tag = await findTag(db, clean);
+  if (!tag) {
+    const count = await db.select<Row>("SELECT COUNT(*) AS n FROM tags");
+    tag = { id: uid(), name: clean, color: TAG_COLORS[num(count[0]?.n) % TAG_COLORS.length] };
+    await db.execute("INSERT INTO tags (id, name, color) VALUES ($1, $2, $3)", [tag.id, tag.name, tag.color]);
+  }
+  await db.execute("INSERT OR IGNORE INTO page_tags (page_id, tag_id) VALUES ($1, $2)", [pageId, tag.id]);
+  return tag;
+}
+
+export async function untagPage(db: Db, pageId: string, tagId: string) {
+  await db.execute("DELETE FROM page_tags WHERE page_id = $1 AND tag_id = $2", [pageId, tagId]);
+}
+
+/**
+ * Renames a tag. Renaming it to another tag's name merges the two (pages keep one tag).
+ * Returns the id of the tag that remains.
+ */
+export async function renameTag(db: Db, id: string, name: string): Promise<string> {
+  const clean = cleanTagName(name);
+  if (!clean) return id;
+  const other = await findTag(db, clean);
+  if (other && other.id !== id) {
+    await db.execute(
+      "INSERT OR IGNORE INTO page_tags (page_id, tag_id) SELECT page_id, $1 FROM page_tags WHERE tag_id = $2",
+      [other.id, id],
+    );
+    await db.execute("DELETE FROM tags WHERE id = $1", [id]);
+    return other.id;
+  }
+  await db.execute("UPDATE tags SET name = $1 WHERE id = $2", [clean, id]);
+  return id;
+}
+
+export async function setTagColor(db: Db, id: string, color: TagColor) {
+  await db.execute("UPDATE tags SET color = $1 WHERE id = $2", [color, id]);
+}
+
+/** Removes a tag from every page. */
+export async function deleteTag(db: Db, id: string) {
+  await db.execute("DELETE FROM tags WHERE id = $1", [id]);
+}
+
+/** Drops tags no page uses any more (e.g. after their last page was deleted). */
+export async function deleteUnusedTags(db: Db) {
+  await db.execute("DELETE FROM tags WHERE id NOT IN (SELECT tag_id FROM page_tags)");
+}
+
+/** Every page's tag names, for exports. */
+export async function allPageTags(db: Db): Promise<Map<string, string[]>> {
+  const rows = await db.select<Row>(
+    `SELECT pt.page_id, t.name FROM page_tags pt JOIN tags t ON t.id = pt.tag_id
+      ORDER BY t.name COLLATE NOCASE`,
+  );
+  const m = new Map<string, string[]>();
+  for (const r of rows) m.set(str(r.page_id), [...(m.get(str(r.page_id)) ?? []), str(r.name)]);
+  return m;
+}
+
 /* ---------- Search ---------- */
 
 /** Turns free text into a safe FTS5 query: every word becomes a quoted prefix term. */
@@ -522,27 +646,76 @@ export function toFtsQuery(input: string): string {
     .join(" ");
 }
 
+/** Splits a search into words and #tag filters: "#exam open addressing" → tags ["exam"]. */
+export function parseSearch(input: string): { text: string; tags: string[] } {
+  const tags: string[] = [];
+  const words: string[] = [];
+  for (const w of input.split(/\s+/)) {
+    if (/^#./.test(w)) tags.push(w.slice(1).toLowerCase());
+    else if (w && w !== "#") words.push(w);
+  }
+  return { text: words.join(" "), tags };
+}
+
+const escapeLike = (s: string) => s.replace(/[\\%_]/g, (c) => `\\${c}`);
+
+/**
+ * Full-text search over notes. "#tag" words narrow the results to pages with a tag starting
+ * with that word ("#alg" finds "algorithms"); a search of only tags lists those pages.
+ */
 export async function searchPages(db: Db, input: string, limit = 20): Promise<SearchHit[]> {
-  const q = toFtsQuery(input);
-  if (!q) return [];
-  const rows = await db.select<Row>(
-    `SELECT f.page_id, p.title, c.name AS course_name, c.color AS course_color,
-            snippet(pages_fts, 2, char(2), char(3), '…', 12) AS snip
-       FROM pages_fts f
-       JOIN pages p ON p.id = f.page_id
-       JOIN courses c ON c.id = p.course_id
-      WHERE pages_fts MATCH $1
-      ORDER BY f.rank
-      LIMIT $2`,
-    [q, limit],
-  );
-  return rows.map((r) => ({
+  const { text, tags } = parseSearch(input);
+  const q = toFtsQuery(text);
+  if (!q && tags.length === 0) return [];
+
+  const params: unknown[] = [];
+  const tagConditions = tags.map((t) => {
+    params.push(`${escapeLike(t)}%`);
+    return `EXISTS (SELECT 1 FROM page_tags pt JOIN tags t ON t.id = pt.tag_id
+                     WHERE pt.page_id = p.id AND t.name LIKE $${params.length} ESCAPE '\\')`;
+  });
+
+  let sql: string;
+  if (q) {
+    params.push(q);
+    sql = `SELECT p.id AS page_id, p.title, c.name AS course_name, c.color AS course_color,
+                  snippet(pages_fts, 2, char(2), char(3), '…', 12) AS snip
+             FROM pages_fts f
+             JOIN pages p ON p.id = f.page_id
+             JOIN courses c ON c.id = p.course_id
+            WHERE pages_fts MATCH $${params.length}
+              ${tagConditions.map((c) => `AND ${c}`).join(" ")}
+            ORDER BY f.rank`;
+  } else {
+    sql = `SELECT p.id AS page_id, p.title, c.name AS course_name, c.color AS course_color,
+                  substr(p.plain_text, 1, 120) AS snip
+             FROM pages p JOIN courses c ON c.id = p.course_id
+            WHERE ${tagConditions.join(" AND ")}
+            ORDER BY p.updated_at DESC`;
+  }
+  params.push(limit);
+  const rows = await db.select<Row>(`${sql} LIMIT $${params.length}`, params);
+
+  const hits: SearchHit[] = rows.map((r) => ({
     pageId: str(r.page_id),
     title: str(r.title),
     courseName: str(r.course_name),
     courseColor: str(r.course_color),
     snippet: str(r.snip),
+    tags: [],
   }));
+  if (hits.length) {
+    const ids = hits.map((h) => h.pageId);
+    const tagRows = await db.select<Row>(
+      `SELECT pt.page_id, t.id, t.name, t.color FROM page_tags pt JOIN tags t ON t.id = pt.tag_id
+        WHERE pt.page_id IN (${ids.map((_, i) => `$${i + 1}`).join(", ")})
+        ORDER BY t.name COLLATE NOCASE`,
+      ids,
+    );
+    const byPage = new Map(hits.map((h) => [h.pageId, h]));
+    for (const r of tagRows) byPage.get(str(r.page_id))?.tags.push(toTag(r));
+  }
+  return hits;
 }
 
 /* ---------- UI state ---------- */

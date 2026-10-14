@@ -1,5 +1,10 @@
-/* Design tokens — "library desk" theme (see the project spec). Light theme; dark follows later. */
+/*
+ * Design tokens — "library desk" (light) and "library at night" (dark). See the project spec.
+ * The theme is chosen by <html data-theme="light|dark">, set before first paint (index.html).
+ */
 :root {
+  color-scheme: light;
+
   --bg: #f4eee4;
   --sidebar: #ece3d4;
   --sidebar-active: #ded2be;
@@ -11,21 +16,68 @@
   --field: #f7f2e9;
   --line: #dcd1bf;
   --line-strong: #d6cab6;
+  --line-pane: #d3c6b1;
+  --line-card: #e6dccb;
 
   --ink: #2a2420;
   --ink-soft: #4e453d;
+  --meta: #5e544b;
   --muted: #6a5f55;
   --faint: #8a7e72;
+
+  /* Hover fills: rows in the sidebar, menu items, toolbar buttons */
+  --hover: rgba(42, 36, 32, 0.04);
+  --hover-menu: #efe7da;
+  --hover-tool: #dccfb9;
+  --row-actions: #e4dbcc;
 
   --accent: #4a6741;
   --accent-hover: #3f5a37;
   --on-accent: #fcfaf5;
   --danger: #a4552c;
+  --danger-tint: #f3e3d8;
 
+  /* Highlight colours on PDF pages (blended onto the paper) and their swatches */
   --hl-yellow: #f3d27a;
   --hl-yellow-tint: #fbf0d2;
   --hl-blue: #bfd6e8;
   --hl-green: #c9ddb8;
+  --hl-blend: multiply;
+  --hl-opacity: 0.85;
+  --mark: #f3d27a;
+  --text-selection: rgba(226, 182, 73, 0.4);
+
+  /* Quote cards in notes, per highlight colour */
+  --quote-yellow-tint: #fbf0d2;
+  --quote-yellow-swatch: #e2b649;
+  --quote-yellow-head: #5a4a2a;
+  --quote-blue-tint: #e3eef6;
+  --quote-blue-swatch: #8fb4d2;
+  --quote-blue-head: #23465e;
+  --quote-green-tint: #e8f0e0;
+  --quote-green-swatch: #9dbf85;
+  --quote-green-head: #2f4529;
+
+  /* Tag chips: background / text per palette colour */
+  --tag-moss-bg: #e3ebdc;
+  --tag-moss-fg: #34502d;
+  --tag-clay-bg: #f3e1d6;
+  --tag-clay-fg: #8a4220;
+  --tag-sky-bg: #dfeaf3;
+  --tag-sky-fg: #2c5674;
+  --tag-ochre-bg: #f6ebcb;
+  --tag-ochre-fg: #765a12;
+  --tag-plum-bg: #ebe1ef;
+  --tag-plum-fg: #5c3b6b;
+  --tag-sand-bg: #ebe4d8;
+  --tag-sand-fg: #5e544b;
+
+  --backdrop: rgba(42, 36, 32, 0.28);
+  --scrim: rgba(42, 36, 32, 0.12);
+  --course-dot-filter: none;
+  /* Marks drawn on top of PDF pages: the pages stay paper-white unless "Dark PDF pages" is on. */
+  --on-page-ink: #2a2420;
+  --on-page-paper: #fcfaf5;
 
   --font-display: "Fraunces Variable", Georgia, serif;
   --font-ui: "Figtree Variable", system-ui, sans-serif;
@@ -36,4 +88,79 @@
   --radius-lg: 12px;
   --shadow-pop: 0 10px 30px rgba(60, 45, 30, 0.14);
   --shadow-page: 0 1px 2px rgba(60, 45, 30, 0.12), 0 8px 24px rgba(60, 45, 30, 0.1);
+  --shadow-chip: 0 1px 3px rgba(40, 30, 20, 0.25);
+}
+
+/* Printing always uses the light tokens: a note exported as PDF is ink on white paper. */
+@media screen {
+  /* Library at night: dark walnut, cream ink, lamp-lit moss. */
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+
+    --bg: #1d1915;
+    --sidebar: #181512;
+    --sidebar-active: #2e2822;
+    --surface: #221e1a;
+    --paper: #2a251f;
+    --pdf-backdrop: #151210;
+    --toolbar: #201c18;
+    --segment: #2a251f;
+    --field: #1f1b17;
+    --line: #352f28;
+    --line-strong: #433b33;
+    --line-pane: #2f2924;
+    --line-card: #3a332b;
+
+    --ink: #ede4d6;
+    --ink-soft: #d2c7b6;
+    --meta: #a99c8a;
+    --muted: #a3978a;
+    --faint: #7a6f63;
+
+    --hover: rgba(237, 228, 214, 0.05);
+    --hover-menu: #352f28;
+    --hover-tool: #332c25;
+    --row-actions: #29241f;
+
+    --accent: #8fae7f;
+    --accent-hover: #a2bf93;
+    --on-accent: #171410;
+    --danger: #e0906a;
+    --danger-tint: #3b2920;
+
+    --mark: rgba(214, 178, 82, 0.45);
+    --text-selection: rgba(226, 182, 73, 0.4);
+
+    --quote-yellow-tint: #332b1c;
+    --quote-yellow-swatch: #d6b25a;
+    --quote-yellow-head: #e3cc93;
+    --quote-blue-tint: #1f2a33;
+    --quote-blue-swatch: #7fa6c4;
+    --quote-blue-head: #a9c7de;
+    --quote-green-tint: #232c1d;
+    --quote-green-swatch: #8db275;
+    --quote-green-head: #b6cfa4;
+
+    --tag-moss-bg: #2a3424;
+    --tag-moss-fg: #b4cfa5;
+    --tag-clay-bg: #3b2a21;
+    --tag-clay-fg: #e8ad8c;
+    --tag-sky-bg: #22303b;
+    --tag-sky-fg: #a8c7df;
+    --tag-ochre-bg: #382f1b;
+    --tag-ochre-fg: #e2c77f;
+    --tag-plum-bg: #322637;
+    --tag-plum-fg: #d1b3dd;
+    --tag-sand-bg: #312b25;
+    --tag-sand-fg: #cfc4b3;
+
+    --backdrop: rgba(8, 6, 4, 0.55);
+    --scrim: rgba(0, 0, 0, 0.3);
+    /* Course colours are picked for paper; lift them a little on the dark sidebar. */
+    --course-dot-filter: brightness(1.18) saturate(0.85);
+
+    --shadow-pop: 0 12px 32px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 245, 230, 0.03);
+    --shadow-page: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
+    --shadow-chip: 0 1px 3px rgba(0, 0, 0, 0.5);
+  }
 }

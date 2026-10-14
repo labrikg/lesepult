@@ -39,6 +39,7 @@ describe("library export", () => {
                 content: snip("documents/s1.png"),
                 plainText: "",
                 documentId: "d1",
+                tags: ["exam"],
               },
               {
                 id: "p2",
@@ -65,5 +66,7 @@ describe("library export", () => {
     expect(entries[1].text).toContain("PDF: [Lecture 07](<PDFs/Lecture 07.pdf>)");
     expect(entries[1].text).toContain("![Snip from Slides, page 2](<assets/s1.png>)");
     expect(entries[3].text).not.toContain("PDF:");
+    expect(entries[1].text).toContain("Tags: #exam");
+    expect(entries[3].text).not.toContain("Tags:");
   });
 });

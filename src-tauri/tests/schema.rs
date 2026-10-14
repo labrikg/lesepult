@@ -74,3 +74,41 @@ async fn schema_cascades_and_search() {
         "deleting a semester should cascade to its pages and search index"
     );
 }
+
+#[tokio::test]
+async fn tags_have_a_colour_and_cascade() {
+    let db = pool().await;
+    sqlx::raw_sql(
+        "INSERT INTO semesters (id, name, position) VALUES ('s1', 'S', 1);
+         INSERT INTO courses (id, semester_id, name, color, position) VALUES ('c1', 's1', 'C', '#4A6741', 1);
+         INSERT INTO pages (id, course_id, title, position) VALUES ('p1', 'c1', 'P', 1);
+         INSERT INTO tags (id, name) VALUES ('t1', 'Exam');
+         INSERT INTO page_tags (page_id, tag_id) VALUES ('p1', 't1');",
+    )
+    .execute(&db)
+    .await
+    .unwrap();
+
+    let color: String = sqlx::query("SELECT color FROM tags WHERE id = 't1'")
+        .fetch_one(&db)
+        .await
+        .unwrap()
+        .get(0);
+    assert_eq!(color, "sand", "tags created before colours existed default to sand");
+
+    let dup = sqlx::query("INSERT INTO tags (id, name) VALUES ('t2', 'exam')")
+        .execute(&db)
+        .await;
+    assert!(dup.is_err(), "tag names are unique regardless of case");
+
+    sqlx::query("DELETE FROM pages WHERE id = 'p1'")
+        .execute(&db)
+        .await
+        .unwrap();
+    let links: i64 = sqlx::query("SELECT count(*) FROM page_tags")
+        .fetch_one(&db)
+        .await
+        .unwrap()
+        .get(0);
+    assert_eq!(links, 0, "deleting a page removes its tag links");
+}

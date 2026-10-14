@@ -3,6 +3,7 @@ import { Search } from "lucide-react";
 import { useStore } from "../store";
 import { getDb } from "../lib/db";
 import { searchPages, type SearchHit } from "../lib/repo";
+import { TagChip } from "./Tags";
 
 /** Renders an FTS snippet, turning the \u0002…\u0003 markers into <mark>. */
 function Snippet({ text }: { text: string }) {
@@ -85,7 +86,7 @@ export function SearchDialog() {
         <input
           autoFocus
           aria-label="Search query"
-          placeholder="Search notes…"
+          placeholder="Search notes… (#tag to filter)"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => {
@@ -111,6 +112,9 @@ export function SearchDialog() {
                 <span className="search-hit-head">
                   <span className="course-dot" style={{ background: h.courseColor }} aria-hidden="true" />
                   <span className="search-hit-title">{h.title || "Untitled"}</span>
+                  {h.tags.map((t) => (
+                    <TagChip key={t.id} tag={t} />
+                  ))}
                   <span className="row-meta">{h.courseName}</span>
                 </span>
                 {h.snippet && (

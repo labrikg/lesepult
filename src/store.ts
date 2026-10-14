@@ -1,9 +1,19 @@
 import { create } from "zustand";
 import { getDb } from "./lib/db";
 import * as repo from "./lib/repo";
-import type { Document, Page, PagePatch, SemesterNode } from "./lib/repo";
+import type { Document, Page, PagePatch, SemesterNode, Tag, TagColor, TagInfo } from "./lib/repo";
 import { pickAndImportPdf, pruneStoredFiles, removeStoredFile } from "./lib/files";
 import { extractNoteRefs } from "./editor/content";
+import {
+  applyTheme,
+  readDarkPdf,
+  readThemePref,
+  resolveTheme,
+  saveDarkPdf,
+  saveThemePref,
+  type ResolvedTheme,
+  type ThemePref,
+} from "./lib/theme";
 
 export type ViewMode = "pdf" | "split" | "note";
 
@@ -30,6 +40,27 @@ interface State {
   notice: string | null;
   /** Saves the open note right away (registered by the note pane); used before exporting. */
   flushNote: (() => Promise<void>) | null;
+
+  /** Tags in use (with counts), the open page's tags, and the sidebar's tag filter. */
+  tags: TagInfo[];
+  pageTags: Tag[];
+  tagFilter: { tagId: string; pageIds: Set<string> } | null;
+  addTag(name: string): Promise<void>;
+  removeTag(tagId: string): Promise<void>;
+  renameTag(tagId: string, name: string): Promise<void>;
+  setTagColor(tagId: string, color: TagColor): Promise<void>;
+  deleteTag(tagId: string): Promise<void>;
+  /** Shows only pages with this tag in the sidebar (null shows everything). */
+  setTagFilter(tagId: string | null): Promise<void>;
+
+  /** Appearance: what the user picked, what that means right now, and whether PDFs go dark too. */
+  themePref: ThemePref;
+  theme: ResolvedTheme;
+  darkPdf: boolean;
+  setThemePref(pref: ThemePref): void;
+  setDarkPdf(on: boolean): void;
+  /** Re-evaluates "system" after the OS switched between light and dark. */
+  syncSystemTheme(): void;
 
   init(): Promise<void>;
   refresh(): Promise<void>;
@@ -93,6 +124,66 @@ export const useStore = create<State>((set, get) => ({
   notice: null,
   flushNote: null,
 
+  tags: [],
+  pageTags: [],
+  tagFilter: null,
+
+  addTag: guard(async (name) => {
+    const page = get().page;
+    if (!page) return;
+    await repo.tagPage(await getDb(), page.id, name);
+    await reloadTags(get, set);
+  }),
+  removeTag: guard(async (tagId) => {
+    const page = get().page;
+    if (!page) return;
+    await repo.untagPage(await getDb(), page.id, tagId);
+    await reloadTags(get, set);
+  }),
+  renameTag: guard(async (tagId, name) => {
+    const kept = await repo.renameTag(await getDb(), tagId, name);
+    // A rename that merged into another tag keeps the filter on the merged tag.
+    if (get().tagFilter?.tagId === tagId && kept !== tagId) await get().setTagFilter(kept);
+    await reloadTags(get, set);
+  }),
+  setTagColor: guard(async (tagId, color) => {
+    await repo.setTagColor(await getDb(), tagId, color);
+    await reloadTags(get, set);
+  }),
+  deleteTag: guard(async (tagId) => {
+    await repo.deleteTag(await getDb(), tagId);
+    if (get().tagFilter?.tagId === tagId) set({ tagFilter: null });
+    await reloadTags(get, set);
+  }),
+  setTagFilter: guard(async (tagId) => {
+    if (!tagId) return set({ tagFilter: null });
+    const pageIds = new Set(await repo.pageIdsWithTag(await getDb(), tagId));
+    set({ tagFilter: { tagId, pageIds } });
+  }),
+
+  themePref: readThemePref(),
+  theme: resolveTheme(readThemePref()),
+  darkPdf: readDarkPdf(),
+
+  setThemePref(pref) {
+    saveThemePref(pref);
+    const theme = resolveTheme(pref);
+    set({ themePref: pref, theme });
+    applyTheme(pref, theme, get().darkPdf);
+  },
+  setDarkPdf(on) {
+    saveDarkPdf(on);
+    set({ darkPdf: on });
+    applyTheme(get().themePref, get().theme, on);
+  },
+  syncSystemTheme() {
+    const { themePref, theme, darkPdf } = get();
+    const next = resolveTheme(themePref);
+    if (next === theme) return;
+    set({ theme: next });
+    applyTheme(themePref, next, darkPdf);
+  },
+
   init: guard(async () => {
     const db = await getDb();
     const [tree, lastPage, viewMode] = await Promise.all([
@@ -100,7 +191,8 @@ export const useStore = create<State>((set, get) => ({
       repo.kvGet(db, "lastPageId"),
       repo.kvGet(db, "viewMode"),
     ]);
-    set({ tree, ready: true, viewMode: (viewMode as ViewMode | null) ?? "split" });
+    await repo.deleteUnusedTags(db);
+    set({ tree, ready: true, viewMode: (viewMode as ViewMode | null) ?? "split", tags: await repo.listTags(db) });
     if (lastPage) await get().selectPage(lastPage);
     // Housekeeping: drop snips no note uses, then files nothing refers to (e.g. from deleted courses).
     (async () => {
@@ -110,14 +202,20 @@ export const useStore = create<State>((set, get) => ({
   }),
 
   refresh: guard(async () => {
-    set({ tree: await repo.loadTree(await getDb()) });
+    const db = await getDb();
+    const [tree, tags] = await Promise.all([repo.loadTree(db), repo.listTags(db)]);
+    set({ tree, tags });
+    // A tag whose last page was deleted disappears; so does a filter on it.
+    const filter = get().tagFilter;
+    if (filter && !tags.some((t) => t.id === filter.tagId)) set({ tagFilter: null });
   }),
 
   selectPage: guard(async (id) => {
     const db = await getDb();
     const page = id ? await repo.getPage(db, id) : null;
     const pdf = page?.documentId ? await repo.getDocument(db, page.documentId) : null;
-    set({ selectedPageId: page?.id ?? null, page, pdf });
+    const pageTags = page ? await repo.pageTags(db, page.id) : [];
+    set({ selectedPageId: page?.id ?? null, page, pdf, pageTags });
     await repo.kvSet(db, "lastPageId", page?.id ?? "");
   }),
 
@@ -289,6 +387,24 @@ export const useStore = create<State>((set, get) => ({
     await reloadOpenPage(get);
   }),
 }));
+
+/** After a tag change: the tag list, the open page's tags and the sidebar filter. */
+async function reloadTags(
+  get: () => State,
+  set: (partial: Partial<State>) => void,
+) {
+  const db = await getDb();
+  const page = get().page;
+  const [tags, pageTags] = await Promise.all([
+    repo.listTags(db),
+    page ? repo.pageTags(db, page.id) : Promise.resolve([]),
+  ]);
+  set({ tags, pageTags });
+  const filter = get().tagFilter;
+  if (!filter) return;
+  if (!tags.some((t) => t.id === filter.tagId)) set({ tagFilter: null });
+  else set({ tagFilter: { tagId: filter.tagId, pageIds: new Set(await repo.pageIdsWithTag(db, filter.tagId)) } });
+}
 
 /** Reloads the open page and its PDF from the database (after attaching/removing). */
 async function reloadOpenPage(get: () => State) {

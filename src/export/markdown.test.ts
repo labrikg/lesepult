@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { blocksToMarkdown, inlineToMarkdown, pageToMarkdown } from "./markdown";
+import { blocksToMarkdown, inlineToMarkdown, pageToMarkdown, toHashtag } from "./markdown";
 
 const t = (text: string, styles: Record<string, boolean> = {}) => ({ type: "text", text, styles });
 const p = (...content: unknown[]) => ({ type: "paragraph", content, children: [] });
@@ -175,5 +175,23 @@ describe("page Markdown", () => {
         "",
       ].join("\n"),
     );
+  });
+
+  it("lists tags as hashtags under the course line", () => {
+    const { markdown } = pageToMarkdown({
+      title: "Hashing",
+      content: "[]",
+      plainText: "",
+      courseName: "Algorithms",
+      tags: ["Exam", "AVL trees", "??"],
+    });
+    expect(markdown).toBe(["# Hashing", "", "*Algorithms*", "", "Tags: #Exam #AVL-trees", ""].join("\n"));
+  });
+
+  it("turns tag names into hashtags", () => {
+    expect(toHashtag("Klausur WS 26/27")).toBe("#Klausur-WS-26/27");
+    expect(toHashtag("  c++ & rust ")).toBe("#c-rust");
+    expect(toHashtag("Übung")).toBe("#Übung");
+    expect(toHashtag("!!!")).toBe("");
   });
 });

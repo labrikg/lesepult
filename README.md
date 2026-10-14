@@ -13,6 +13,12 @@ Built with Tauri 2, React + TypeScript and SQLite. Runs on macOS and Linux.
   Markdown shortcuts work too (`# `, `- `, `1. `, `[] `, `> `). Drag blocks by the ⋮⋮ handle; click below the last block to add one.
 - LaTeX blocks render with KaTeX; click a formula to edit its source. Code blocks have syntax highlighting (pick the language at the top left of the block).
 - Everything saves automatically; full-text search covers titles, text, code and formulas: **⌘K** (macOS) / **Ctrl K** (Linux).
+  Add `#tag` to a search to narrow it to tagged pages (`#exam hashing`); a search of only `#exam` lists all those pages.
+- **Tags**: *Add tag* under a note's title finds or creates a tag (Enter adds it, Backspace in the empty field removes the last one).
+  Click a tag on a note, or under **Tags** in the sidebar, to show only pages with that tag. The **⋯** menu on a sidebar tag
+  renames it (renaming to an existing tag merges the two), changes its colour, or deletes it from all pages.
+- **Appearance** (Settings in the sidebar): light, dark ("library at night") or match the system. In the dark theme,
+  *Dark PDF pages* turns slides into light-on-dark too, snips included. Printing and PDF export always use the light look.
 - **PDFs**: "Attach PDF" copies a file into Lesepult and opens it next to the note (split view). Continuous scrolling,
   page jump, zoom (− / + / fit width), selectable text. Each PDF remembers where you stopped reading.
   Click the PDF's name in the toolbar to rename it; replace or remove it from there too. A paperclip in the sidebar marks pages with a PDF.
@@ -33,6 +39,7 @@ Built with Tauri 2, React + TypeScript and SQLite. Runs on macOS and Linux.
   - *Export note → PDF…* opens the print dialog with just the note laid out for A4; on macOS choose **PDF → Save as PDF**.
   - *Export everything…* (sidebar) writes your whole library as a folder you can read without Lesepult:
     `Semester/Course/Page.md`, each course's PDFs in `PDFs/` (linked from the notes) and snips in `assets/`.
+  - Exported notes list their tags as hashtags (`Tags: #exam #AVL-trees`), which Obsidian and similar apps pick up.
 
 ## Setup
 
@@ -76,6 +83,7 @@ cd src-tauri && cargo test     # migration test on the same SQLite engine the ap
 
 - Database `studyhub.db` (notes, structure, highlights): the app's config folder
 - Imported PDFs: `documents/` in the app's data folder (the database stores paths relative to it)
+- Appearance settings: the app's web storage (so the theme applies before anything is drawn)
 
 | | Config folder | Data folder |
 |---|---|---|
@@ -100,10 +108,12 @@ src/
   lib/files.ts            PDF import / removal via the Rust commands
   export/                 Markdown converter, library layout, export + print actions
   components/             Sidebar, TopBar, NotePane, PdfPane, SearchDialog, …
-  styles/tokens.css       design tokens (colours, fonts) from the approved mockup
+  styles/tokens.css       design tokens (colours, fonts): light theme + dark theme
+  lib/theme.ts            theme preference, system light/dark, window title bar
 src-tauri/
   migrations/0001_init.sql  schema: semesters, courses, documents, pages, highlights,
                             snips, note_refs, tags, kv, pages_fts (FTS5)
+  migrations/0002_tag_colors.sql  tag colours
   src/lib.rs                registers plugins, migrations and commands
   src/files.rs              import_pdf / save_png / remove_stored_file / prune_stored_files
   src/export.rs             export_bundle (writes/copies files into a chosen folder) / print_window
@@ -119,4 +129,5 @@ New schema changes go in a new `migrations/000N_*.sql` file registered in `lib.r
 3. ~~Highlights + comments~~ ✓
 4. ~~"Send to note", "Jump to page", snip tool~~ ✓
 5. ~~Export notes to Markdown / PDF~~ ✓ (v1 complete)
-6. v2: flashcards with spaced repetition, deadlines & exam dates, to-dos per course
+6. ~~Dark theme, tags~~ ✓
+7. v2: flashcards with spaced repetition, deadlines & exam dates, to-dos per course

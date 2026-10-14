@@ -22,29 +22,32 @@ import { blocksToPlainText, initialBlocks } from "./content";
 import { findExactSlashItem } from "./slashMatch";
 import { useStore } from "../store";
 
-/** BlockNote colours mapped onto the library-desk tokens (the project spec). */
+/**
+ * BlockNote colours mapped onto the library-desk tokens. They are CSS variables, so the editor
+ * follows the light/dark theme (and prints light) without re-rendering.
+ */
 const libraryTheme: Theme = {
   colors: {
-    editor: { text: "#2a2420", background: "#fcfaf5" },
-    menu: { text: "#2a2420", background: "#fffefb" },
-    tooltip: { text: "#fcfaf5", background: "#2a2420" },
-    hovered: { text: "#2a2420", background: "#efe7da" },
-    selected: { text: "#fcfaf5", background: "#4a6741" },
-    disabled: { text: "#8a7e72", background: "#ede4d5" },
-    shadow: "rgba(60, 45, 30, 0.14)",
-    border: "#dcd1bf",
-    sideMenu: "#8a7e72",
+    editor: { text: "var(--ink)", background: "var(--surface)" },
+    menu: { text: "var(--ink)", background: "var(--paper)" },
+    tooltip: { text: "var(--surface)", background: "var(--ink)" },
+    hovered: { text: "var(--ink)", background: "var(--hover-menu)" },
+    selected: { text: "var(--on-accent)", background: "var(--accent)" },
+    disabled: { text: "var(--faint)", background: "var(--toolbar)" },
+    shadow: "var(--backdrop)",
+    border: "var(--line)",
+    sideMenu: "var(--faint)",
     highlights: {
-      yellow: { text: "#5a4a2a", background: "#fbf0d2" },
-      blue: { text: "#23465e", background: "#dde9f3" },
-      green: { text: "#2f4529", background: "#e3eedb" },
+      yellow: { text: "var(--quote-yellow-head)", background: "var(--quote-yellow-tint)" },
+      blue: { text: "var(--quote-blue-head)", background: "var(--quote-blue-tint)" },
+      green: { text: "var(--quote-green-head)", background: "var(--quote-green-tint)" },
     },
   },
   borderRadius: 8,
   fontFamily: '"Figtree Variable", system-ui, sans-serif',
 };
 
-const lightOnly = { colorSchemePreference: "light" as const };
+const schemeContext = { light: { colorSchemePreference: "light" as const }, dark: { colorSchemePreference: "dark" as const } };
 
 function slashMenuItems(editor: Editor): DefaultReactSuggestionItem[] {
   const items = getDefaultReactSlashMenuItems(editor).filter((item) => item.group !== "Media");
@@ -161,6 +164,7 @@ export function NoteEditor({ pageId, content, plainText, onChange, onReady }: Pr
 
   // "In note" chips in the PDF ask to show a block.
   const focusBlock = useStore((s) => s.focusBlock);
+  const theme = useStore((s) => s.theme);
   useEffect(() => {
     if (!focusBlock || focusBlock.pageId !== pageId) return;
     useStore.setState({ focusBlock: null });
@@ -168,7 +172,7 @@ export function NoteEditor({ pageId, content, plainText, onChange, onReady }: Pr
   }, [focusBlock, pageId]);
 
   return (
-    <BlockNoteContext.Provider value={lightOnly}>
+    <BlockNoteContext.Provider value={schemeContext[theme]}>
       <div
         className="note-editor-area"
         onKeyDownCapture={(e) => {

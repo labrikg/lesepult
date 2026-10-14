@@ -240,6 +240,21 @@ export interface PageForExport {
   semesterName?: string;
   /** Link to the page's PDF, relative to the .md file, if it is exported alongside. */
   pdfLink?: { title: string; path?: string };
+  tags?: string[];
+}
+
+/**
+ * A tag as a hashtag that Obsidian and similar apps recognise: no spaces or punctuation
+ * ("AVL trees" → "#AVL-trees"). Returns "" if nothing usable is left.
+ */
+export function toHashtag(name: string): string {
+  const body = name
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/[^\p{L}\p{N}_\-/]/gu, "")
+    .replace(/-{2,}/g, "-")
+    .replace(/^[-/]+|[-/]+$/g, "");
+  return body ? `#${body}` : "";
 }
 
 /** A whole page: title, where it belongs, its PDF, then the note. */
@@ -258,6 +273,8 @@ export function pageToMarkdown(page: PageForExport, options: MarkdownOptions = {
   const header = [`# ${escapeText(page.title || "Untitled")}`];
   const meta = [page.semesterName, page.courseName].filter(Boolean).map((s) => escapeText(String(s)));
   if (meta.length) header.push("", `*${meta.join(" · ")}*`);
+  const hashtags = (page.tags ?? []).map(toHashtag).filter(Boolean);
+  if (hashtags.length) header.push("", `Tags: ${hashtags.join(" ")}`);
   if (page.pdfLink)
     header.push(
       "",

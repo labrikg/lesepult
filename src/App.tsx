@@ -7,6 +7,7 @@ import { PdfPane } from "./components/PdfPane";
 import { NotePane } from "./components/NotePane";
 import { SearchDialog } from "./components/SearchDialog";
 import { InlineInput } from "./components/InlineInput";
+import { applyTheme, onSystemThemeChange } from "./lib/theme";
 
 export default function App() {
   const init = useStore((s) => s.init);
@@ -23,6 +24,13 @@ export default function App() {
   useEffect(() => {
     init();
   }, [init]);
+
+  // Theme: match the window to the saved choice, and follow the system when set to "System".
+  useEffect(() => {
+    const { themePref, theme, darkPdf, syncSystemTheme } = useStore.getState();
+    applyTheme(themePref, theme, darkPdf);
+    return onSystemThemeChange(syncSystemTheme);
+  }, []);
 
   return (
     <div className="app">

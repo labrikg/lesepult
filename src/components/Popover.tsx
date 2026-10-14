@@ -8,13 +8,26 @@ interface Props {
   label: string;
   /** Preferred width in px. */
   width?: number;
+  /** What gets focus when it opens (default: the first enabled button). */
+  focusSelector?: string;
+  role?: "menu" | "dialog";
+  className?: string;
 }
 
 /**
  * A small menu anchored below an element. Rendered in a portal with fixed positioning so the
  * sidebar's overflow can't clip it. Closes on outside click, Escape, scroll or resize.
  */
-export function Popover({ anchor, onClose, children, label, width = 240 }: Props) {
+export function Popover({
+  anchor,
+  onClose,
+  children,
+  label,
+  width = 240,
+  focusSelector = "button:not(:disabled)",
+  role = "menu",
+  className,
+}: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
 
@@ -53,18 +66,21 @@ export function Popover({ anchor, onClose, children, label, width = 240 }: Props
 
   // Focus the first item when the menu opens, so it works from the keyboard.
   useEffect(() => {
-    ref.current?.querySelector<HTMLElement>("button:not(:disabled)")?.focus();
+    ref.current?.querySelector<HTMLElement>(focusSelector)?.focus();
+    // Only on open.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return createPortal(
     <div
       ref={ref}
-      className="popover"
-      role="menu"
+      className={`popover${className ? ` ${className}` : ""}`}
+      role={role}
       aria-label={label}
       style={{ width, top: pos?.top ?? -9999, left: pos?.left ?? -9999 }}
       onKeyDown={(e) => {
         if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+        if (e.defaultPrevented) return; // handled inside (e.g. a list with its own keyboard logic)
         e.preventDefault();
         const items = [...(ref.current?.querySelectorAll<HTMLElement>("button:not(:disabled)") ?? [])];
         const i = items.indexOf(document.activeElement as HTMLElement);
