@@ -69,4 +69,38 @@ describe("library export", () => {
     expect(entries[1].text).toContain("Tags: #exam");
     expect(entries[3].text).not.toContain("Tags:");
   });
+
+  it("writes folders as directories and links back up to PDFs and snips", () => {
+    const snip = JSON.stringify([{ type: "pdfSnip", props: { imagePath: "documents/s9.png", pageNumber: 1 } }]);
+    const entries = buildLibraryExport([
+      {
+        name: "WS",
+        courses: [
+          {
+            name: "Datenkommunikation",
+            documents: [{ id: "d1", title: "VL 01", storedPath: "documents/d1.pdf" }],
+            folders: [
+              { id: "f1", name: "Vorlesungen", parentId: null },
+              { id: "f2", name: "Kapitel 1", parentId: "f1" },
+              { id: "f3", name: "PDFs", parentId: null },
+            ],
+            pages: [
+              { id: "p1", title: "TCP", content: snip, plainText: "", documentId: "d1", folderId: "f2" },
+              { id: "p2", title: "Overview", content: "[]", plainText: "", documentId: null, folderId: null },
+            ],
+          },
+        ],
+      },
+    ]);
+    const paths = entries.map((e) => e.path);
+    expect(paths).toContain("WS/Datenkommunikation/Vorlesungen/Kapitel 1/TCP.md");
+    expect(paths).toContain("WS/Datenkommunikation/Overview.md");
+    expect(paths).toContain("WS/Datenkommunikation/assets/s9.png");
+    const tcp = entries.find((e) => e.path.endsWith("TCP.md"))!.text!;
+    expect(tcp).toContain("PDF: [VL 01](<../../PDFs/VL 01.pdf>)");
+    expect(tcp).toContain("(<../../assets/s9.png>)");
+    expect(tcp).toContain("*WS · Datenkommunikation › Vorlesungen › Kapitel 1*");
+    // A folder can't take the name of the PDFs folder.
+    expect(paths.some((p) => p.includes("/PDFs (2)"))).toBe(false); // empty folders write nothing
+  });
 });

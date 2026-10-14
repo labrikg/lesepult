@@ -51,7 +51,7 @@ export async function exportNoteMarkdown() {
         content: page.content,
         plainText: page.plainText,
         semesterName: where?.semester.name,
-        courseName: where?.course.name,
+        courseName: where ? [where.course.name, ...where.folders.map((f) => f.name)].join(" › ") : undefined,
         pdfLink: doc ? { title: doc.title } : undefined,
         tags: useStore.getState().pageTags.map((t) => t.name),
       },
@@ -107,6 +107,7 @@ export async function exportLibrary() {
         pages: pages
           .filter((p) => p.courseId === c.id)
           .map((p) => ({ ...p, tags: tagsByPage.get(p.id) ?? [] })),
+        folders: c.folders.map((f) => ({ id: f.id, name: f.name, parentId: f.parentId })),
         documents: documents.filter((d) => d.courseId === c.id),
       })),
     }));

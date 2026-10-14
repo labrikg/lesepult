@@ -1,0 +1,23 @@
+\documentclass{beamer}
+\usepackage[utf8]{inputenc}
+\usepackage[ngerman]{babel}
+\usepackage{amsmath,amssymb}
+\title{Turing-Maschinen I}
+\begin{document}
+\begin{frame}{Turing-Maschinen}
+\begin{block}{Beispiel: Multiplikation}
+Zu zwei natürlichen Zahlen $i_1, i_2 \in \mathbf{N}$ (Eingabe) suchen wir das entsprechende Produkt $i_1 \cdot i_2$ (Ausgabe).
+
+Um die Zahlen $i_1$ und $i_2$ in der Eingabe voneinander trennen zu können, erweitern wir das Alphabet um ein Trennsymbol: $\Sigma = \{0, 1, \#\}$.
+
+Die entsprechende Funktion $f : \Sigma^* \to \Sigma^*$ ist dann gegeben durch
+\[ f(\mathrm{bin}(i_1)\#\mathrm{bin}(i_2)) = \mathrm{bin}(i_1 \cdot i_2) \]
+\end{block}
+Also zum Beispiel $f(110\#10) = 1100$. Was ist $f(\#\#)$?
+\end{frame}
+\begin{frame}{Mehr Mathe}
+Die Laufzeit ist $T(n) \le c \cdot n^2 + \log_2 n$ für alle $n \ge n_0$, und es gilt $x^{k+1} = \sum_{i=0}^{k} a_i$.
+Größe, Übergänge, Äpfel, Öfen, Straße.
+\[ \delta : Q \times \Gamma \to Q \times \Gamma \times \{L, R, N\} \]
+\end{frame}
+\end{document}

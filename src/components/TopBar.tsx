@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { Fragment, useCallback, useRef, useState } from "react";
 import { Columns2, Download, FileDown, FileText, NotebookPen, Printer } from "lucide-react";
 import { locatePage, useStore, type ViewMode } from "../store";
 import { exportNoteMarkdown, exportNotePdf } from "../export/exporter";
@@ -29,6 +29,12 @@ export function TopBar() {
             <span aria-hidden="true">/</span>
             <span>{where.course.name}</span>
             <span aria-hidden="true">/</span>
+            {where.folders.map((f) => (
+              <Fragment key={f.id}>
+                <span>{f.name}</span>
+                <span aria-hidden="true">/</span>
+              </Fragment>
+            ))}
             <span className="breadcrumb-current">{where.page.title || "Untitled"}</span>
           </>
         ) : (

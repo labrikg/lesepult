@@ -1,7 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 import {
   ArrowLeft,
-  Check,
   FileText,
   FolderInput,
   MoreHorizontal,
@@ -13,9 +12,8 @@ import { useStore } from "../store";
 import type { PageSummary } from "../lib/repo";
 import { InlineInput } from "./InlineInput";
 import { Popover } from "./Popover";
-
-/** Drag payload type for moving pages between courses. */
-export const PAGE_DRAG_TYPE = "application/x-lesepult-page";
+import { Destinations } from "./Destinations";
+import { endDrag, startDrag } from "./dnd";
 
 export function PageItem({ page }: { page: PageSummary }) {
   const selectedPageId = useStore((s) => s.selectedPageId);
@@ -51,11 +49,9 @@ export function PageItem({ page }: { page: PageSummary }) {
         aria-current={page.id === selectedPageId ? "page" : undefined}
         onClick={() => selectPage(page.id)}
         onDoubleClick={() => setRenaming(true)}
-        onDragStart={(e) => {
-          e.dataTransfer.setData(PAGE_DRAG_TYPE, page.id);
-          e.dataTransfer.effectAllowed = "move";
-        }}
-        title="Double-click to rename · drag onto a course to move"
+        onDragStart={(e) => startDrag(e, { kind: "page", id: page.id })}
+        onDragEnd={endDrag}
+        title="Double-click to rename · drag onto a course or folder to move"
       >
         <FileText size={15} strokeWidth={1.8} aria-hidden="true" />
         <span className="truncate">{page.title || "Untitled"}</span>
@@ -120,7 +116,7 @@ function PageMenu({ page, anchor, onClose, onRename }: MenuProps) {
           </button>
           <button type="button" role="menuitem" className="menu-item" onClick={() => setView("move")}>
             <FolderInput size={15} aria-hidden="true" />
-            Move to course…
+            Move to…
           </button>
           <div className="menu-divider" role="separator" />
           <button
@@ -149,36 +145,14 @@ function PageMenu({ page, anchor, onClose, onRename }: MenuProps) {
             Move “{page.title || "Untitled"}” to…
           </button>
           <div className="menu-divider" role="separator" />
-          <div className="menu-scroll">
-            {tree.map((s) => (
-              <div key={s.id} role="group" aria-label={s.name}>
-                <div className="menu-label">{s.name}</div>
-                {s.courses.map((c) => {
-                  const here = c.id === page.courseId;
-                  return (
-                    <button
-                      key={c.id}
-                      type="button"
-                      role="menuitem"
-                      className="menu-item"
-                      disabled={here}
-                      onClick={() => {
-                        onClose();
-                        movePage(page.id, c.id);
-                      }}
-                    >
-                      <span className="course-dot" style={{ background: c.color }} aria-hidden="true" />
-                      <span className="truncate">{c.name}</span>
-                      {here && (
-                        <Check size={14} className="menu-check" aria-label="Current course" role="img" />
-                      )}
-                    </button>
-                  );
-                })}
-                {s.courses.length === 0 && <div className="menu-empty">No courses</div>}
-              </div>
-            ))}
-          </div>
+          <Destinations
+            tree={tree}
+            current={{ courseId: page.courseId, folderId: page.folderId }}
+            onPick={(courseId, folderId) => {
+              onClose();
+              movePage(page.id, courseId, folderId);
+            }}
+          />
         </>
       )}
     </Popover>

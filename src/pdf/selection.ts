@@ -1,5 +1,7 @@
 import type { NormRect } from "../lib/repo";
 import { cleanSelectedText, mergeLineRects, normalize } from "./highlights";
+import { fixAccents, runsToText, type TextRun } from "./mathText";
+import { runFromSpan } from "./textRuns";
 
 export interface PageSelection {
   pageNumber: number;
@@ -35,7 +37,7 @@ export function readSelection(root: HTMLElement): ViewerSelection | null {
     for (let n = walker.nextNode(); n; n = walker.nextNode()) textNodes.push(n as Text);
   }
 
-  const pages = new Map<number, { el: HTMLElement; rects: NormRect[]; parts: string[] }>();
+  const pages = new Map<number, { el: HTMLElement; rects: NormRect[]; parts: string[]; runs: (TextRun | null)[] }>();
   let anchor: ViewerSelection["anchor"] | null = null;
 
   for (const node of textNodes) {
@@ -51,7 +53,7 @@ export function readSelection(root: HTMLElement): ViewerSelection | null {
     const box = pageEl.getBoundingClientRect();
     let entry = pages.get(pageNumber);
     if (!entry) {
-      entry = { el: pageEl, rects: [], parts: [] };
+      entry = { el: pageEl, rects: [], parts: [], runs: [] };
       pages.set(pageNumber, entry);
     }
     for (const r of sub.getClientRects()) {
@@ -65,7 +67,9 @@ export function readSelection(root: HTMLElement): ViewerSelection | null {
       );
       anchor = { left: r.left, top: r.top, right: r.right, bottom: r.bottom };
     }
-    entry.parts.push(sub.toString());
+    const part = sub.toString();
+    entry.parts.push(part);
+    entry.runs.push(runFromSpan(node.parentElement, part));
   }
 
   const result: PageSelection[] = [...pages.entries()]
@@ -73,9 +77,18 @@ export function readSelection(root: HTMLElement): ViewerSelection | null {
     .map(([pageNumber, e]) => ({
       pageNumber,
       rects: mergeLineRects(e.rects),
-      text: cleanSelectedText(pages.size === 1 ? sel.toString() : e.parts.join("")),
+      text: cleanSelectedText(selectedText(e.runs, e.parts, pages.size === 1 ? sel.toString() : null)),
     }))
     .filter((p) => p.rects.length > 0 && p.text.length > 0);
 
   return result.length && anchor ? { pages: result, anchor } : null;
+}
+
+/**
+ * The selected text of one page. With font information on every span, formulas come out as
+ * inline LaTeX ($i_1 \cdot i_2$) and broken umlauts are repaired; otherwise plain text.
+ */
+function selectedText(runs: (TextRun | null)[], parts: string[], whole: string | null): string {
+  if (runs.length && runs.every((r): r is TextRun => r !== null)) return runsToText(runs);
+  return fixAccents(whole ?? parts.join(""));
 }

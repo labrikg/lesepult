@@ -4,6 +4,7 @@ import {
   ChevronDown,
   ChevronRight,
   Download,
+  FolderPlus,
   Hash,
   MoreHorizontal,
   Plus,
@@ -11,11 +12,12 @@ import {
   Settings,
   X,
 } from "lucide-react";
-import { useStore } from "../store";
+import { folderPath, useStore } from "../store";
 import type { CourseNode, SemesterNode, TagInfo } from "../lib/repo";
 import { InlineInput } from "./InlineInput";
 import { ConfirmDelete } from "./ConfirmDelete";
-import { PAGE_DRAG_TYPE, PageItem } from "./PageItem";
+import { TreeLevel } from "./FolderItem";
+import { dropZone, useDropTarget } from "./dnd";
 import { exportLibrary } from "../export/exporter";
 import { SettingsMenu } from "./SettingsMenu";
 import { TagChip, TagMenu } from "./Tags";
@@ -35,7 +37,12 @@ export function Sidebar() {
         ...s,
         collapsed: false,
         courses: s.courses
-          .map((c) => ({ ...c, collapsed: false, pages: c.pages.filter((p) => tagFilter.pageIds.has(p.id)) }))
+          .map((c) => {
+            const pages = c.pages.filter((p) => tagFilter.pageIds.has(p.id));
+            const keep = new Set(pages.flatMap((p) => folderPath(c.folders, p.folderId).map((f) => f.id)));
+            const folders = c.folders.filter((f) => keep.has(f.id)).map((f) => ({ ...f, collapsed: false }));
+            return { ...c, collapsed: false, pages, folders };
+          })
           .filter((c) => c.pages.length > 0),
       }))
       .filter((s) => s.courses.length > 0);
@@ -213,31 +220,23 @@ function SemesterSection({ semester, filtered }: { semester: SemesterNode; filte
 }
 
 function CourseItem({ course, filtered }: { course: CourseNode; filtered: boolean }) {
-  const { toggleCourse, renameCourse, deleteCourse, addPage, movePage } = useStore.getState();
+  const { toggleCourse, renameCourse, deleteCourse, addPage, addFolder, movePage, moveFolder } =
+    useStore.getState();
   const [renaming, setRenaming] = useState(false);
-  const [dropTarget, setDropTarget] = useState(false);
+  const [creatingFolder, setCreatingFolder] = useState(false);
+  const dropKey = `course:${course.id}`;
+  const isDropTarget = useDropTarget((s) => s.over === dropKey);
   const Chevron = course.collapsed ? ChevronRight : ChevronDown;
 
+  // Dropped on the course itself: to its top level.
+  const zone = dropZone(
+    dropKey,
+    () => true,
+    (d) => (d.kind === "page" ? movePage(d.id, course.id, null) : moveFolder(d.id, course.id, null)),
+  );
+
   return (
-    <div
-      className={`course${dropTarget ? " course--drop" : ""}`}
-      onDragOver={(e) => {
-        if (!e.dataTransfer.types.includes(PAGE_DRAG_TYPE)) return;
-        e.preventDefault();
-        e.dataTransfer.dropEffect = "move";
-        setDropTarget(true);
-      }}
-      onDragLeave={(e) => {
-        if (!e.currentTarget.contains(e.relatedTarget as Node)) setDropTarget(false);
-      }}
-      onDrop={(e) => {
-        setDropTarget(false);
-        const pageId = e.dataTransfer.getData(PAGE_DRAG_TYPE);
-        if (!pageId) return;
-        e.preventDefault();
-        movePage(pageId, course.id);
-      }}
-    >
+    <div className={`course${isDropTarget ? " course--drop" : ""}`} {...(filtered ? {} : zone)}>
       <div className="row">
         {renaming ? (
           <InlineInput
@@ -275,6 +274,18 @@ function CourseItem({ course, filtered }: { course: CourseNode; filtered: boolea
             >
               <Plus size={14} aria-hidden="true" />
             </button>
+            <button
+              type="button"
+              className="row-action"
+              aria-label={`New folder in ${course.name}`}
+              title="New folder"
+              onClick={() => {
+                if (course.collapsed) toggleCourse(course.id);
+                setCreatingFolder(true);
+              }}
+            >
+              <FolderPlus size={14} aria-hidden="true" />
+            </button>
             <ConfirmDelete what={course.name} onConfirm={() => deleteCourse(course.id)} />
           </div>
         )}
@@ -282,9 +293,18 @@ function CourseItem({ course, filtered }: { course: CourseNode; filtered: boolea
 
       {!course.collapsed && (
         <div className="course-body">
-          {course.pages.map((p) => (
-            <PageItem key={p.id} page={p} />
-          ))}
+          {creatingFolder && (
+            <InlineInput
+              label="Folder name"
+              placeholder="Folder name, e.g. Vorlesungen"
+              onSubmit={(name) => {
+                setCreatingFolder(false);
+                addFolder(course.id, null, name);
+              }}
+              onCancel={() => setCreatingFolder(false)}
+            />
+          )}
+          <TreeLevel course={course} parentId={null} filtered={filtered} />
           {!filtered && (
             <button type="button" className="tree-add tree-add--muted" onClick={() => addPage(course.id)}>
               <Plus size={15} aria-hidden="true" />

@@ -6,7 +6,7 @@ import type { Db } from "./db";
 import * as repo from "./repo";
 
 /** All migrations, in order, as the app runs them. */
-const migrations = ["0001_init.sql", "0002_tag_colors.sql"].map((f) =>
+const migrations = ["0001_init.sql", "0002_tag_colors.sql", "0003_folders.sql"].map((f) =>
   readFileSync(fileURLToPath(new URL(`../../src-tauri/migrations/${f}`, import.meta.url)), "utf8"),
 );
 
@@ -402,5 +402,129 @@ describe("repository", () => {
       // LIKE wildcards in a tag search are literal.
       expect(await repo.searchPages(db, "#%")).toEqual([]);
     });
+  });
+
+  describe("folders", () => {
+    async function setup() {
+      const s = await repo.createSemester(db, "WS");
+      const dako = await repo.createCourse(db, s, "Datenkommunikation");
+      const crypto = await repo.createCourse(db, s, "Cryptography");
+      return { s, dako, crypto };
+    }
+
+    it("nests folders and pages and loads them into the tree", async () => {
+      const { dako } = await setup();
+      const lectures = await repo.createFolder(db, dako, null, " Vorlesungen ");
+      const ch1 = await repo.createFolder(db, dako, lectures, "Kapitel 1");
+      const p1 = await repo.createPage(db, dako, "TCP", ch1);
+      const p2 = await repo.createPage(db, dako, "Overview");
+
+      const course = (await repo.loadTree(db))[0].courses[0];
+      expect(course.folders.map((f) => [f.name, f.parentId])).toEqual([
+        ["Vorlesungen", null],
+        ["Kapitel 1", lectures],
+      ]);
+      expect(course.pages.map((p) => [p.id, p.folderId])).toEqual([
+        [p1, ch1],
+        [p2, null],
+      ]);
+      expect(await repo.countFolderPages(db, lectures)).toBe(1);
+    });
+
+    it("refuses a folder from another course", async () => {
+      const { dako, crypto } = await setup();
+      const f = await repo.createFolder(db, dako, null, "Vorlesungen");
+      await expect(repo.createPage(db, crypto, "x", f)).rejects.toThrow();
+      await expect(repo.createFolder(db, crypto, f, "y")).rejects.toThrow();
+    });
+
+    it("moves pages between folders and courses, taking the PDF along", async () => {
+      const { dako, crypto } = await setup();
+      const f = await repo.createFolder(db, dako, null, "Vorlesungen");
+      const g = await repo.createFolder(db, crypto, null, "Slides");
+      const p = await repo.createPage(db, dako, "RSA");
+      const doc = await repo.createDocument(db, dako, { fileName: "rsa.pdf", storedPath: "documents/r.pdf", sha256: "1" });
+      await repo.updatePage(db, p, { documentId: doc });
+
+      await repo.movePage(db, p, dako, f);
+      expect((await repo.getPage(db, p))?.folderId).toBe(f);
+
+      await repo.movePage(db, p, crypto, g);
+      const moved = await repo.getPage(db, p);
+      expect([moved?.courseId, moved?.folderId]).toEqual([crypto, g]);
+      expect((await repo.getDocument(db, doc))?.courseId).toBe(crypto);
+
+      await repo.movePage(db, p, crypto, null);
+      expect((await repo.getPage(db, p))?.folderId).toBeNull();
+      await expect(repo.movePage(db, p, crypto, f)).rejects.toThrow(); // f is in another course
+    });
+
+    it("moves folders with everything inside, but never into themselves", async () => {
+      const { dako, crypto } = await setup();
+      const a = await repo.createFolder(db, dako, null, "A");
+      const b = await repo.createFolder(db, dako, a, "B");
+      const c = await repo.createFolder(db, dako, b, "C");
+      const p = await repo.createPage(db, dako, "deep", c);
+      const doc = await repo.createDocument(db, dako, { fileName: "d.pdf", storedPath: "documents/d.pdf", sha256: "2" });
+      await repo.updatePage(db, p, { documentId: doc });
+
+      await expect(repo.moveFolder(db, a, dako, c)).rejects.toThrow();
+      await expect(repo.moveFolder(db, a, dako, a)).rejects.toThrow();
+
+      // Within the course: B goes to the top level.
+      await repo.moveFolder(db, b, dako, null);
+      let course = (await repo.loadTree(db))[0].courses[0];
+      expect(course.folders.find((f) => f.id === b)?.parentId).toBeNull();
+
+      // Across courses: B, C, the page and its PDF all move.
+      await repo.moveFolder(db, b, crypto, null);
+      const tree = await repo.loadTree(db);
+      course = tree[0].courses.find((x) => x.id === crypto)!;
+      expect(course.folders.map((f) => f.id).sort()).toEqual([b, c].sort());
+      expect(course.pages.map((x) => x.id)).toEqual([p]);
+      expect((await repo.getDocument(db, doc))?.courseId).toBe(crypto);
+    });
+
+    it("deletes sub-folders and pages with their folder, keeping search in sync", async () => {
+      const { dako } = await setup();
+      const a = await repo.createFolder(db, dako, null, "A");
+      const b = await repo.createFolder(db, dako, a, "B");
+      const p = await repo.createPage(db, dako, "deep", b);
+      await repo.updatePage(db, p, { plainText: "sliding window protocol" });
+      const keep = await repo.createPage(db, dako, "top");
+
+      await repo.deleteFolder(db, a);
+      const course = (await repo.loadTree(db))[0].courses[0];
+      expect(course.folders).toEqual([]);
+      expect(course.pages.map((x) => x.id)).toEqual([keep]);
+      expect(await repo.searchPages(db, "sliding")).toEqual([]);
+    });
+  });
+
+  it("repairs broken umlauts in old highlights and quotes once", async () => {
+    const { repairOldPdfText } = await import("./repair");
+    const s = await repo.createSemester(db, "S");
+    const c = await repo.createCourse(db, s, "C");
+    const p = await repo.createPage(db, c, "P");
+    const doc = await repo.createDocument(db, c, { fileName: "a.pdf", storedPath: "documents/a.pdf", sha256: "1" });
+    const h = await repo.createHighlight(db, { documentId: doc, pageNumber: 1, rects: [], color: "yellow", text: "nat¨urlich" });
+    const content = JSON.stringify([
+      { id: "b1", type: "pdfQuote", props: { text: "k¨onnen", comment: "Gr¨oße", highlightId: h.id }, children: [] },
+    ]);
+    await repo.updatePage(db, p, { content, plainText: "k¨onnen" });
+    const before = (await repo.getPage(db, p))!.updatedAt;
+
+    await repairOldPdfText(db);
+    expect((await repo.listHighlights(db, doc))[0].text).toBe("natürlich");
+    const page = (await repo.getPage(db, p))!;
+    expect(JSON.parse(page.content)[0].props).toMatchObject({ text: "können", comment: "Größe" });
+    expect(page.plainText).toContain("können");
+    expect(page.updatedAt).toBe(before);
+    expect((await repo.searchPages(db, "können")).map((x) => x.pageId)).toEqual([p]);
+
+    // Only once: later text is left as it is.
+    await repo.setHighlightText(db, h.id, "x¨y");
+    await repairOldPdfText(db);
+    expect((await repo.listHighlights(db, doc))[0].text).toBe("x¨y");
   });
 });

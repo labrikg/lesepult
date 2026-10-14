@@ -14,5 +14,7 @@ export function openPdf(url: string): PDFDocumentLoadingTask {
     standardFontDataUrl: "/pdfjs/standard_fonts/",
     wasmUrl: "/pdfjs/wasm/",
     iccUrl: "/pdfjs/iccs/",
+    // Keeps real font names (e.g. CMMI10) so formulas can be recognised in selected text.
+    fontExtraProperties: true,
   });
 }

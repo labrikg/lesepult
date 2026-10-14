@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { MathText } from "../editor/MathText";
 import { createPortal } from "react-dom";
 import { MessageSquarePlus, NotebookPen, Trash2 } from "lucide-react";
 import type { Highlight, HighlightColor } from "../lib/repo";
@@ -163,7 +164,9 @@ export function HighlightPopover({
           {armed && <span>Delete?</span>}
         </button>
       </div>
-      <blockquote className="hl-quote">{highlight.text}</blockquote>
+      <blockquote className="hl-quote">
+        <MathText text={highlight.text} />
+      </blockquote>
       <label className="hl-comment">
         <span className="visually-hidden">Comment</span>
         <textarea

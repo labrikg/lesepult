@@ -21,6 +21,8 @@ export interface Course {
 export interface PageSummary {
   id: string;
   courseId: string;
+  /** The folder it sits in, or null when directly in the course. */
+  folderId: string | null;
   documentId: string | null;
   title: string;
   position: number;
@@ -39,8 +41,21 @@ export interface DocumentSummary {
   position: number;
 }
 
+export interface Folder {
+  id: string;
+  courseId: string;
+  /** null = at the top of the course. */
+  parentId: string | null;
+  name: string;
+  position: number;
+  collapsed: boolean;
+}
+
 export interface CourseNode extends Course {
+  /** Every page of the course, in any folder (see PageSummary.folderId). */
   pages: PageSummary[];
+  /** Every folder of the course, flat (see Folder.parentId). */
+  folders: Folder[];
   documents: DocumentSummary[];
 }
 
@@ -84,10 +99,19 @@ const toCourse = (r: Row): Course => ({
 const toPageSummary = (r: Row): PageSummary => ({
   id: str(r.id),
   courseId: str(r.course_id),
+  folderId: r.folder_id == null ? null : str(r.folder_id),
   documentId: r.document_id == null ? null : str(r.document_id),
   title: str(r.title),
   position: num(r.position),
   updatedAt: str(r.updated_at),
+});
+const toFolder = (r: Row): Folder => ({
+  id: str(r.id),
+  courseId: str(r.course_id),
+  parentId: r.parent_id == null ? null : str(r.parent_id),
+  name: str(r.name),
+  position: num(r.position),
+  collapsed: num(r.collapsed) === 1,
 });
 const toDocument = (r: Row): DocumentSummary => ({
   id: str(r.id),
@@ -108,17 +132,20 @@ async function nextPosition(db: Db, table: string, parentCol?: string, parentId?
 /* ---------- Tree ---------- */
 
 export async function loadTree(db: Db): Promise<SemesterNode[]> {
-  const [semesters, courses, pages, documents] = await Promise.all([
+  const [semesters, courses, folders, pages, documents] = await Promise.all([
     db.select<Row>("SELECT * FROM semesters ORDER BY position"),
     db.select<Row>("SELECT * FROM courses ORDER BY position"),
+    db.select<Row>("SELECT * FROM folders ORDER BY position"),
     db.select<Row>(
-      "SELECT id, course_id, document_id, title, position, updated_at FROM pages ORDER BY position",
+      "SELECT id, course_id, folder_id, document_id, title, position, updated_at FROM pages ORDER BY position",
     ),
     db.select<Row>("SELECT id, course_id, title, position FROM documents ORDER BY position"),
   ]);
 
   const courseNodes = new Map<string, CourseNode>();
-  for (const r of courses) courseNodes.set(str(r.id), { ...toCourse(r), pages: [], documents: [] });
+  for (const r of courses)
+    courseNodes.set(str(r.id), { ...toCourse(r), pages: [], folders: [], documents: [] });
+  for (const r of folders) courseNodes.get(str(r.course_id))?.folders.push(toFolder(r));
   for (const r of pages) courseNodes.get(str(r.course_id))?.pages.push(toPageSummary(r));
   for (const r of documents) courseNodes.get(str(r.course_id))?.documents.push(toDocument(r));
 
@@ -181,13 +208,20 @@ export async function deleteCourse(db: Db, id: string) {
 
 /* ---------- Pages (notes) ---------- */
 
-export async function createPage(db: Db, courseId: string, title = ""): Promise<string> {
+export async function createPage(
+  db: Db,
+  courseId: string,
+  title = "",
+  folderId: string | null = null,
+): Promise<string> {
+  if (folderId) await assertFolderInCourse(db, folderId, courseId);
   const id = uid();
   const position = await nextPosition(db, "pages", "course_id", courseId);
   const ts = now();
   await db.execute(
-    "INSERT INTO pages (id, course_id, title, position, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $5)",
-    [id, courseId, title.trim(), position, ts],
+    `INSERT INTO pages (id, course_id, folder_id, title, position, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $6)`,
+    [id, courseId, folderId, title.trim(), position, ts],
   );
   return id;
 }
@@ -302,32 +336,139 @@ export async function renameDocument(db: Db, id: string, title: string) {
 }
 
 /**
- * Moves a page to another course (appended at the end). Its PDF moves along unless another
- * page that stays behind still uses it.
+ * Moves a page to another course and/or folder (appended at the end). Across courses, its PDF
+ * moves along unless a page that stays behind still uses it.
  */
-export async function movePage(db: Db, pageId: string, courseId: string) {
+export async function movePage(db: Db, pageId: string, courseId: string, folderId: string | null = null) {
   const page = await getPage(db, pageId);
-  if (!page || page.courseId === courseId) return;
+  if (!page) return;
+  if (page.courseId === courseId && page.folderId === folderId) return;
+  if (folderId) await assertFolderInCourse(db, folderId, courseId);
   const position = await nextPosition(db, "pages", "course_id", courseId);
-  await db.execute("UPDATE pages SET course_id = $1, position = $2 WHERE id = $3", [
+  await db.execute("UPDATE pages SET course_id = $1, folder_id = $2, position = $3 WHERE id = $4", [
     courseId,
+    folderId,
     position,
     pageId,
   ]);
-  if (page.documentId) {
-    const others = await db.select<Row>(
-      "SELECT COUNT(*) AS n FROM pages WHERE document_id = $1 AND id <> $2 AND course_id <> $3",
-      [page.documentId, pageId, courseId],
-    );
-    if (num(others[0]?.n) === 0) {
-      const docPos = await nextPosition(db, "documents", "course_id", courseId);
-      await db.execute("UPDATE documents SET course_id = $1, position = $2 WHERE id = $3", [
-        courseId,
-        docPos,
-        page.documentId,
-      ]);
-    }
+  if (page.courseId !== courseId && page.documentId) await followDocument(db, page.documentId, courseId);
+}
+
+/** Moves a PDF to the course its pages are now in, unless a page in another course still uses it. */
+async function followDocument(db: Db, documentId: string, courseId: string) {
+  const elsewhere = await db.select<Row>(
+    "SELECT COUNT(*) AS n FROM pages WHERE document_id = $1 AND course_id <> $2",
+    [documentId, courseId],
+  );
+  if (num(elsewhere[0]?.n) > 0) return;
+  const current = await db.select<Row>("SELECT course_id FROM documents WHERE id = $1", [documentId]);
+  if (str(current[0]?.course_id) === courseId) return;
+  const docPos = await nextPosition(db, "documents", "course_id", courseId);
+  await db.execute("UPDATE documents SET course_id = $1, position = $2 WHERE id = $3", [
+    courseId,
+    docPos,
+    documentId,
+  ]);
+}
+
+/* ---------- Folders ---------- */
+
+async function getFolder(db: Db, id: string): Promise<Folder | null> {
+  const rows = await db.select<Row>("SELECT * FROM folders WHERE id = $1", [id]);
+  return rows[0] ? toFolder(rows[0]) : null;
+}
+
+async function assertFolderInCourse(db: Db, folderId: string, courseId: string) {
+  const folder = await getFolder(db, folderId);
+  if (!folder || folder.courseId !== courseId) throw new Error("That folder isn't in this course.");
+}
+
+/** A folder and everything below it. */
+async function folderSubtree(db: Db, folderId: string): Promise<string[]> {
+  const rows = await db.select<Row>(
+    `WITH RECURSIVE sub(id) AS (
+       SELECT $1
+       UNION ALL
+       SELECT f.id FROM folders f JOIN sub ON f.parent_id = sub.id
+     )
+     SELECT id FROM sub`,
+    [folderId],
+  );
+  return rows.map((r) => str(r.id));
+}
+
+export async function createFolder(
+  db: Db,
+  courseId: string,
+  parentId: string | null,
+  name: string,
+): Promise<string> {
+  if (parentId) await assertFolderInCourse(db, parentId, courseId);
+  const id = uid();
+  const position = await nextPosition(db, "folders", "course_id", courseId);
+  await db.execute(
+    "INSERT INTO folders (id, course_id, parent_id, name, position) VALUES ($1, $2, $3, $4, $5)",
+    [id, courseId, parentId, name.trim() || "New folder", position],
+  );
+  return id;
+}
+
+export async function renameFolder(db: Db, id: string, name: string) {
+  if (!name.trim()) return;
+  await db.execute("UPDATE folders SET name = $1 WHERE id = $2", [name.trim(), id]);
+}
+
+export async function setFolderCollapsed(db: Db, id: string, collapsed: boolean) {
+  await db.execute("UPDATE folders SET collapsed = $1 WHERE id = $2", [collapsed ? 1 : 0, id]);
+}
+
+/** How many pages a folder holds, sub-folders included (for the delete confirmation). */
+export async function countFolderPages(db: Db, id: string): Promise<number> {
+  const ids = await folderSubtree(db, id);
+  const rows = await db.select<Row>(
+    `SELECT COUNT(*) AS n FROM pages WHERE folder_id IN (${ids.map((_, i) => `$${i + 1}`).join(", ")})`,
+    ids,
+  );
+  return num(rows[0]?.n);
+}
+
+/** Deletes a folder with its sub-folders and pages. */
+export async function deleteFolder(db: Db, id: string) {
+  await db.execute("DELETE FROM folders WHERE id = $1", [id]);
+}
+
+/**
+ * Moves a folder (with everything in it) into another folder or to the top of a course, also
+ * across courses. A folder can't move into itself or one of its own sub-folders.
+ */
+export async function moveFolder(db: Db, id: string, courseId: string, parentId: string | null) {
+  const folder = await getFolder(db, id);
+  if (!folder) return;
+  if (folder.courseId === courseId && folder.parentId === parentId) return;
+  const subtree = await folderSubtree(db, id);
+  if (parentId) {
+    if (subtree.includes(parentId)) throw new Error("A folder can't go inside itself.");
+    await assertFolderInCourse(db, parentId, courseId);
   }
+  const position = await nextPosition(db, "folders", "course_id", courseId);
+  await db.execute("UPDATE folders SET parent_id = $1, course_id = $2, position = $3 WHERE id = $4", [
+    parentId,
+    courseId,
+    position,
+    id,
+  ]);
+  if (folder.courseId === courseId) return;
+
+  // Across courses: sub-folders and pages come along, and so do their PDFs.
+  const marks = subtree.map((_, i) => `$${i + 2}`).join(", ");
+  await db.execute(`UPDATE folders SET course_id = $1 WHERE id IN (${marks})`, [courseId, ...subtree]);
+  await db.execute(`UPDATE pages SET course_id = $1 WHERE folder_id IN (${marks})`, [courseId, ...subtree]);
+  const docs = await db.select<Row>(
+    `SELECT DISTINCT document_id FROM pages
+      WHERE document_id IS NOT NULL AND folder_id IN (${subtree.map((_, i) => `$${i + 1}`).join(", ")})`,
+    subtree,
+  );
+  for (const d of docs) await followDocument(db, str(d.document_id), courseId);
 }
 
 /* ---------- Highlights ---------- */
@@ -716,6 +857,29 @@ export async function searchPages(db: Db, input: string, limit = 20): Promise<Se
     for (const r of tagRows) byPage.get(str(r.page_id))?.tags.push(toTag(r));
   }
   return hits;
+}
+
+/* ---------- One-off repairs ---------- */
+
+/** All highlights' texts (for repairs). */
+export async function listHighlightTexts(db: Db): Promise<{ id: string; text: string }[]> {
+  const rows = await db.select<Row>("SELECT id, text FROM highlights");
+  return rows.map((r) => ({ id: str(r.id), text: str(r.text) }));
+}
+
+export async function setHighlightText(db: Db, id: string, text: string) {
+  await db.execute("UPDATE highlights SET text = $1 WHERE id = $2", [text, id]);
+}
+
+/** Notes that contain quoted highlights. */
+export async function listPagesWithQuotes(db: Db): Promise<{ id: string; content: string }[]> {
+  const rows = await db.select<Row>("SELECT id, content FROM pages WHERE content LIKE '%pdfQuote%'");
+  return rows.map((r) => ({ id: str(r.id), content: str(r.content) }));
+}
+
+/** Replaces a note's content without touching its "edited" time (for repairs, not edits). */
+export async function rewritePageContent(db: Db, id: string, content: string, plainText: string) {
+  await db.execute("UPDATE pages SET content = $1, plain_text = $2 WHERE id = $3", [content, plainText, id]);
 }
 
 /* ---------- UI state ---------- */

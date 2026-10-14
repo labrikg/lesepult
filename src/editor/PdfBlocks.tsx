@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createReactBlockSpec } from "@blocknote/react";
-import { ArrowUpRight, Scissors } from "lucide-react";
+import { ArrowUpRight, Check, Pencil, Scissors } from "lucide-react";
+import { MathText } from "./MathText";
 import { useStore } from "../store";
 import { storedFileUrl } from "../lib/files";
 
@@ -48,24 +49,12 @@ export const createPdfQuoteBlock = createReactBlockSpec(
     content: "none",
   },
   {
-    render: ({ block }) => {
-      const p = block.props;
-      return (
-        <figure className="pdf-quote" data-color={p.color} contentEditable={false}>
-          <div className="pdf-block-head">
-            <span className="pdf-quote-swatch" aria-hidden="true" />
-            <span className="pdf-block-kind">Highlight</span>
-            <span className="pdf-block-source">
-              {p.source ? `${p.source} · ` : ""}p. {p.pageNumber}
-            </span>
-            <span className="pdf-block-spacer" />
-            <JumpButton documentId={p.documentId} pageNumber={p.pageNumber} highlightId={p.highlightId} />
-          </div>
-          <blockquote className="pdf-quote-text">{p.text}</blockquote>
-          {p.comment && <figcaption className="pdf-quote-comment">{p.comment}</figcaption>}
-        </figure>
-      );
-    },
+    render: ({ block, editor }) => (
+      <QuoteView
+        props={block.props}
+        onSaveText={(text) => editor.updateBlock(block, { props: { text } })}
+      />
+    ),
     toExternalHTML: ({ block }) => (
       <blockquote>
         <p>{block.props.text}</p>
@@ -78,6 +67,107 @@ export const createPdfQuoteBlock = createReactBlockSpec(
     ),
   },
 );
+
+interface QuoteProps {
+  highlightId: string;
+  documentId: string;
+  pageNumber: number;
+  color: string;
+  text: string;
+  comment: string;
+  source: string;
+}
+
+/** A quoted highlight. Formulas ($…$) render as math; "Edit text" fixes what the PDF got wrong. */
+function QuoteView({ props: p, onSaveText }: { props: QuoteProps; onSaveText(text: string): void }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(p.text);
+  const field = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (!editing) return;
+    const el = field.current;
+    if (!el) return;
+    el.focus();
+    el.style.height = `${el.scrollHeight}px`;
+  }, [editing]);
+
+  const save = () => {
+    setEditing(false);
+    const text = draft.replace(/\s+/g, " ").trim();
+    if (text && text !== p.text) onSaveText(text);
+  };
+
+  return (
+    <figure className="pdf-quote" data-color={p.color} contentEditable={false}>
+      <div className="pdf-block-head">
+        <span className="pdf-quote-swatch" aria-hidden="true" />
+        <span className="pdf-block-kind">Highlight</span>
+        <span className="pdf-block-source">
+          {p.source ? `${p.source} · ` : ""}p. {p.pageNumber}
+        </span>
+        <span className="pdf-block-spacer" />
+        {editing ? (
+          <button
+            type="button"
+            className="pdf-block-jump"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={save}
+          >
+            <Check size={13} aria-hidden="true" />
+            Done
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="pdf-block-jump pdf-block-edit"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => {
+              setDraft(p.text);
+              setEditing(true);
+            }}
+            title="Edit the quoted text (formulas go between $…$)"
+          >
+            <Pencil size={12} aria-hidden="true" />
+            Edit text
+          </button>
+        )}
+        <JumpButton documentId={p.documentId} pageNumber={p.pageNumber} highlightId={p.highlightId} />
+      </div>
+      {editing ? (
+        <div className="pdf-quote-editor">
+          <textarea
+            ref={field}
+            className="pdf-quote-input"
+            aria-label="Quoted text"
+            value={draft}
+            onChange={(e) => {
+              setDraft(e.target.value);
+              e.target.style.height = "auto";
+              e.target.style.height = `${e.target.scrollHeight}px`;
+            }}
+            onKeyDown={(e) => {
+              e.stopPropagation(); // keep the note editor's shortcuts out of this field
+              if (e.key === "Escape") setEditing(false);
+              if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) save();
+            }}
+          />
+          <div className="pdf-quote-preview" aria-label="Preview">
+            <MathText text={draft} />
+          </div>
+          <div className="pdf-quote-hint">
+            Formulas between <code>$…$</code>, e.g. <code>{"$i_1 \\cdot i_2$"}</code>. ⌘/Ctrl + Enter saves, Esc cancels.
+          </div>
+        </div>
+      ) : (
+        <blockquote className="pdf-quote-text">
+          <MathText text={p.text} />
+        </blockquote>
+      )}
+      {p.comment && <figcaption className="pdf-quote-comment">{p.comment}</figcaption>}
+    </figure>
+  );
+}
 
 function SnipImage({ imagePath, alt }: { imagePath: string; alt: string }) {
   const [src, setSrc] = useState<string | null>(null);

@@ -5,6 +5,7 @@ import type { PDFDocumentProxy } from "./pdfjs";
 import type { Highlight, NormRect } from "../lib/repo";
 import { fillFor } from "./highlights";
 import { registerTextLayer } from "./textSelection";
+import { annotateTextLayer } from "./textRuns";
 
 interface Props {
   pdf: PDFDocumentProxy;
@@ -78,13 +79,13 @@ export function PdfPage({
       setRendered(true);
 
       textDiv.replaceChildren();
-      textLayer = new TextLayer({
-        textContentSource: page.streamTextContent(),
-        container: textDiv,
-        viewport,
-      });
+      const content = await page.getTextContent();
+      if (cancelled) return;
+      textLayer = new TextLayer({ textContentSource: content, container: textDiv, viewport });
       await textLayer.render();
-      if (!cancelled) unregister = registerTextLayer(textDiv);
+      if (cancelled) return;
+      annotateTextLayer(textLayer.textDivs, content.items, page);
+      unregister = registerTextLayer(textDiv);
     })().catch((e) => {
       if (!cancelled && e?.name !== "RenderingCancelledException") console.warn(`page ${pageNumber}`, e);
     });

@@ -21,6 +21,12 @@ pub fn migrations() -> Vec<Migration> {
             sql: include_str!("../migrations/0002_tag_colors.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 3,
+            description: "folders",
+            sql: include_str!("../migrations/0003_folders.sql"),
+            kind: MigrationKind::Up,
+        },
     ]
 }
 

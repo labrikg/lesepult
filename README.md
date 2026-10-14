@@ -5,9 +5,11 @@ Built with Tauri 2, React + TypeScript and SQLite. Runs on macOS and Linux.
 
 ## What works right now
 
-- Sidebar: semesters → courses → pages. Add with **+**, rename with a double-click, delete with the bin (click twice to confirm).
-  Each page has a **⋯** menu (Rename, Move to course…, Delete), and pages can be **dragged onto another course**;
-  a page's PDF and highlights move with it.
+- Sidebar: semesters → courses → **folders** (nested as deep as you like) → pages. Add with **+**, rename with a
+  double-click, delete with the bin (click twice to confirm). The folder button on a course creates a folder; a folder's
+  **⋯** menu has New page, New folder inside, Rename, Move to… and Delete (with everything in it).
+  Pages and folders can be **dragged onto a course or folder**, or moved with *Move to…*; across courses a page's PDF and
+  highlights move with it. The breadcrumb shows the full path.
 - Block editor (BlockNote): type **/** for headings, lists, checklists, toggles, quotes, tables, code blocks and **LaTeX formulas**.
   **Tab** picks the highlighted command; typing a full command and a space applies it directly (`/latex␣`, `/h2␣`, `/code␣`).
   Markdown shortcuts work too (`# `, `- `, `1. `, `[] `, `> `). Drag blocks by the ⋮⋮ handle; click below the last block to add one.
@@ -23,7 +25,10 @@ Built with Tauri 2, React + TypeScript and SQLite. Runs on macOS and Linux.
   page jump, zoom (− / + / fit width), selectable text. Each PDF remembers where you stopped reading.
   Click the PDF's name in the toolbar to rename it; replace or remove it from there too. A paperclip in the sidebar marks pages with a PDF.
 - **Highlights**: select text on a slide and pick yellow, blue or green (or press **1 / 2 / 3**), or "Comment" to highlight and
-  write a note straight away. Click a highlight to recolour it, edit its comment (⌘/Ctrl + Enter saves) or delete it.
+  write a note straight away. Selected text keeps formulas as inline LaTeX: on slides made with LaTeX, math fonts,
+  sub- and superscripts are recognised (`$i_1 \cdot i_2 \in \mathbf{N}$`) and rendered in the note; umlauts that
+  older TeX fonts split up ("nat¨urlich") are repaired. Fractions and other 2D formulas can't be rebuilt from a PDF
+  this way; *Edit text* on a quote lets you fix or complete the text (formulas between `$…$`). Click a highlight to recolour it, edit its comment (⌘/Ctrl + Enter saves) or delete it.
   Highlights with a comment show a small speech bubble.
 - View modes PDF / Split / Note; the app remembers the last page and view.
 - **Linking PDF and note**:
@@ -38,7 +43,7 @@ Built with Tauri 2, React + TypeScript and SQLite. Runs on macOS and Linux.
     code with its language) plus an `assets/` folder for snip images.
   - *Export note → PDF…* opens the print dialog with just the note laid out for A4; on macOS choose **PDF → Save as PDF**.
   - *Export everything…* (sidebar) writes your whole library as a folder you can read without Lesepult:
-    `Semester/Course/Page.md`, each course's PDFs in `PDFs/` (linked from the notes) and snips in `assets/`.
+    `Semester/Course/[Folder/…]/Page.md`, each course's PDFs in `PDFs/` (linked from the notes) and snips in `assets/`.
   - Exported notes list their tags as hashtags (`Tags: #exam #AVL-trees`), which Obsidian and similar apps pick up.
 
 ## Setup
@@ -104,7 +109,8 @@ src/
   editor/                 block editor: schema, LaTeX block, PDF quote/snip blocks, slash menu,
                           content ↔ plain text and note → highlight links
   pdf/                    PDF viewer: PDF.js setup, page rendering + text layer, layout maths,
-                          highlights (selection → page-relative boxes, toolbar, popover)
+                          highlights (selection → page-relative boxes, toolbar, popover),
+                          mathText.ts: selected text → text with inline LaTeX, umlaut repair
   lib/files.ts            PDF import / removal via the Rust commands
   export/                 Markdown converter, library layout, export + print actions
   components/             Sidebar, TopBar, NotePane, PdfPane, SearchDialog, …
@@ -114,6 +120,7 @@ src-tauri/
   migrations/0001_init.sql  schema: semesters, courses, documents, pages, highlights,
                             snips, note_refs, tags, kv, pages_fts (FTS5)
   migrations/0002_tag_colors.sql  tag colours
+  migrations/0003_folders.sql     folders (nested) and pages.folder_id
   src/lib.rs                registers plugins, migrations and commands
   src/files.rs              import_pdf / save_png / remove_stored_file / prune_stored_files
   src/export.rs             export_bundle (writes/copies files into a chosen folder) / print_window

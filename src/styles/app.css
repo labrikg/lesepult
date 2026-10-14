@@ -2045,3 +2045,103 @@ button.tag-chip-name:hover {
     display: none !important;
   }
 }
+
+/* ---------- Folders ---------- */
+
+.folder-label .folder-chevron {
+  flex-shrink: 0;
+  /* The chevron hangs in the indent, so folder and page icons line up. */
+  margin-left: -17px;
+  margin-right: -4px;
+  color: var(--muted);
+}
+
+.folder-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-left: 13px;
+  margin-left: 7px;
+  border-left: 1px solid var(--line);
+}
+
+.folder.is-drop-target > .row,
+.folder.is-drop-target > .folder-body {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.folder.is-drop-target > .row {
+  border-radius: var(--radius-sm);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent) 50%, transparent);
+}
+
+.course-body > .inline-input,
+.folder-body > .inline-input {
+  margin: 1px 0;
+}
+
+/* ---------- Formulas in quoted text ---------- */
+
+.inline-math .katex {
+  font-size: 1.02em;
+}
+
+.pdf-block-edit {
+  opacity: 0;
+  transition: opacity 120ms ease-out;
+}
+
+.pdf-quote:hover .pdf-block-edit,
+.pdf-block-edit:focus-visible {
+  opacity: 1;
+}
+
+.pdf-quote-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pdf-quote-input {
+  width: 100%;
+  min-height: 72px;
+  resize: none;
+  overflow: hidden;
+  padding: 8px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.5;
+  outline: none;
+}
+
+.pdf-quote-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.pdf-quote-preview {
+  font-family: var(--font-display);
+  font-size: 17px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+.pdf-quote-hint {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.pdf-quote-hint code {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+}
+
+@media print {
+  .pdf-block-edit {
+    display: none !important;
+  }
+}

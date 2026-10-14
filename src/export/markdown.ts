@@ -3,6 +3,8 @@
  * Pure and dependency-free so it can be unit-tested and reused for single and bulk exports.
  */
 
+import { fixAccents, splitMath } from "../pdf/mathText";
+
 type Json = Record<string, unknown>;
 const isObj = (v: unknown): v is Json => typeof v === "object" && v !== null && !Array.isArray(v);
 
@@ -81,6 +83,13 @@ function plainText(content: unknown): string {
   if (typeof content === "string") return content;
   if (!Array.isArray(content)) return "";
   return content.map((c) => (isObj(c) && typeof c.text === "string" ? c.text : "")).join("");
+}
+
+/** Quoted PDF text: words escaped, formulas kept as `$…$` for Markdown viewers with math. */
+function quotedText(text: string): string {
+  return splitMath(text)
+    .map((p) => (p.math ? `$${p.text}$` : escapeText(fixAccents(p.text)).replace(/\$/g, "\\$")))
+    .join("");
 }
 
 /* ---------- Blocks ---------- */
@@ -167,7 +176,7 @@ function blockBody(b: Json, ctx: Ctx, listIndex: number): { text: string; listMa
       ]
         .filter(Boolean)
         .join(", ");
-      const parts = [escapeText(String(props.text ?? "")), "", `— ${source}`];
+      const parts = [quotedText(String(props.text ?? "")), "", `— ${source}`];
       if (props.comment) parts.push("", `**Note:** ${escapeText(String(props.comment))}`);
       return { text: quoteLines(parts.join("\n")) };
     }

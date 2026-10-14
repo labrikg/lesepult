@@ -1,9 +1,10 @@
 import { create } from "zustand";
 import { getDb } from "./lib/db";
 import * as repo from "./lib/repo";
-import type { Document, Page, PagePatch, SemesterNode, Tag, TagColor, TagInfo } from "./lib/repo";
+import type { Document, Folder, Page, PagePatch, SemesterNode, Tag, TagColor, TagInfo } from "./lib/repo";
 import { pickAndImportPdf, pruneStoredFiles, removeStoredFile } from "./lib/files";
 import { extractNoteRefs } from "./editor/content";
+import { repairOldPdfText } from "./lib/repair";
 import {
   applyTheme,
   readDarkPdf,
@@ -78,11 +79,17 @@ interface State {
   toggleCourse(id: string): Promise<void>;
   deleteCourse(id: string): Promise<void>;
 
-  addPage(courseId: string): Promise<void>;
+  addPage(courseId: string, folderId?: string | null): Promise<void>;
   savePage(id: string, patch: PagePatch): Promise<void>;
   deletePage(id: string): Promise<void>;
 
-  movePage(pageId: string, courseId: string): Promise<void>;
+  movePage(pageId: string, courseId: string, folderId?: string | null): Promise<void>;
+
+  addFolder(courseId: string, parentId: string | null, name: string): Promise<void>;
+  renameFolder(id: string, name: string): Promise<void>;
+  toggleFolder(id: string): Promise<void>;
+  deleteFolder(id: string): Promise<void>;
+  moveFolder(id: string, courseId: string, parentId: string | null): Promise<void>;
 
   attachPdf(): Promise<void>;
   removePdf(): Promise<void>;
@@ -186,6 +193,8 @@ export const useStore = create<State>((set, get) => ({
 
   init: guard(async () => {
     const db = await getDb();
+    // Before anything is shown, so the open note loads the repaired text.
+    await repairOldPdfText(db).catch((e) => console.warn("repair failed", e));
     const [tree, lastPage, viewMode] = await Promise.all([
       repo.loadTree(db),
       repo.kvGet(db, "lastPageId"),
@@ -273,10 +282,11 @@ export const useStore = create<State>((set, get) => ({
     await reselectIfGone(get);
   }),
 
-  addPage: guard(async (courseId) => {
+  addPage: guard(async (courseId, folderId = null) => {
     const db = await getDb();
-    const id = await repo.createPage(db, courseId);
+    const id = await repo.createPage(db, courseId, "", folderId);
     await repo.setCourseCollapsed(db, courseId, false);
+    if (folderId) await expandFolderPath(get, folderId);
     await get().refresh();
     await get().selectPage(id);
   }),
@@ -313,10 +323,42 @@ export const useStore = create<State>((set, get) => ({
     await reselectIfGone(get);
   }),
 
-  movePage: guard(async (pageId, courseId) => {
+  movePage: guard(async (pageId, courseId, folderId = null) => {
     const db = await getDb();
-    await repo.movePage(db, pageId, courseId);
+    await repo.movePage(db, pageId, courseId, folderId);
     await repo.setCourseCollapsed(db, courseId, false);
+    if (folderId) await expandFolderPath(get, folderId);
+    await get().refresh();
+    await reloadOpenPage(get);
+  }),
+
+  addFolder: guard(async (courseId, parentId, name) => {
+    const db = await getDb();
+    await repo.createFolder(db, courseId, parentId, name);
+    await repo.setCourseCollapsed(db, courseId, false);
+    if (parentId) await expandFolderPath(get, parentId);
+    await get().refresh();
+  }),
+  renameFolder: guard(async (id, name) => {
+    await repo.renameFolder(await getDb(), id, name);
+    await get().refresh();
+  }),
+  toggleFolder: guard(async (id) => {
+    const f = findFolder(get().tree, id);
+    if (!f) return;
+    await repo.setFolderCollapsed(await getDb(), id, !f.collapsed);
+    await get().refresh();
+  }),
+  deleteFolder: guard(async (id) => {
+    await repo.deleteFolder(await getDb(), id);
+    await get().refresh();
+    await reselectIfGone(get);
+  }),
+  moveFolder: guard(async (id, courseId, parentId) => {
+    const db = await getDb();
+    await repo.moveFolder(db, id, courseId, parentId);
+    await repo.setCourseCollapsed(db, courseId, false);
+    if (parentId) await expandFolderPath(get, parentId);
     await get().refresh();
     await reloadOpenPage(get);
   }),
@@ -419,11 +461,36 @@ async function reselectIfGone(get: () => State) {
   if (!exists) await selectPage(null);
 }
 
-/** Finds the semester and course a page belongs to (for the breadcrumb). */
+/** Finds the semester, course and folder path of a page (for the breadcrumb and exports). */
 export function locatePage(tree: SemesterNode[], pageId: string | null) {
   if (!pageId) return null;
   for (const semester of tree)
     for (const course of semester.courses)
-      for (const page of course.pages) if (page.id === pageId) return { semester, course, page };
+      for (const page of course.pages)
+        if (page.id === pageId) return { semester, course, page, folders: folderPath(course.folders, page.folderId) };
   return null;
+}
+
+/** The folders from the top of the course down to (and including) this one. */
+export function folderPath(folders: Folder[], folderId: string | null): Folder[] {
+  const byId = new Map(folders.map((f) => [f.id, f]));
+  const path: Folder[] = [];
+  for (let f = folderId ? byId.get(folderId) : undefined; f && path.length < 64; f = f.parentId ? byId.get(f.parentId) : undefined)
+    path.unshift(f);
+  return path;
+}
+
+function findFolder(tree: SemesterNode[], id: string): Folder | undefined {
+  for (const s of tree) for (const c of s.courses) for (const f of c.folders) if (f.id === id) return f;
+  return undefined;
+}
+
+/** Opens a folder and all folders above it, so something just put there is visible. */
+async function expandFolderPath(get: () => State, folderId: string) {
+  const db = await getDb();
+  let course;
+  for (const s of get().tree) for (const c of s.courses) if (c.folders.some((f) => f.id === folderId)) course = c;
+  if (!course) return;
+  for (const f of folderPath(course.folders, folderId))
+    if (f.collapsed) await repo.setFolderCollapsed(db, f.id, false);
 }

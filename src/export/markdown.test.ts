@@ -145,6 +145,18 @@ describe("block Markdown", () => {
     expect(assets).toEqual([{ storedPath: "documents/abc.png", linkPath: "assets/abc.png" }]);
   });
 
+  it("keeps formulas in quotes as $…$ and repairs old umlauts", () => {
+    const { markdown } = blocksToMarkdown([
+      {
+        type: "pdfQuote",
+        props: { text: "Zu zwei nat¨urlichen Zahlen $i_1, i_2 \\in \\mathbf{N}$ (*Eingabe*) kostet \\$5", pageNumber: 18 },
+      },
+    ]);
+    expect(markdown.split("\n")[0]).toBe(
+      "> Zu zwei natürlichen Zahlen $i_1, i_2 \\in \\mathbf{N}$ (\\*Eingabe\\*) kostet \\$5",
+    );
+  });
+
   it("returns nothing for empty notes", () => {
     expect(blocksToMarkdown([p(), p()]).markdown).toBe("");
     expect(blocksToMarkdown(null).markdown).toBe("");

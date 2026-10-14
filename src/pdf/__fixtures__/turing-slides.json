@@ -1,0 +1,1438 @@
+{
+ "1": [
+  {
+   "text": "Turing-Maschinen",
+   "font": "ZYHWSV+CMSS12",
+   "size": 14.35,
+   "x": 8.5,
+   "y": 251.07,
+   "width": 104.31
+  },
+  {
+   "text": "Beispiel: Multiplikation",
+   "font": "ZYHWSV+CMSS12",
+   "size": 11.96,
+   "x": 28.35,
+   "y": 195.83,
+   "width": 112.59
+  },
+  {
+   "text": "Zu zwei nat¨",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 28.35,
+   "y": 180.17,
+   "width": 59.29
+  },
+  {
+   "text": "urlichen Zahlen",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 82.09,
+   "y": 180.17,
+   "width": 69.82
+  },
+  {
+   "text": " ",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 151.91,
+   "y": 180.17,
+   "width": 3.64
+  },
+  {
+   "text": "i",
+   "font": "QCCBFV+CMSSI10",
+   "size": 10.91,
+   "x": 155.54,
+   "y": 180.17,
+   "width": 2.61
+  },
+  {
+   "text": "1",
+   "font": "OMNBSV+CMSS8",
+   "size": 7.97,
+   "x": 158.15,
+   "y": 178.53,
+   "width": 4.23
+  },
+  {
+   "text": ",",
+   "font": "VVCZSD+CMMI10",
+   "size": 10.91,
+   "x": 162.88,
+   "y": 180.17,
+   "width": 3.03
+  },
+  {
+   "text": " ",
+   "font": "VVCZSD+CMMI10",
+   "size": 10.91,
+   "x": 165.91,
+   "y": 180.17,
+   "width": 1.82
+  },
+  {
+   "text": "i",
+   "font": "QCCBFV+CMSSI10",
+   "size": 10.91,
+   "x": 167.73,
+   "y": 180.17,
+   "width": 2.61
+  },
+  {
+   "text": "2",
+   "font": "OMNBSV+CMSS8",
+   "size": 7.97,
+   "x": 170.34,
+   "y": 178.53,
+   "width": 4.23
+  },
+  {
+   "text": " ",
+   "font": "OMNBSV+CMSS8",
+   "size": 7.97,
+   "x": 174.57,
+   "y": 178.53,
+   "width": 3.53
+  },
+  {
+   "text": "∈",
+   "font": "BAJSKS+CMSY10",
+   "size": 10.91,
+   "x": 178.1,
+   "y": 180.17,
+   "width": 7.27
+  },
+  {
+   "text": " ",
+   "font": "BAJSKS+CMSY10",
+   "size": 10.91,
+   "x": 185.37,
+   "y": 180.17,
+   "width": 3.03
+  },
+  {
+   "text": "N",
+   "font": "PDAINP+CMSSBX10",
+   "size": 10.91,
+   "x": 188.4,
+   "y": 180.17,
+   "width": 8.67
+  },
+  {
+   "text": " ",
+   "font": "PDAINP+CMSSBX10",
+   "size": 10.91,
+   "x": 197.07,
+   "y": 180.17,
+   "width": 3.64
+  },
+  {
+   "text": "(Eingabe) suchen wir das",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 200.71,
+   "y": 180.17,
+   "width": 115.28
+  },
+  {
+   "text": "entsprechende Produkt",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 28.35,
+   "y": 166.62,
+   "width": 104.6
+  },
+  {
+   "text": " ",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 132.95,
+   "y": 166.62,
+   "width": 3.64
+  },
+  {
+   "text": "i",
+   "font": "QCCBFV+CMSSI10",
+   "size": 10.91,
+   "x": 136.59,
+   "y": 166.62,
+   "width": 2.61
+  },
+  {
+   "text": "1",
+   "font": "OMNBSV+CMSS8",
+   "size": 7.97,
+   "x": 139.19,
+   "y": 164.98,
+   "width": 4.23
+  },
+  {
+   "text": " ",
+   "font": "OMNBSV+CMSS8",
+   "size": 7.97,
+   "x": 143.43,
+   "y": 164.98,
+   "width": 2.92
+  },
+  {
+   "text": "·",
+   "font": "BAJSKS+CMSY10",
+   "size": 10.91,
+   "x": 146.35,
+   "y": 166.62,
+   "width": 3.03
+  },
+  {
+   "text": " ",
+   "font": "BAJSKS+CMSY10",
+   "size": 10.91,
+   "x": 149.38,
+   "y": 166.62,
+   "width": 2.42
+  },
+  {
+   "text": "i",
+   "font": "QCCBFV+CMSSI10",
+   "size": 10.91,
+   "x": 151.81,
+   "y": 166.62,
+   "width": 2.61
+  },
+  {
+   "text": "2",
+   "font": "OMNBSV+CMSS8",
+   "size": 7.97,
+   "x": 154.41,
+   "y": 164.98,
+   "width": 4.23
+  },
+  {
+   "text": " ",
+   "font": "OMNBSV+CMSS8",
+   "size": 7.97,
+   "x": 158.65,
+   "y": 164.98,
+   "width": 4.13
+  },
+  {
+   "text": "(Ausgabe).",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 162.78,
+   "y": 166.62,
+   "width": 50.09
+  },
+  {
+   "text": "Um die Zahlen",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 28.35,
+   "y": 153.07,
+   "width": 67.17
+  },
+  {
+   "text": " ",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 95.52,
+   "y": 153.07,
+   "width": 3.63
+  },
+  {
+   "text": "i",
+   "font": "QCCBFV+CMSSI10",
+   "size": 10.91,
+   "x": 99.15,
+   "y": 153.07,
+   "width": 2.61
+  },
+  {
+   "text": "1",
+   "font": "OMNBSV+CMSS8",
+   "size": 7.97,
+   "x": 101.76,
+   "y": 151.43,
+   "width": 4.23
+  },
+  {
+   "text": " ",
+   "font": "OMNBSV+CMSS8",
+   "size": 7.97,
+   "x": 105.99,
+   "y": 151.43,
+   "width": 4.13
+  },
+  {
+   "text": "und",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 110.12,
+   "y": 153.07,
+   "width": 16.91
+  },
+  {
+   "text": " ",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 127.03,
+   "y": 153.07,
+   "width": 3.64
+  },
+  {
+   "text": "i",
+   "font": "QCCBFV+CMSSI10",
+   "size": 10.91,
+   "x": 130.67,
+   "y": 153.07,
+   "width": 2.61
+  },
+  {
+   "text": "2",
+   "font": "OMNBSV+CMSS8",
+   "size": 7.97,
+   "x": 133.28,
+   "y": 151.43,
+   "width": 4.23
+  },
+  {
+   "text": " ",
+   "font": "OMNBSV+CMSS8",
+   "size": 7.97,
+   "x": 137.51,
+   "y": 151.43,
+   "width": 4.13
+  },
+  {
+   "text": "in der Eingabe voneinander trennen zu",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 141.64,
+   "y": 153.07,
+   "width": 175.83
+  },
+  {
+   "text": "k¨",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 28.35,
+   "y": 139.52,
+   "width": 10.79
+  },
+  {
+   "text": "onnen, erweitern wir das Alphabet um ein Trennsymbol:",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 33.68,
+   "y": 139.52,
+   "width": 255.67
+  },
+  {
+   "text": "Σ =",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 28.35,
+   "y": 125.97,
+   "width": 19.4
+  },
+  {
+   "text": " ",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 47.74,
+   "y": 125.97,
+   "width": 3.03
+  },
+  {
+   "text": "{",
+   "font": "BAJSKS+CMSY10",
+   "size": 10.91,
+   "x": 50.77,
+   "y": 125.97,
+   "width": 5.45
+  },
+  {
+   "text": "0",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 56.22,
+   "y": 125.97,
+   "width": 5.45
+  },
+  {
+   "text": ",",
+   "font": "VVCZSD+CMMI10",
+   "size": 10.91,
+   "x": 61.68,
+   "y": 125.97,
+   "width": 3.03
+  },
+  {
+   "text": " ",
+   "font": "VVCZSD+CMMI10",
+   "size": 10.91,
+   "x": 64.71,
+   "y": 125.97,
+   "width": 1.82
+  },
+  {
+   "text": "1",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 66.53,
+   "y": 125.97,
+   "width": 5.45
+  },
+  {
+   "text": ",",
+   "font": "VVCZSD+CMMI10",
+   "size": 10.91,
+   "x": 71.98,
+   "y": 125.97,
+   "width": 3.03
+  },
+  {
+   "text": " ",
+   "font": "VVCZSD+CMMI10",
+   "size": 10.91,
+   "x": 75.01,
+   "y": 125.97,
+   "width": 1.82
+  },
+  {
+   "text": "#",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 76.83,
+   "y": 125.97,
+   "width": 9.09
+  },
+  {
+   "text": "}",
+   "font": "BAJSKS+CMSY10",
+   "size": 10.91,
+   "x": 85.92,
+   "y": 125.97,
+   "width": 5.45
+  },
+  {
+   "text": ".",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 91.38,
+   "y": 125.97,
+   "width": 3.03
+  },
+  {
+   "text": "Die entsprechende Funktion",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 28.35,
+   "y": 112.42,
+   "width": 126.73
+  },
+  {
+   "text": " ",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 155.07,
+   "y": 112.42,
+   "width": 3.64
+  },
+  {
+   "text": "f",
+   "font": "QCCBFV+CMSSI10",
+   "size": 10.91,
+   "x": 158.71,
+   "y": 112.42,
+   "width": 3.33
+  },
+  {
+   "text": " ",
+   "font": "QCCBFV+CMSSI10",
+   "size": 10.91,
+   "x": 162.04,
+   "y": 112.42,
+   "width": 5.4
+  },
+  {
+   "text": ": Σ",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 167.44,
+   "y": 112.42,
+   "width": 13.94
+  },
+  {
+   "text": "∗",
+   "font": "FRNIHB+CMSY8",
+   "size": 7.97,
+   "x": 181.38,
+   "y": 116.38,
+   "width": 4.23
+  },
+  {
+   "text": " ",
+   "font": "FRNIHB+CMSY8",
+   "size": 7.97,
+   "x": 185.62,
+   "y": 116.38,
+   "width": 3.53
+  },
+  {
+   "text": "→",
+   "font": "BAJSKS+CMSY10",
+   "size": 10.91,
+   "x": 189.14,
+   "y": 112.42,
+   "width": 10.91
+  },
+  {
+   "text": " ",
+   "font": "BAJSKS+CMSY10",
+   "size": 10.91,
+   "x": 200.05,
+   "y": 112.42,
+   "width": 3.03
+  },
+  {
+   "text": "Σ",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 203.08,
+   "y": 112.42,
+   "width": 7.88
+  },
+  {
+   "text": "∗",
+   "font": "FRNIHB+CMSY8",
+   "size": 7.97,
+   "x": 210.96,
+   "y": 116.38,
+   "width": 4.23
+  },
+  {
+   "text": " ",
+   "font": "FRNIHB+CMSY8",
+   "size": 7.97,
+   "x": 215.2,
+   "y": 116.38,
+   "width": 4.13
+  },
+  {
+   "text": "ist dann gegeben durch",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 219.33,
+   "y": 112.42,
+   "width": 106.31
+  },
+  {
+   "text": "f",
+   "font": "QCCBFV+CMSSI10",
+   "size": 10.91,
+   "x": 108.43,
+   "y": 87.91,
+   "width": 3.33
+  },
+  {
+   "text": " ",
+   "font": "QCCBFV+CMSSI10",
+   "size": 10.91,
+   "x": 111.77,
+   "y": 87.91,
+   "width": 2.37
+  },
+  {
+   "text": "(",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 114.14,
+   "y": 87.91,
+   "width": 4.24
+  },
+  {
+   "text": "bin",
+   "font": "FYAGOX+CMR10",
+   "size": 10.91,
+   "x": 118.38,
+   "y": 87.91,
+   "width": 15.15
+  },
+  {
+   "text": "(",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 133.53,
+   "y": 87.91,
+   "width": 4.24
+  },
+  {
+   "text": "i",
+   "font": "QCCBFV+CMSSI10",
+   "size": 10.91,
+   "x": 137.77,
+   "y": 87.91,
+   "width": 2.61
+  },
+  {
+   "text": "1",
+   "font": "OMNBSV+CMSS8",
+   "size": 7.97,
+   "x": 140.38,
+   "y": 86.28,
+   "width": 4.23
+  },
+  {
+   "text": ")#",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 145.11,
+   "y": 87.91,
+   "width": 13.33
+  },
+  {
+   "text": "bin",
+   "font": "FYAGOX+CMR10",
+   "size": 10.91,
+   "x": 158.44,
+   "y": 87.91,
+   "width": 15.15
+  },
+  {
+   "text": "(",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 173.6,
+   "y": 87.91,
+   "width": 4.24
+  },
+  {
+   "text": "i",
+   "font": "QCCBFV+CMSSI10",
+   "size": 10.91,
+   "x": 177.84,
+   "y": 87.91,
+   "width": 2.61
+  },
+  {
+   "text": "2",
+   "font": "OMNBSV+CMSS8",
+   "size": 7.97,
+   "x": 180.44,
+   "y": 86.28,
+   "width": 4.23
+  },
+  {
+   "text": ")) =",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 185.18,
+   "y": 87.91,
+   "width": 20
+  },
+  {
+   "text": " ",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 205.18,
+   "y": 87.91,
+   "width": 3.03
+  },
+  {
+   "text": "bin",
+   "font": "FYAGOX+CMR10",
+   "size": 10.91,
+   "x": 208.21,
+   "y": 87.91,
+   "width": 15.15
+  },
+  {
+   "text": "(",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 223.36,
+   "y": 87.91,
+   "width": 4.24
+  },
+  {
+   "text": "i",
+   "font": "QCCBFV+CMSSI10",
+   "size": 10.91,
+   "x": 227.6,
+   "y": 87.91,
+   "width": 2.61
+  },
+  {
+   "text": "1",
+   "font": "OMNBSV+CMSS8",
+   "size": 7.97,
+   "x": 230.21,
+   "y": 86.28,
+   "width": 4.23
+  },
+  {
+   "text": " ",
+   "font": "OMNBSV+CMSS8",
+   "size": 7.97,
+   "x": 234.44,
+   "y": 86.28,
+   "width": 2.92
+  },
+  {
+   "text": "·",
+   "font": "BAJSKS+CMSY10",
+   "size": 10.91,
+   "x": 237.36,
+   "y": 87.91,
+   "width": 3.03
+  },
+  {
+   "text": " ",
+   "font": "BAJSKS+CMSY10",
+   "size": 10.91,
+   "x": 240.39,
+   "y": 87.91,
+   "width": 2.42
+  },
+  {
+   "text": "i",
+   "font": "QCCBFV+CMSSI10",
+   "size": 10.91,
+   "x": 242.82,
+   "y": 87.91,
+   "width": 2.61
+  },
+  {
+   "text": "2",
+   "font": "OMNBSV+CMSS8",
+   "size": 7.97,
+   "x": 245.42,
+   "y": 86.28,
+   "width": 4.23
+  },
+  {
+   "text": ")",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 250.16,
+   "y": 87.91,
+   "width": 4.24
+  },
+  {
+   "text": "Also zum Beispiel",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 28.35,
+   "y": 57.69,
+   "width": 80.44
+  },
+  {
+   "text": " ",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 108.79,
+   "y": 57.69,
+   "width": 3.63
+  },
+  {
+   "text": "f",
+   "font": "QCCBFV+CMSSI10",
+   "size": 10.91,
+   "x": 112.42,
+   "y": 57.69,
+   "width": 3.33
+  },
+  {
+   "text": " ",
+   "font": "QCCBFV+CMSSI10",
+   "size": 10.91,
+   "x": 115.76,
+   "y": 57.69,
+   "width": 2.37
+  },
+  {
+   "text": "(110#10) = 1100. Was ist",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 118.12,
+   "y": 57.69,
+   "width": 122.88
+  },
+  {
+   "text": " ",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 241.01,
+   "y": 57.69,
+   "width": 3.63
+  },
+  {
+   "text": "f",
+   "font": "QCCBFV+CMSSI10",
+   "size": 10.91,
+   "x": 244.64,
+   "y": 57.69,
+   "width": 3.33
+  },
+  {
+   "text": " ",
+   "font": "QCCBFV+CMSSI10",
+   "size": 10.91,
+   "x": 247.97,
+   "y": 57.69,
+   "width": 2.37
+  },
+  {
+   "text": "(##)?",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 250.34,
+   "y": 57.69,
+   "width": 31.82
+  }
+ ],
+ "2": [
+  {
+   "text": "Mehr Mathe",
+   "font": "ZYHWSV+CMSS12",
+   "size": 14.35,
+   "x": 8.5,
+   "y": 251.07,
+   "width": 72.52
+  },
+  {
+   "text": "Die Laufzeit ist",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 28.35,
+   "y": 163.76,
+   "width": 69.59
+  },
+  {
+   "text": " ",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 97.94,
+   "y": 163.76,
+   "width": 3.63
+  },
+  {
+   "text": "T",
+   "font": "QCCBFV+CMSSI10",
+   "size": 10.91,
+   "x": 101.57,
+   "y": 163.76,
+   "width": 7.42
+  },
+  {
+   "text": " ",
+   "font": "QCCBFV+CMSSI10",
+   "size": 10.91,
+   "x": 109,
+   "y": 163.76,
+   "width": 1.46
+  },
+  {
+   "text": "(",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 110.46,
+   "y": 163.76,
+   "width": 4.24
+  },
+  {
+   "text": "n",
+   "font": "QCCBFV+CMSSI10",
+   "size": 10.91,
+   "x": 114.7,
+   "y": 163.76,
+   "width": 5.64
+  },
+  {
+   "text": ")",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 120.53,
+   "y": 163.76,
+   "width": 4.24
+  },
+  {
+   "text": " ",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 124.77,
+   "y": 163.76,
+   "width": 3.03
+  },
+  {
+   "text": "≤",
+   "font": "BAJSKS+CMSY10",
+   "size": 10.91,
+   "x": 127.8,
+   "y": 163.76,
+   "width": 8.49
+  },
+  {
+   "text": " ",
+   "font": "BAJSKS+CMSY10",
+   "size": 10.91,
+   "x": 136.29,
+   "y": 163.76,
+   "width": 3.03
+  },
+  {
+   "text": "c",
+   "font": "QCCBFV+CMSSI10",
+   "size": 10.91,
+   "x": 139.32,
+   "y": 163.76,
+   "width": 4.85
+  },
+  {
+   "text": " ",
+   "font": "QCCBFV+CMSSI10",
+   "size": 10.91,
+   "x": 144.17,
+   "y": 163.76,
+   "width": 3.33
+  },
+  {
+   "text": "·",
+   "font": "BAJSKS+CMSY10",
+   "size": 10.91,
+   "x": 147.5,
+   "y": 163.76,
+   "width": 3.03
+  },
+  {
+   "text": " ",
+   "font": "BAJSKS+CMSY10",
+   "size": 10.91,
+   "x": 150.53,
+   "y": 163.76,
+   "width": 2.42
+  },
+  {
+   "text": "n",
+   "font": "QCCBFV+CMSSI10",
+   "size": 10.91,
+   "x": 152.95,
+   "y": 163.76,
+   "width": 5.64
+  },
+  {
+   "text": "2",
+   "font": "OMNBSV+CMSS8",
+   "size": 7.97,
+   "x": 158.78,
+   "y": 167.72,
+   "width": 4.23
+  },
+  {
+   "text": " ",
+   "font": "OMNBSV+CMSS8",
+   "size": 7.97,
+   "x": 163.02,
+   "y": 167.72,
+   "width": 2.92
+  },
+  {
+   "text": "+ log",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 165.94,
+   "y": 163.76,
+   "width": 24.42
+  },
+  {
+   "text": "2",
+   "font": "OMNBSV+CMSS8",
+   "size": 7.97,
+   "x": 190.52,
+   "y": 161.14,
+   "width": 4.23
+  },
+  {
+   "text": " ",
+   "font": "OMNBSV+CMSS8",
+   "size": 7.97,
+   "x": 194.75,
+   "y": 161.14,
+   "width": 2.32
+  },
+  {
+   "text": "n",
+   "font": "QCCBFV+CMSSI10",
+   "size": 10.91,
+   "x": 197.07,
+   "y": 163.76,
+   "width": 5.64
+  },
+  {
+   "text": " ",
+   "font": "QCCBFV+CMSSI10",
+   "size": 10.91,
+   "x": 202.7,
+   "y": 163.76,
+   "width": 3.83
+  },
+  {
+   "text": "f¨",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 206.53,
+   "y": 163.76,
+   "width": 8.88
+  },
+  {
+   "text": "ur alle",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 209.87,
+   "y": 163.76,
+   "width": 28.3
+  },
+  {
+   "text": " ",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 238.17,
+   "y": 163.76,
+   "width": 3.64
+  },
+  {
+   "text": "n",
+   "font": "QCCBFV+CMSSI10",
+   "size": 10.91,
+   "x": 241.81,
+   "y": 163.76,
+   "width": 5.64
+  },
+  {
+   "text": " ",
+   "font": "QCCBFV+CMSSI10",
+   "size": 10.91,
+   "x": 247.44,
+   "y": 163.76,
+   "width": 3.22
+  },
+  {
+   "text": "≥",
+   "font": "BAJSKS+CMSY10",
+   "size": 10.91,
+   "x": 250.67,
+   "y": 163.76,
+   "width": 8.49
+  },
+  {
+   "text": " ",
+   "font": "BAJSKS+CMSY10",
+   "size": 10.91,
+   "x": 259.15,
+   "y": 163.76,
+   "width": 3.03
+  },
+  {
+   "text": "n",
+   "font": "QCCBFV+CMSSI10",
+   "size": 10.91,
+   "x": 262.18,
+   "y": 163.76,
+   "width": 5.64
+  },
+  {
+   "text": "0",
+   "font": "OMNBSV+CMSS8",
+   "size": 7.97,
+   "x": 267.82,
+   "y": 162.13,
+   "width": 4.23
+  },
+  {
+   "text": ", und es gilt",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 272.55,
+   "y": 163.76,
+   "width": 54.49
+  },
+  {
+   "text": "x",
+   "font": "QCCBFV+CMSSI10",
+   "size": 10.91,
+   "x": 28.35,
+   "y": 150.22,
+   "width": 5.03
+  },
+  {
+   "text": "k",
+   "font": "KOQZMX+CMSSI8",
+   "size": 7.97,
+   "x": 34.38,
+   "y": 154.17,
+   "width": 4.14
+  },
+  {
+   "text": "+1",
+   "font": "OMNBSV+CMSS8",
+   "size": 7.97,
+   "x": 39.17,
+   "y": 154.17,
+   "width": 10.82
+  },
+  {
+   "text": " ",
+   "font": "OMNBSV+CMSS8",
+   "size": 7.97,
+   "x": 49.99,
+   "y": 154.17,
+   "width": 3.53
+  },
+  {
+   "text": "=",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 53.52,
+   "y": 150.22,
+   "width": 8.49
+  },
+  {
+   "text": " ",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 62.01,
+   "y": 150.22,
+   "width": 3.03
+  },
+  {
+   "text": "P",
+   "font": "LBWBDW+CMEX10",
+   "size": 10.91,
+   "x": 65.04,
+   "y": 158.4,
+   "width": 11.52
+  },
+  {
+   "text": "k",
+   "font": "KOQZMX+CMSSI8",
+   "size": 7.97,
+   "x": 76.55,
+   "y": 155.24,
+   "width": 4.14
+  },
+  {
+   "text": "i",
+   "font": "KOQZMX+CMSSI8",
+   "size": 7.97,
+   "x": 76.55,
+   "y": 146.99,
+   "width": 2.02
+  },
+  {
+   "text": "=0",
+   "font": "OMNBSV+CMSS8",
+   "size": 7.97,
+   "x": 79.36,
+   "y": 146.99,
+   "width": 10.82
+  },
+  {
+   "text": " ",
+   "font": "OMNBSV+CMSS8",
+   "size": 7.97,
+   "x": 90.18,
+   "y": 146.99,
+   "width": 2.32
+  },
+  {
+   "text": "a",
+   "font": "QCCBFV+CMSSI10",
+   "size": 10.91,
+   "x": 92.5,
+   "y": 150.22,
+   "width": 5.24
+  },
+  {
+   "text": "i",
+   "font": "KOQZMX+CMSSI8",
+   "size": 7.97,
+   "x": 97.74,
+   "y": 148.51,
+   "width": 2.02
+  },
+  {
+   "text": " ",
+   "font": "KOQZMX+CMSSI8",
+   "size": 7.97,
+   "x": 99.76,
+   "y": 148.51,
+   "width": 1.29
+  },
+  {
+   "text": ". Gr¨",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 101.05,
+   "y": 150.22,
+   "width": 24.33
+  },
+  {
+   "text": "oße, ¨",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 119.92,
+   "y": 150.22,
+   "width": 28.69
+  },
+  {
+   "text": "Uberg¨",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 142.14,
+   "y": 150.22,
+   "width": 32.82
+  },
+  {
+   "text": "ange, ¨",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 169.61,
+   "y": 150.22,
+   "width": 34.21
+  },
+  {
+   "text": "Apfel, ¨",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 197.45,
+   "y": 150.22,
+   "width": 37.11
+  },
+  {
+   "text": "Ofen, Straße.",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 227.82,
+   "y": 150.22,
+   "width": 60.6
+  },
+  {
+   "text": "δ",
+   "font": "VVCZSD+CMMI10",
+   "size": 10.91,
+   "x": 109.46,
+   "y": 125.71,
+   "width": 4.85
+  },
+  {
+   "text": " ",
+   "font": "VVCZSD+CMMI10",
+   "size": 10.91,
+   "x": 114.3,
+   "y": 125.71,
+   "width": 3.44
+  },
+  {
+   "text": ":",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 117.75,
+   "y": 125.71,
+   "width": 3.03
+  },
+  {
+   "text": " ",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 120.78,
+   "y": 125.71,
+   "width": 3.03
+  },
+  {
+   "text": "Q",
+   "font": "QCCBFV+CMSSI10",
+   "size": 10.91,
+   "x": 123.81,
+   "y": 125.71,
+   "width": 8.03
+  },
+  {
+   "text": " ",
+   "font": "QCCBFV+CMSSI10",
+   "size": 10.91,
+   "x": 131.84,
+   "y": 125.71,
+   "width": 3.25
+  },
+  {
+   "text": "×",
+   "font": "BAJSKS+CMSY10",
+   "size": 10.91,
+   "x": 135.09,
+   "y": 125.71,
+   "width": 8.49
+  },
+  {
+   "text": " ",
+   "font": "BAJSKS+CMSY10",
+   "size": 10.91,
+   "x": 143.57,
+   "y": 125.71,
+   "width": 2.42
+  },
+  {
+   "text": "Γ",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 146,
+   "y": 125.71,
+   "width": 5.91
+  },
+  {
+   "text": " ",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 151.9,
+   "y": 125.71,
+   "width": 3.03
+  },
+  {
+   "text": "→",
+   "font": "BAJSKS+CMSY10",
+   "size": 10.91,
+   "x": 154.93,
+   "y": 125.71,
+   "width": 10.91
+  },
+  {
+   "text": " ",
+   "font": "BAJSKS+CMSY10",
+   "size": 10.91,
+   "x": 165.84,
+   "y": 125.71,
+   "width": 3.03
+  },
+  {
+   "text": "Q",
+   "font": "QCCBFV+CMSSI10",
+   "size": 10.91,
+   "x": 168.87,
+   "y": 125.71,
+   "width": 8.03
+  },
+  {
+   "text": " ",
+   "font": "QCCBFV+CMSSI10",
+   "size": 10.91,
+   "x": 176.9,
+   "y": 125.71,
+   "width": 3.25
+  },
+  {
+   "text": "×",
+   "font": "BAJSKS+CMSY10",
+   "size": 10.91,
+   "x": 180.15,
+   "y": 125.71,
+   "width": 8.49
+  },
+  {
+   "text": " ",
+   "font": "BAJSKS+CMSY10",
+   "size": 10.91,
+   "x": 188.64,
+   "y": 125.71,
+   "width": 2.42
+  },
+  {
+   "text": "Γ",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 191.06,
+   "y": 125.71,
+   "width": 5.91
+  },
+  {
+   "text": " ",
+   "font": "EHUXDU+CMSS10",
+   "size": 10.91,
+   "x": 196.97,
+   "y": 125.71,
+   "width": 2.42
+  },
+  {
+   "text": "× {",
+   "font": "BAJSKS+CMSY10",
+   "size": 10.91,
+   "x": 199.4,
+   "y": 125.71,
+   "width": 16.36
+  },
+  {
+   "text": "L",
+   "font": "QCCBFV+CMSSI10",
+   "size": 10.91,
+   "x": 215.76,
+   "y": 125.71,
+   "width": 5.91
+  },
+  {
+   "text": ",",
+   "font": "VVCZSD+CMMI10",
+   "size": 10.91,
+   "x": 221.67,
+   "y": 125.71,
+   "width": 3.03
+  },
+  {
+   "text": " ",
+   "font": "VVCZSD+CMMI10",
+   "size": 10.91,
+   "x": 224.7,
+   "y": 125.71,
+   "width": 1.82
+  },
+  {
+   "text": "R",
+   "font": "QCCBFV+CMSSI10",
+   "size": 10.91,
+   "x": 226.52,
+   "y": 125.71,
+   "width": 7.05
+  },
+  {
+   "text": ",",
+   "font": "VVCZSD+CMMI10",
+   "size": 10.91,
+   "x": 234.47,
+   "y": 125.71,
+   "width": 3.03
+  },
+  {
+   "text": " ",
+   "font": "VVCZSD+CMMI10",
+   "size": 10.91,
+   "x": 237.5,
+   "y": 125.71,
+   "width": 1.82
+  },
+  {
+   "text": "N",
+   "font": "QCCBFV+CMSSI10",
+   "size": 10.91,
+   "x": 239.31,
+   "y": 125.71,
+   "width": 7.73
+  },
+  {
+   "text": "}",
+   "font": "BAJSKS+CMSY10",
+   "size": 10.91,
+   "x": 247.92,
+   "y": 125.71,
+   "width": 5.45
+  }
+ ]
+}

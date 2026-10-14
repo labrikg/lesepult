@@ -39,6 +39,14 @@ export interface LibraryPage {
   plainText: string;
   documentId: string | null;
   tags?: string[];
+  /** The folder it sits in (null or missing: directly in the course). */
+  folderId?: string | null;
+}
+
+export interface LibraryFolder {
+  id: string;
+  name: string;
+  parentId: string | null;
 }
 
 export interface LibraryDocument {
@@ -51,6 +59,7 @@ export interface LibraryCourse {
   name: string;
   pages: LibraryPage[];
   documents: LibraryDocument[];
+  folders?: LibraryFolder[];
 }
 
 export interface LibrarySemester {
@@ -59,8 +68,8 @@ export interface LibrarySemester {
 }
 
 /**
- * The whole library as files: Semester/Course/Page.md, the course's PDFs in Course/PDFs/,
- * snip images in Course/assets/. Each note links to its PDF.
+ * The whole library as files: Semester/Course/[Folder/…]/Page.md, the course's PDFs in
+ * Course/PDFs/, snip images in Course/assets/. Notes link to both with relative paths.
  */
 export function buildLibraryExport(semesters: LibrarySemester[]): ExportEntry[] {
   const entries: ExportEntry[] = [];
@@ -71,6 +80,21 @@ export function buildLibraryExport(semesters: LibrarySemester[]): ExportEntry[] 
     for (const course of semester.courses) {
       const cDir = `${sDir}/${courseNames(safeName(course.name, "Course"))}`;
 
+      // One namer per directory (keyed by folder id, "" = the course folder), shared by
+      // folders and notes in it. "PDFs" and "assets" are taken at the course level.
+      const namers = new Map<string, ReturnType<typeof uniqueNamer>>();
+      const namerFor = (key: string) => {
+        if (!namers.has(key)) {
+          const n = uniqueNamer();
+          if (key === "") {
+            n("PDFs");
+            n("assets");
+          }
+          namers.set(key, n);
+        }
+        return namers.get(key)!;
+      };
+
       // PDFs first, so notes can link to them by their final file name.
       const pdfNames = uniqueNamer();
       const pdfPath = new Map<string, string>();
@@ -80,9 +104,27 @@ export function buildLibraryExport(semesters: LibrarySemester[]): ExportEntry[] 
         entries.push({ path: `${cDir}/PDFs/${file}`, storedPath: doc.storedPath });
       }
 
-      const pageNames = uniqueNamer();
+      // Folder paths relative to the course folder (a parent always resolves before its child).
+      const folders = course.folders ?? [];
+      const byId = new Map(folders.map((f) => [f.id, f]));
+      const folderDir = new Map<string, string[]>();
+      const dirOf = (id: string, guard = 0): string[] => {
+        const known = folderDir.get(id);
+        if (known) return known;
+        const f = byId.get(id);
+        if (!f || guard > 64) return [];
+        const parent = f.parentId && byId.has(f.parentId) ? dirOf(f.parentId, guard + 1) : [];
+        const dir = [...parent, namerFor(f.parentId && byId.has(f.parentId) ? f.parentId : "")(safeName(f.name, "Folder"))];
+        folderDir.set(id, dir);
+        return dir;
+      };
+      for (const f of folders) dirOf(f.id);
+
       const assets = new Set<string>();
       for (const page of course.pages) {
+        const folderId = page.folderId && byId.has(page.folderId) ? page.folderId : null;
+        const dir = folderId ? dirOf(folderId) : [];
+        const up = "../".repeat(dir.length);
         const doc = page.documentId ? course.documents.find((d) => d.id === page.documentId) : undefined;
         const { markdown, assets: pageAssets } = pageToMarkdown(
           {
@@ -90,20 +132,31 @@ export function buildLibraryExport(semesters: LibrarySemester[]): ExportEntry[] 
             content: page.content,
             plainText: page.plainText,
             semesterName: semester.name,
-            courseName: course.name,
-            pdfLink: doc ? { title: doc.title, path: pdfPath.get(doc.id)! } : undefined,
+            courseName: [course.name, ...dir.map((_, i) => folderNameAt(folders, folderId, i))].join(" › "),
+            pdfLink: doc ? { title: doc.title, path: `${up}${pdfPath.get(doc.id)!}` } : undefined,
             tags: page.tags,
           },
-          { assetDir: "assets" },
+          { assetDir: `${up}assets` },
         );
-        entries.push({ path: `${cDir}/${pageNames(safeName(page.title), ".md")}`, text: markdown });
+        const file = namerFor(folderId ?? "")(safeName(page.title), ".md");
+        entries.push({ path: [cDir, ...dir, file].join("/"), text: markdown });
         for (const a of pageAssets) {
-          if (assets.has(a.linkPath)) continue;
-          assets.add(a.linkPath);
-          entries.push({ path: `${cDir}/${a.linkPath}`, storedPath: a.storedPath });
+          const name = a.storedPath.split("/").pop() ?? a.storedPath;
+          if (assets.has(name)) continue;
+          assets.add(name);
+          entries.push({ path: `${cDir}/assets/${name}`, storedPath: a.storedPath });
         }
       }
     }
   }
   return entries;
+}
+
+/** The real (unsanitised) name of the i-th folder on the way to `folderId`, for the note header. */
+function folderNameAt(folders: LibraryFolder[], folderId: string | null, i: number): string {
+  const byId = new Map(folders.map((f) => [f.id, f]));
+  const path: string[] = [];
+  for (let f = folderId ? byId.get(folderId) : undefined; f && path.length < 64; f = f.parentId ? byId.get(f.parentId) : undefined)
+    path.unshift(f.name);
+  return path[i] ?? "";
 }
