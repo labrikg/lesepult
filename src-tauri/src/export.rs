@@ -13,7 +13,7 @@ pub struct ExportEntry {
     /// Relative path inside the export folder, "/"-separated.
     pub path: String,
     pub text: Option<String>,
-    /// A file in Study Hub's data folder to copy (documents/…).
+    /// A file in Lesepult's data folder to copy (documents/…).
     pub stored_path: Option<String>,
 }
 
@@ -113,7 +113,7 @@ mod tests {
     use super::*;
 
     fn tmp() -> PathBuf {
-        let dir = std::env::temp_dir().join(format!("studyhub-export-{}", uuid::Uuid::new_v4()));
+        let dir = std::env::temp_dir().join(format!("lesepult-export-{}", uuid::Uuid::new_v4()));
         fs::create_dir_all(&dir).unwrap();
         dir
     }
@@ -141,9 +141,9 @@ mod tests {
                 stored_path: Some("documents/a.pdf".into()),
             },
         ];
-        let first = export_into(&data, &out, Some("Study Hub export"), &entries).unwrap();
+        let first = export_into(&data, &out, Some("Lesepult export"), &entries).unwrap();
         assert_eq!(first.files, 2);
-        assert!(first.dir.ends_with("Study Hub export"));
+        assert!(first.dir.ends_with("Lesepult export"));
         let dir = PathBuf::from(&first.dir);
         assert_eq!(
             fs::read_to_string(dir.join("Winter/Algorithms/Hashing.md")).unwrap(),
@@ -154,8 +154,8 @@ mod tests {
             b"%PDF-1.7"
         );
 
-        let second = export_into(&data, &out, Some("Study Hub export"), &entries).unwrap();
-        assert!(second.dir.ends_with("Study Hub export (2)"));
+        let second = export_into(&data, &out, Some("Lesepult export"), &entries).unwrap();
+        assert!(second.dir.ends_with("Lesepult export (2)"));
     }
 
     #[test]

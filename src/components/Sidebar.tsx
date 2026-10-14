@@ -21,7 +21,7 @@ export function Sidebar() {
         <span className="brand-mark" aria-hidden="true">
           <BookMarked size={18} strokeWidth={1.8} />
         </span>
-        <span className="brand-name">Study Hub</span>
+        <span className="brand-name">Lesepult</span>
       </div>
 
       <button type="button" className="search-trigger" onClick={() => setSearchOpen(true)}>

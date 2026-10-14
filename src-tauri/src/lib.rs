@@ -34,5 +34,5 @@ pub fn run() {
             export::print_window
         ])
         .run(tauri::generate_context!())
-        .expect("error while running Study Hub");
+        .expect("error while running Lesepult");
 }

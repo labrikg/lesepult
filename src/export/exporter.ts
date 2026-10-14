@@ -86,7 +86,7 @@ export async function exportNotePdf() {
   }
 }
 
-/** Every semester, course, note, PDF and snip as plain files: a backup you can read without Study Hub. */
+/** Every semester, course, note, PDF and snip as plain files: a backup you can read without Lesepult. */
 export async function exportLibrary() {
   try {
     await flush();
@@ -105,7 +105,7 @@ export async function exportLibrary() {
     }));
     const entries = buildLibraryExport(semesters);
     const date = new Date().toISOString().slice(0, 10);
-    const result = await writeBundle(picked, entries, `Study Hub export ${date}`);
+    const result = await writeBundle(picked, entries, `Lesepult export ${date}`);
     notify(`Exported ${result.files} files to “${await basename(result.dir)}”`);
   } catch (e) {
     report(e);

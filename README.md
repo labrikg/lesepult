@@ -1,6 +1,6 @@
-# Study Hub
+# Lesepult
 
-A desktop app for all your study material: notes, lecture PDFs and (soon) flashcards, organised by semester and course.
+*Lesepult* is German for lectern, the stand you put your book on while reading. It's a desktop app for all your study material: notes, lecture PDFs and (soon) flashcards, organised by semester and course.
 Built with Tauri 2, React + TypeScript and SQLite. Runs on macOS and Linux.
 
 ## What works right now
@@ -13,7 +13,7 @@ Built with Tauri 2, React + TypeScript and SQLite. Runs on macOS and Linux.
   Markdown shortcuts work too (`# `, `- `, `1. `, `[] `, `> `). Drag blocks by the ⋮⋮ handle; click below the last block to add one.
 - LaTeX blocks render with KaTeX; click a formula to edit its source. Code blocks have syntax highlighting (pick the language at the top left of the block).
 - Everything saves automatically; full-text search covers titles, text, code and formulas: **⌘K** (macOS) / **Ctrl K** (Linux).
-- **PDFs**: "Attach PDF" copies a file into Study Hub and opens it next to the note (split view). Continuous scrolling,
+- **PDFs**: "Attach PDF" copies a file into Lesepult and opens it next to the note (split view). Continuous scrolling,
   page jump, zoom (− / + / fit width), selectable text. Each PDF remembers where you stopped reading.
   Click the PDF's name in the toolbar to rename it; replace or remove it from there too. A paperclip in the sidebar marks pages with a PDF.
 - **Highlights**: select text on a slide and pick yellow, blue or green (or press **1 / 2 / 3**), or "Comment" to highlight and
@@ -31,7 +31,7 @@ Built with Tauri 2, React + TypeScript and SQLite. Runs on macOS and Linux.
   - *Export note → Markdown file…* writes the note as `.md` (formulas as `$$…$$`, quotes with source and page,
     code with its language) plus an `assets/` folder for snip images.
   - *Export note → PDF…* opens the print dialog with just the note laid out for A4; on macOS choose **PDF → Save as PDF**.
-  - *Export everything…* (sidebar) writes your whole library as a folder you can read without Study Hub:
+  - *Export everything…* (sidebar) writes your whole library as a folder you can read without Lesepult:
     `Semester/Course/Page.md`, each course's PDFs in `PDFs/` (linked from the notes) and snips in `assets/`.
 
 ## Setup
@@ -82,6 +82,7 @@ cd src-tauri && cargo test     # migration test on the same SQLite engine the ap
 | macOS | `~/Library/Application Support/app.studyhub.desktop/` | same |
 | Linux | `~/.config/app.studyhub.desktop/` | `~/.local/share/app.studyhub.desktop/` |
 
+The folder names still say `studyhub`: that's the app's internal ID, kept from before the rename so existing data stays where it is.
 Delete both to start over. Files no longer referenced (e.g. after deleting a course) are cleaned up on the next start.
 
 ## Project layout

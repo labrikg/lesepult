@@ -22,7 +22,7 @@ import { blocksToPlainText, initialBlocks } from "./content";
 import { findExactSlashItem } from "./slashMatch";
 import { useStore } from "../store";
 
-/** BlockNote colours mapped onto the library-desk tokens (studyhub-spec.md). */
+/** BlockNote colours mapped onto the library-desk tokens (the project spec). */
 const libraryTheme: Theme = {
   colors: {
     editor: { text: "#2a2420", background: "#fcfaf5" },

@@ -33,7 +33,7 @@ export function PdfPane() {
           <FileUp size={28} strokeWidth={1.6} aria-hidden="true" />
           <h2>Attach lecture slides</h2>
           <p>
-            The PDF opens next to your note. It's copied into Study Hub, so moving the original won't break
+            The PDF opens next to your note. It's copied into Lesepult, so moving the original won't break
             anything.
           </p>
           <button type="button" className="btn btn--primary" onClick={attachPdf}>

@@ -1,6 +1,6 @@
 import { pageToMarkdown } from "./markdown";
 
-/** One file to write: either text, or a copy of a file from Study Hub's data folder. */
+/** One file to write: either text, or a copy of a file from Lesepult's data folder. */
 export interface ExportEntry {
   /** Relative path inside the export folder, "/"-separated. */
   path: string;

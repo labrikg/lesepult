@@ -32,7 +32,7 @@ export function TopBar() {
             <span className="breadcrumb-current">{where.page.title || "Untitled"}</span>
           </>
         ) : (
-          <span className="breadcrumb-current">Study Hub</span>
+          <span className="breadcrumb-current">Lesepult</span>
         )}
       </nav>
 

@@ -15,7 +15,7 @@ import { InlineInput } from "./InlineInput";
 import { Popover } from "./Popover";
 
 /** Drag payload type for moving pages between courses. */
-export const PAGE_DRAG_TYPE = "application/x-studyhub-page";
+export const PAGE_DRAG_TYPE = "application/x-lesepult-page";
 
 export function PageItem({ page }: { page: PageSummary }) {
   const selectedPageId = useStore((s) => s.selectedPageId);

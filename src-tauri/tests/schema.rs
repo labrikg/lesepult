@@ -12,7 +12,7 @@ async fn pool() -> SqlitePool {
         .connect_with(opts)
         .await
         .unwrap();
-    for m in study_hub_lib::migrations() {
+    for m in lesepult_lib::migrations() {
         sqlx::raw_sql(m.sql)
             .execute(&pool)
             .await

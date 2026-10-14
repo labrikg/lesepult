@@ -79,7 +79,7 @@ function Welcome() {
         <span className="brand-mark brand-mark--lg" aria-hidden="true">
           <BookMarked size={26} strokeWidth={1.6} />
         </span>
-        <h1>{empty ? "Welcome to Study Hub" : "Pick a page"}</h1>
+        <h1>{empty ? "Welcome to Lesepult" : "Pick a page"}</h1>
         <p>
           {empty
             ? "Start with a semester, add your courses to it, then create pages for lectures and exercises."

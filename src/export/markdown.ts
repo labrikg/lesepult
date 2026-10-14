@@ -7,7 +7,7 @@ type Json = Record<string, unknown>;
 const isObj = (v: unknown): v is Json => typeof v === "object" && v !== null && !Array.isArray(v);
 
 export interface ExportAsset {
-  /** Path inside Study Hub's data folder (documents/….png). */
+  /** Path inside Lesepult's data folder (documents/….png). */
   storedPath: string;
   /** Path the Markdown links to, relative to the .md file. */
   linkPath: string;
