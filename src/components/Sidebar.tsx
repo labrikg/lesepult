@@ -1,6 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import {
-  BookMarked,
   ChevronDown,
   ChevronRight,
   Download,
@@ -20,6 +19,7 @@ import { TreeLevel } from "./FolderItem";
 import { dropZone, useDropTarget } from "./dnd";
 import { exportLibrary } from "../export/exporter";
 import { SettingsMenu } from "./SettingsMenu";
+import { BrandMark } from "./BrandMark";
 import { TagChip, TagMenu } from "./Tags";
 
 const isMac = navigator.userAgent.includes("Mac");
@@ -57,9 +57,7 @@ export function Sidebar() {
   return (
     <nav className="sidebar" aria-label="Library">
       <div className="brand">
-        <span className="brand-mark" aria-hidden="true">
-          <BookMarked size={18} strokeWidth={1.8} />
-        </span>
+        <BrandMark size={32} />
         <span className="brand-name">Lesepult</span>
       </div>
 

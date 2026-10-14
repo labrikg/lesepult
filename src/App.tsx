@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { BookMarked, Check, X } from "lucide-react";
+import { Check, X } from "lucide-react";
+import { BrandMark } from "./components/BrandMark";
 import { useStore } from "./store";
 import { Sidebar } from "./components/Sidebar";
 import { TopBar } from "./components/TopBar";
@@ -84,9 +85,7 @@ function Welcome() {
   return (
     <div className="welcome">
       <div className="empty-card">
-        <span className="brand-mark brand-mark--lg" aria-hidden="true">
-          <BookMarked size={26} strokeWidth={1.6} />
-        </span>
+        <BrandMark size={56} />
         <h1>{empty ? "Welcome to Lesepult" : "Pick a page"}</h1>
         <p>
           {empty

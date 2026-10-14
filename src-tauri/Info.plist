@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- The layered icon in Resources/Assets.car (built from icons/Lesepult.icon). macOS uses it to
+	     draw the default, dark, clear and tinted looks; icon.icns is the fallback. -->
+	<key>CFBundleIconName</key>
+	<string>Lesepult</string>
+</dict>
+</plist>
