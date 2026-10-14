@@ -1,0 +1,39 @@
+/* Design tokens — "library desk" theme (see studyhub-spec.md). Light theme; dark follows later. */
+:root {
+  --bg: #f4eee4;
+  --sidebar: #ece3d4;
+  --sidebar-active: #ded2be;
+  --surface: #fcfaf5;
+  --paper: #fffefb;
+  --pdf-backdrop: #e4daca;
+  --toolbar: #ede4d5;
+  --segment: #e6dccb;
+  --field: #f7f2e9;
+  --line: #dcd1bf;
+  --line-strong: #d6cab6;
+
+  --ink: #2a2420;
+  --ink-soft: #4e453d;
+  --muted: #6a5f55;
+  --faint: #8a7e72;
+
+  --accent: #4a6741;
+  --accent-hover: #3f5a37;
+  --on-accent: #fcfaf5;
+  --danger: #a4552c;
+
+  --hl-yellow: #f3d27a;
+  --hl-yellow-tint: #fbf0d2;
+  --hl-blue: #bfd6e8;
+  --hl-green: #c9ddb8;
+
+  --font-display: "Fraunces Variable", Georgia, serif;
+  --font-ui: "Figtree Variable", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --shadow-pop: 0 10px 30px rgba(60, 45, 30, 0.14);
+  --shadow-page: 0 1px 2px rgba(60, 45, 30, 0.12), 0 8px 24px rgba(60, 45, 30, 0.1);
+}
