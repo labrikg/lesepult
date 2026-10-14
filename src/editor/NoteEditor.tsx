@@ -1,7 +1,11 @@
 import { useEffect, useRef } from "react";
 import { Sigma } from "lucide-react";
 import { SourceBlockWithPreviewExtension } from "@blocknote/core";
-import { filterSuggestionItems, insertOrUpdateBlockForSlashMenu } from "@blocknote/core/extensions";
+import {
+  filterSuggestionItems,
+  insertOrUpdateBlockForSlashMenu,
+  SuggestionMenu,
+} from "@blocknote/core/extensions";
 import { BlockNoteView, type Theme } from "@blocknote/mantine";
 import {
   BlockNoteContext,
@@ -15,6 +19,7 @@ import "@blocknote/core/style.css";
 import "@blocknote/mantine/style.css";
 import { schema, type NoteEditor as Editor, type NotePartialBlock } from "./schema";
 import { blocksToPlainText, initialBlocks } from "./content";
+import { findExactSlashItem } from "./slashMatch";
 
 /** BlockNote colours mapped onto the library-desk tokens (studyhub-spec.md). */
 const libraryTheme: Theme = {
@@ -105,6 +110,29 @@ export function NoteEditor({ content, plainText, onChange, onReady }: Props) {
     <BlockNoteContext.Provider value={lightOnly}>
       <div
         className="note-editor-area"
+        onKeyDownCapture={(e) => {
+          const menu = editor.getExtension(SuggestionMenu);
+          if (!menu?.shown()) return;
+          // Tab picks the highlighted slash-menu item (instead of indenting the block).
+          if (e.key === "Tab" && !e.shiftKey) {
+            e.preventDefault();
+            e.stopPropagation();
+            editor.domElement?.dispatchEvent(
+              new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }),
+            );
+            return;
+          }
+          // Typing a complete command and then a space applies it ("/latex␣", "/h2␣", "/code␣").
+          if (e.key === " ") {
+            const item = findExactSlashItem(slashMenuItems(editor), menu.store.state?.query ?? "");
+            if (!item) return;
+            e.preventDefault();
+            e.stopPropagation();
+            menu.closeMenu();
+            menu.clearQuery();
+            item.onItemClick();
+          }
+        }}
         onMouseDown={(e) => {
           // Clicking the empty space below the last block starts a new block there, like Notion.
           const target = e.target as HTMLElement;

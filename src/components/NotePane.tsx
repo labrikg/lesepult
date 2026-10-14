@@ -32,6 +32,11 @@ export function NotePane({ page }: { page: Page }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page.id]);
 
+  // Keep the title field in sync when the page is renamed elsewhere (e.g. from the sidebar).
+  useEffect(() => {
+    if (document.activeElement !== titleRef.current) setTitle(page.title);
+  }, [page.title]);
+
   useEffect(() => {
     const onUnload = () => flush.current();
     window.addEventListener("beforeunload", onUnload);

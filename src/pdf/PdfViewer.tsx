@@ -20,16 +20,25 @@ import { storedFileUrl } from "../lib/files";
 import { getDb } from "../lib/db";
 import { kvGet, kvSet, setDocumentPageCount, type Document } from "../lib/repo";
 import { ConfirmDelete } from "../components/ConfirmDelete";
+import { InlineInput } from "../components/InlineInput";
+import { useHighlights } from "./useHighlights";
+import { readSelection, type ViewerSelection } from "./selection";
+import { HighlightPopover, SelectionToolbar } from "./HighlightMenus";
+import { hitTest, HIGHLIGHT_COLORS } from "./highlights";
+import type { HighlightColor } from "../lib/repo";
+
+type Anchor = ViewerSelection["anchor"];
 
 interface Props {
   doc: Document;
   onReplace(): void;
   onRemove(): void;
+  onRename(title: string): void;
 }
 
 const positionKey = (docId: string) => `pdfPos:${docId}`;
 
-export function PdfViewer({ doc, onReplace, onRemove }: Props) {
+export function PdfViewer({ doc, onReplace, onRemove, onRename }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [pdf, setPdf] = useState<PDFDocumentProxy | null>(null);
   const [sizes, setSizes] = useState<Size[]>([]);
@@ -37,6 +46,7 @@ export function PdfViewer({ doc, onReplace, onRemove }: Props) {
   const [zoom, setZoom] = useState<Zoom>("fit");
   const [viewport, setViewport] = useState({ width: 0, height: 0, scrollTop: 0 });
   const [pageInput, setPageInput] = useState("1");
+  const [renaming, setRenaming] = useState(false);
   const restoreTo = useRef<{ page: number; fraction: number } | null>(null);
 
   /* ---- Load the document ---- */
@@ -134,6 +144,86 @@ export function PdfViewer({ doc, onReplace, onRemove }: Props) {
 
   useEffect(() => setPageInput(String(page)), [page]);
 
+  /* ---- Highlights ---- */
+  const { highlights, byPage, create, update, remove } = useHighlights(doc.id);
+  const [selection, setSelection] = useState<ViewerSelection | null>(null);
+  const [open, setOpen] = useState<{ id: string; anchor: Anchor; focusComment: boolean } | null>(null);
+  const openHighlight = highlights.find((h) => h.id === open?.id) ?? null;
+
+  const highlightSelection = async (color: HighlightColor, thenComment = false) => {
+    if (!selection) return;
+    const made = await create(selection.pages, color);
+    window.getSelection()?.removeAllRanges();
+    const anchor = selection.anchor;
+    setSelection(null);
+    if (thenComment && made.length) setOpen({ id: made[made.length - 1].id, anchor, focusComment: true });
+  };
+
+  // After a mouse-up: a text selection gets the colour toolbar; a plain click on a highlight opens it.
+  const onMouseUp = (e: React.MouseEvent) => {
+    const { clientX, clientY, target } = e;
+    window.setTimeout(() => {
+      const root = scrollRef.current;
+      if (!root) return;
+      const sel = readSelection(root);
+      if (sel) {
+        setOpen(null);
+        setSelection(sel);
+        return;
+      }
+      setSelection(null);
+      const pageEl = (target as HTMLElement).closest<HTMLElement>(".pdf-page");
+      if (!pageEl) return;
+      const box = pageEl.getBoundingClientRect();
+      const x = (clientX - box.left) / box.width;
+      const y = (clientY - box.top) / box.height;
+      const hit = [...(byPage.get(Number(pageEl.dataset.page)) ?? [])]
+        .reverse()
+        .find((h) => hitTest(h.rects, x, y));
+      if (hit) {
+        const r = hit.rects[hit.rects.length - 1];
+        setOpen({
+          id: hit.id,
+          focusComment: false,
+          anchor: {
+            left: box.left + r.x * box.width,
+            top: box.top + r.y * box.height,
+            right: box.left + (r.x + r.w) * box.width,
+            bottom: box.top + (r.y + r.h) * box.height,
+          },
+        });
+      }
+    }, 0);
+  };
+
+  // The toolbar follows the selection: hide it when the selection goes away or the view scrolls.
+  useEffect(() => {
+    if (!selection) return;
+    const onChange = () => {
+      if (window.getSelection()?.isCollapsed) setSelection(null);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t?.closest("input, textarea, [contenteditable='true']")) return;
+      const i = ["1", "2", "3"].indexOf(e.key);
+      if (i >= 0 && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        e.preventDefault();
+        highlightSelection(HIGHLIGHT_COLORS[i].id);
+      } else if (e.key === "Escape") {
+        window.getSelection()?.removeAllRanges();
+        setSelection(null);
+      }
+    };
+    document.addEventListener("selectionchange", onChange);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("selectionchange", onChange);
+      document.removeEventListener("keydown", onKey);
+    };
+    // highlightSelection is recreated every render; the selection is what matters here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selection]);
+
   const goTo = (n: number) => {
     const el = scrollRef.current;
     if (el && layout.tops.length) el.scrollTop = scrollTopFor(layout, n);
@@ -144,9 +234,28 @@ export function PdfViewer({ doc, onReplace, onRemove }: Props) {
   return (
     <section className="pdf-pane" aria-label="PDF viewer">
       <div className="pane-toolbar">
-        <span className="mono truncate" title={doc.fileName}>
-          {doc.fileName}
-        </span>
+        {renaming ? (
+          <InlineInput
+            className="pdf-title-input"
+            label="Rename PDF"
+            placeholder="PDF title"
+            initial={doc.title}
+            onSubmit={(t) => {
+              setRenaming(false);
+              onRename(t);
+            }}
+            onCancel={() => setRenaming(false)}
+          />
+        ) : (
+          <button
+            type="button"
+            className="pdf-title truncate"
+            title={`${doc.fileName} · click to rename`}
+            onClick={() => setRenaming(true)}
+          >
+            {doc.title}
+          </button>
+        )}
         <form
           className="page-jump"
           onSubmit={(e) => {
@@ -205,7 +314,16 @@ export function PdfViewer({ doc, onReplace, onRemove }: Props) {
         />
       </div>
 
-      <div className="pdf-scroll" ref={scrollRef} onScroll={onScroll}>
+      <div
+        className="pdf-scroll"
+        ref={scrollRef}
+        onScroll={() => {
+          onScroll();
+          if (selection) setSelection(null);
+          if (open) setOpen(null);
+        }}
+        onMouseUp={onMouseUp}
+      >
         {error ? (
           <div className="pdf-message" role="alert">
             Couldn't open this PDF: {error}
@@ -228,12 +346,37 @@ export function PdfViewer({ doc, onReplace, onRemove }: Props) {
                   top={layout.tops[n - 1]}
                   width={layout.widths[n - 1]}
                   height={layout.heights[n - 1]}
+                  highlights={byPage.get(n) ?? []}
+                  activeHighlightId={open?.id ?? null}
+                  onOpenHighlight={(id, anchor) => setOpen({ id, anchor, focusComment: false })}
                 />
               );
             })}
           </div>
         )}
       </div>
+      {selection && (
+        <SelectionToolbar
+          anchor={selection.anchor}
+          onPick={(c) => highlightSelection(c)}
+          onComment={() => highlightSelection("yellow", true)}
+        />
+      )}
+      {open && openHighlight && (
+        <HighlightPopover
+          key={openHighlight.id}
+          highlight={openHighlight}
+          anchor={open.anchor}
+          focusComment={open.focusComment}
+          onColor={(color) => update(openHighlight.id, { color })}
+          onComment={(comment) => update(openHighlight.id, { comment })}
+          onDelete={() => {
+            remove(openHighlight.id);
+            setOpen(null);
+          }}
+          onClose={() => setOpen(null)}
+        />
+      )}
     </section>
   );
 }

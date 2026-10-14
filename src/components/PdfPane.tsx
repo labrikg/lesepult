@@ -6,8 +6,12 @@ export function PdfPane() {
   const pdf = useStore((s) => s.pdf);
   const attachPdf = useStore((s) => s.attachPdf);
   const removePdf = useStore((s) => s.removePdf);
+  const renamePdf = useStore((s) => s.renamePdf);
 
-  if (pdf) return <PdfViewer key={pdf.id} doc={pdf} onReplace={attachPdf} onRemove={removePdf} />;
+  if (pdf)
+    return (
+      <PdfViewer key={pdf.id} doc={pdf} onReplace={attachPdf} onRemove={removePdf} onRename={renamePdf} />
+    );
 
   return (
     <section className="pdf-pane" aria-label="PDF viewer">

@@ -133,11 +133,121 @@ describe("repository", () => {
     expect(await repo.detachDocument(db, p2)).toBeNull();
   });
 
+  it("moves a page and its PDF to another course and renames PDFs", async () => {
+    const s = await repo.createSemester(db, "Winter 26/27");
+    const net = await repo.createCourse(db, s, "Datenkommunikation");
+    const crypto = await repo.createCourse(db, s, "Cryptography");
+    await repo.createPage(db, crypto, "Existing");
+    const p = await repo.createPage(db, net, "Untitled");
+    const doc = await repo.createDocument(db, net, {
+      fileName: "rsa.pdf",
+      storedPath: "documents/r.pdf",
+      sha256: "1",
+    });
+    await repo.updatePage(db, p, { documentId: doc });
+
+    await repo.movePage(db, p, crypto);
+    await repo.updatePage(db, p, { title: "RSA" });
+    await repo.renameDocument(db, doc, "  RSA slides ");
+
+    const tree = await repo.loadTree(db);
+    expect(tree[0].courses[0].pages).toEqual([]);
+    expect(tree[0].courses[1].pages.map((x) => x.title)).toEqual(["Existing", "RSA"]);
+    expect(tree[0].courses[1].documents.map((d) => d.title)).toEqual(["RSA slides"]);
+    expect(await repo.searchPages(db, "rsa")).toHaveLength(1);
+  });
+
+  it("leaves a shared PDF in place when only one of its pages moves", async () => {
+    const s = await repo.createSemester(db, "S");
+    const a = await repo.createCourse(db, s, "A");
+    const b = await repo.createCourse(db, s, "B");
+    const p1 = await repo.createPage(db, a, "Lecture");
+    const p2 = await repo.createPage(db, a, "Exercise");
+    const doc = await repo.createDocument(db, a, {
+      fileName: "x.pdf",
+      storedPath: "documents/x.pdf",
+      sha256: "1",
+    });
+    await repo.updatePage(db, p1, { documentId: doc });
+    await repo.updatePage(db, p2, { documentId: doc });
+    await repo.movePage(db, p1, b);
+    expect((await repo.getDocument(db, doc))?.courseId).toBe(a);
+    expect((await repo.getPage(db, p1))?.documentId).toBe(doc);
+    await repo.movePage(db, p1, b); // moving to the same course is a no-op
+    expect((await repo.getPage(db, p1))?.courseId).toBe(b);
+  });
+
+  it("stores, updates and deletes highlights per PDF", async () => {
+    const s = await repo.createSemester(db, "S");
+    const c = await repo.createCourse(db, s, "C");
+    const doc = await repo.createDocument(db, c, {
+      fileName: "a.pdf",
+      storedPath: "documents/a.pdf",
+      sha256: "1",
+    });
+    const rects = [{ x: 0.1, y: 0.4, w: 0.5, h: 0.04 }];
+    const h2 = await repo.createHighlight(db, {
+      documentId: doc,
+      pageNumber: 6,
+      rects,
+      color: "yellow",
+      text: "probe",
+    });
+    const h1 = await repo.createHighlight(db, {
+      documentId: doc,
+      pageNumber: 2,
+      rects,
+      color: "blue",
+      text: "O(1)",
+      comment: "exam",
+    });
+
+    let list = await repo.listHighlights(db, doc);
+    expect(list.map((h) => h.id)).toEqual([h1.id, h2.id]);
+    expect(list[1]).toMatchObject({ pageNumber: 6, rects, color: "yellow", text: "probe", comment: null });
+
+    await repo.updateHighlight(db, h2.id, { color: "green", comment: "  why does order matter? " });
+    await repo.updateHighlight(db, h1.id, { comment: "   " });
+    list = await repo.listHighlights(db, doc);
+    expect(list[1]).toMatchObject({ color: "green", comment: "why does order matter?" });
+    expect(list[0].comment).toBeNull();
+
+    await repo.deleteHighlight(db, h1.id);
+    expect((await repo.listHighlights(db, doc)).map((h) => h.id)).toEqual([h2.id]);
+
+    // Highlights go with their PDF.
+    await db.execute("DELETE FROM documents WHERE id = $1", [doc]);
+    expect(await repo.listHighlights(db, doc)).toEqual([]);
+  });
+
+  it("rejects unknown highlight colours at the database level", async () => {
+    const s = await repo.createSemester(db, "S");
+    const c = await repo.createCourse(db, s, "C");
+    const doc = await repo.createDocument(db, c, {
+      fileName: "a.pdf",
+      storedPath: "documents/a.pdf",
+      sha256: "1",
+    });
+    await expect(
+      repo.createHighlight(db, {
+        documentId: doc,
+        pageNumber: 1,
+        rects: [],
+        color: "pink" as repo.HighlightColor,
+        text: "",
+      }),
+    ).rejects.toThrow();
+  });
+
   it("drops a page's PDF link when the course's document is deleted", async () => {
     const s = await repo.createSemester(db, "S");
     const c = await repo.createCourse(db, s, "C");
     const p = await repo.createPage(db, c, "P");
-    const doc = await repo.createDocument(db, c, { fileName: "a.pdf", storedPath: "documents/a.pdf", sha256: "1" });
+    const doc = await repo.createDocument(db, c, {
+      fileName: "a.pdf",
+      storedPath: "documents/a.pdf",
+      sha256: "1",
+    });
     await repo.updatePage(db, p, { documentId: doc });
     await db.execute("DELETE FROM documents WHERE id = $1", [doc]);
     expect((await repo.getPage(db, p))?.documentId).toBeNull();

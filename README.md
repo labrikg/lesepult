@@ -6,15 +6,21 @@ Built with Tauri 2, React + TypeScript and SQLite. Runs on macOS and Linux.
 ## What works right now
 
 - Sidebar: semesters → courses → pages. Add with **+**, rename with a double-click, delete with the bin (click twice to confirm).
+  Each page has a **⋯** menu (Rename, Move to course…, Delete), and pages can be **dragged onto another course**;
+  a page's PDF and highlights move with it.
 - Block editor (BlockNote): type **/** for headings, lists, checklists, toggles, quotes, tables, code blocks and **LaTeX formulas**.
+  **Tab** picks the highlighted command; typing a full command and a space applies it directly (`/latex␣`, `/h2␣`, `/code␣`).
   Markdown shortcuts work too (`# `, `- `, `1. `, `[] `, `> `). Drag blocks by the ⋮⋮ handle; click below the last block to add one.
 - LaTeX blocks render with KaTeX; click a formula to edit its source. Code blocks have syntax highlighting (pick the language at the top left of the block).
 - Everything saves automatically; full-text search covers titles, text, code and formulas: **⌘K** (macOS) / **Ctrl K** (Linux).
 - **PDFs**: "Attach PDF" copies a file into Study Hub and opens it next to the note (split view). Continuous scrolling,
   page jump, zoom (− / + / fit width), selectable text. Each PDF remembers where you stopped reading.
-  Replace or remove it from the viewer toolbar; a paperclip in the sidebar marks pages with a PDF.
+  Click the PDF's name in the toolbar to rename it; replace or remove it from there too. A paperclip in the sidebar marks pages with a PDF.
+- **Highlights**: select text on a slide and pick yellow, blue or green (or press **1 / 2 / 3**), or "Comment" to highlight and
+  write a note straight away. Click a highlight to recolour it, edit its comment (⌘/Ctrl + Enter saves) or delete it.
+  Highlights with a comment show a small speech bubble.
 - View modes PDF / Split / Note; the app remembers the last page and view.
-- Next: highlights, "Send to note", "Jump to page" and the snip tool.
+- Next: "Send to note", "Jump to page" and the snip tool.
 
 ## Setup
 
@@ -75,7 +81,8 @@ src/
   lib/db.ts               database connection
   lib/repo.ts             all SQL: tree, pages, search, UI state
   editor/                 block editor: schema, LaTeX block, slash menu, content ↔ plain text
-  pdf/                    PDF viewer: PDF.js setup, page rendering + text layer, layout maths
+  pdf/                    PDF viewer: PDF.js setup, page rendering + text layer, layout maths,
+                          highlights (selection → page-relative boxes, toolbar, popover)
   lib/files.ts            PDF import / removal via the Rust commands
   components/             Sidebar, TopBar, NotePane, PdfPane, SearchDialog, …
   styles/tokens.css       design tokens (colours, fonts) from the approved mockup
@@ -93,6 +100,7 @@ New schema changes go in a new `migrations/000N_*.sql` file registered in `lib.r
 
 1. ~~Block editor~~ ✓
 2. ~~PDF import + viewer~~ ✓
-3. **Highlights + comments**, "Send to note", "Jump to page", snip tool
-4. Export notes to Markdown / PDF
-5. v2: flashcards with spaced repetition, deadlines & exam dates, to-dos per course
+3. ~~Highlights + comments~~ ✓
+4. **"Send to note", "Jump to page", snip tool**
+5. Export notes to Markdown / PDF
+6. v2: flashcards with spaced repetition, deadlines & exam dates, to-dos per course

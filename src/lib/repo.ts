@@ -296,6 +296,121 @@ export async function detachDocument(db: Db, pageId: string): Promise<string | n
   return doc?.storedPath ?? null;
 }
 
+export async function renameDocument(db: Db, id: string, title: string) {
+  await db.execute("UPDATE documents SET title = $1 WHERE id = $2", [title.trim(), id]);
+}
+
+/**
+ * Moves a page to another course (appended at the end). Its PDF moves along unless another
+ * page that stays behind still uses it.
+ */
+export async function movePage(db: Db, pageId: string, courseId: string) {
+  const page = await getPage(db, pageId);
+  if (!page || page.courseId === courseId) return;
+  const position = await nextPosition(db, "pages", "course_id", courseId);
+  await db.execute("UPDATE pages SET course_id = $1, position = $2 WHERE id = $3", [
+    courseId,
+    position,
+    pageId,
+  ]);
+  if (page.documentId) {
+    const others = await db.select<Row>(
+      "SELECT COUNT(*) AS n FROM pages WHERE document_id = $1 AND id <> $2 AND course_id <> $3",
+      [page.documentId, pageId, courseId],
+    );
+    if (num(others[0]?.n) === 0) {
+      const docPos = await nextPosition(db, "documents", "course_id", courseId);
+      await db.execute("UPDATE documents SET course_id = $1, position = $2 WHERE id = $3", [
+        courseId,
+        docPos,
+        page.documentId,
+      ]);
+    }
+  }
+}
+
+/* ---------- Highlights ---------- */
+
+export type HighlightColor = "yellow" | "blue" | "green";
+
+/** A rectangle in page-relative units (0..1 of the page width/height). */
+export interface NormRect {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+export interface Highlight {
+  id: string;
+  documentId: string;
+  pageNumber: number;
+  rects: NormRect[];
+  color: HighlightColor;
+  text: string;
+  comment: string | null;
+  createdAt: string;
+}
+
+const toHighlight = (r: Row): Highlight => {
+  let rects: NormRect[] = [];
+  try {
+    rects = JSON.parse(str(r.rects));
+  } catch {
+    rects = [];
+  }
+  return {
+    id: str(r.id),
+    documentId: str(r.document_id),
+    pageNumber: num(r.page_number),
+    rects,
+    color: str(r.color) as HighlightColor,
+    text: str(r.text),
+    comment: r.comment == null || r.comment === "" ? null : str(r.comment),
+    createdAt: str(r.created_at),
+  };
+};
+
+export async function listHighlights(db: Db, documentId: string): Promise<Highlight[]> {
+  const rows = await db.select<Row>(
+    "SELECT * FROM highlights WHERE document_id = $1 ORDER BY page_number, created_at",
+    [documentId],
+  );
+  return rows.map(toHighlight);
+}
+
+export async function createHighlight(
+  db: Db,
+  h: Omit<Highlight, "id" | "createdAt" | "comment"> & { comment?: string | null },
+): Promise<Highlight> {
+  const id = uid();
+  const createdAt = now();
+  await db.execute(
+    `INSERT INTO highlights (id, document_id, page_number, rects, color, text, comment, created_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+    [id, h.documentId, h.pageNumber, JSON.stringify(h.rects), h.color, h.text, h.comment ?? null, createdAt],
+  );
+  return { ...h, id, createdAt, comment: h.comment ?? null };
+}
+
+export async function updateHighlight(
+  db: Db,
+  id: string,
+  patch: { color?: HighlightColor; comment?: string | null },
+) {
+  if (patch.color !== undefined)
+    await db.execute("UPDATE highlights SET color = $1 WHERE id = $2", [patch.color, id]);
+  if (patch.comment !== undefined)
+    await db.execute("UPDATE highlights SET comment = $1 WHERE id = $2", [
+      patch.comment?.trim() ? patch.comment.trim() : null,
+      id,
+    ]);
+}
+
+export async function deleteHighlight(db: Db, id: string) {
+  await db.execute("DELETE FROM highlights WHERE id = $1", [id]);
+}
+
 /** Every file path the database still refers to; anything else in the documents folder is an orphan. */
 export async function listStoredPaths(db: Db): Promise<string[]> {
   const rows = await db.select<Row>(

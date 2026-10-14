@@ -37,8 +37,11 @@ interface State {
   savePage(id: string, patch: PagePatch): Promise<void>;
   deletePage(id: string): Promise<void>;
 
+  movePage(pageId: string, courseId: string): Promise<void>;
+
   attachPdf(): Promise<void>;
   removePdf(): Promise<void>;
+  renamePdf(title: string): Promise<void>;
 }
 
 /** Wraps an action so a database failure shows up in the UI instead of vanishing. */
@@ -171,6 +174,14 @@ export const useStore = create<State>((set, get) => ({
     await reselectIfGone(get);
   }),
 
+  movePage: guard(async (pageId, courseId) => {
+    const db = await getDb();
+    await repo.movePage(db, pageId, courseId);
+    await repo.setCourseCollapsed(db, courseId, false);
+    await get().refresh();
+    await reloadOpenPage(get);
+  }),
+
   attachPdf: guard(async () => {
     const page = get().page;
     if (!page) return;
@@ -184,6 +195,14 @@ export const useStore = create<State>((set, get) => ({
     if (get().viewMode === "note") get().setViewMode("split");
     await get().refresh();
     await reloadOpenPage(get);
+  }),
+
+  renamePdf: guard(async (title) => {
+    const pdf = get().pdf;
+    if (!pdf || !title.trim()) return;
+    await repo.renameDocument(await getDb(), pdf.id, title);
+    set({ pdf: { ...pdf, title: title.trim() } });
+    await get().refresh();
   }),
 
   removePdf: guard(async () => {

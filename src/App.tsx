@@ -28,11 +28,7 @@ export default function App() {
       {error && (
         <div className="toast" role="alert">
           <span>Something went wrong: {error}</span>
-          <button
-            type="button"
-            aria-label="Dismiss"
-            onClick={() => useStore.setState({ error: null })}
-          >
+          <button type="button" aria-label="Dismiss" onClick={() => useStore.setState({ error: null })}>
             <X size={14} aria-hidden="true" />
           </button>
         </div>

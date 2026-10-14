@@ -1,19 +1,10 @@
 import { useState } from "react";
-import {
-  BookMarked,
-  ChevronDown,
-  ChevronRight,
-  Download,
-  FileText,
-  Paperclip,
-  Plus,
-  Search,
-  Settings,
-} from "lucide-react";
+import { BookMarked, ChevronDown, ChevronRight, Download, Plus, Search, Settings } from "lucide-react";
 import { useStore } from "../store";
 import type { CourseNode, SemesterNode } from "../lib/repo";
 import { InlineInput } from "./InlineInput";
 import { ConfirmDelete } from "./ConfirmDelete";
+import { PAGE_DRAG_TYPE, PageItem } from "./PageItem";
 
 const isMac = navigator.userAgent.includes("Mac");
 
@@ -156,13 +147,31 @@ function SemesterSection({ semester }: { semester: SemesterNode }) {
 }
 
 function CourseItem({ course }: { course: CourseNode }) {
-  const { toggleCourse, renameCourse, deleteCourse, addPage, selectPage } = useStore.getState();
-  const selectedPageId = useStore((s) => s.selectedPageId);
+  const { toggleCourse, renameCourse, deleteCourse, addPage, movePage } = useStore.getState();
   const [renaming, setRenaming] = useState(false);
+  const [dropTarget, setDropTarget] = useState(false);
   const Chevron = course.collapsed ? ChevronRight : ChevronDown;
 
   return (
-    <div className="course">
+    <div
+      className={`course${dropTarget ? " course--drop" : ""}`}
+      onDragOver={(e) => {
+        if (!e.dataTransfer.types.includes(PAGE_DRAG_TYPE)) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+        setDropTarget(true);
+      }}
+      onDragLeave={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node)) setDropTarget(false);
+      }}
+      onDrop={(e) => {
+        setDropTarget(false);
+        const pageId = e.dataTransfer.getData(PAGE_DRAG_TYPE);
+        if (!pageId) return;
+        e.preventDefault();
+        movePage(pageId, course.id);
+      }}
+    >
       <div className="row">
         {renaming ? (
           <InlineInput
@@ -206,19 +215,7 @@ function CourseItem({ course }: { course: CourseNode }) {
       {!course.collapsed && (
         <div className="course-body">
           {course.pages.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              className="page-item"
-              aria-current={p.id === selectedPageId ? "page" : undefined}
-              onClick={() => selectPage(p.id)}
-            >
-              <FileText size={15} strokeWidth={1.8} aria-hidden="true" />
-              <span className="truncate">{p.title || "Untitled"}</span>
-              {p.documentId && (
-                <Paperclip size={13} className="row-meta-icon" aria-label="Has a PDF" role="img" />
-              )}
-            </button>
+            <PageItem key={p.id} page={p} />
           ))}
           <button type="button" className="tree-add tree-add--muted" onClick={() => addPage(course.id)}>
             <Plus size={15} aria-hidden="true" />
