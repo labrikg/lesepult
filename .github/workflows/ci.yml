@@ -12,7 +12,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, windows-latest]
+        # windows-2022, not -latest: its Visual Studio 2026 isn't recognised by the node-gyp that npm
+        # runs for better-sqlite3 (the test database), so npm ci fails there.
+        os: [ubuntu-22.04, windows-2022]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v5
