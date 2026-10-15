@@ -16,19 +16,24 @@ export function TodayView() {
   const today = todayISO();
   const courses = tree.flatMap((s) => s.courses);
 
-  const data = useStudy(async (db) => {
-    const [counts, deadlines, todos] = await Promise.all([
-      study.cardCounts(db, new Date().toISOString()),
-      study.listDeadlines(db, { from: today }),
-      study.listTodos(db, { openOnly: true }),
-    ]);
-    return { counts, deadlines, todos };
-  }, [today]);
+  const data = useStudy(
+    async (db) => {
+      const [counts, deadlines, todos] = await Promise.all([
+        study.cardCounts(db, new Date().toISOString()),
+        study.listDeadlines(db, { from: today }),
+        study.listTodos(db, { openOnly: true }),
+      ]);
+      return { counts, deadlines, todos };
+    },
+    [today],
+  );
 
   const counts = data?.counts ?? [];
   const due = counts.reduce((n, c) => n + c.due, 0);
   const totalCards = counts.reduce((n, c) => n + c.total, 0);
-  const soon = (data?.deadlines ?? []).filter((d) => !d.done && d.date <= addDays(today, 60));
+  const soon = (data?.deadlines ?? []).filter(
+    (d) => !d.done && d.date <= addDays(today, 60),
+  );
   const courseOf = (id: string) => courses.find((c) => c.id === id);
 
   return (
@@ -45,14 +50,20 @@ export function TodayView() {
               <Layers size={16} aria-hidden="true" />
               Review
             </h2>
-            <button type="button" className="btn btn--primary btn--sm" disabled={due === 0} onClick={() => startReview(null)}>
+            <button
+              type="button"
+              className="btn btn--primary btn--sm"
+              disabled={due === 0}
+              onClick={() => startReview(null)}
+            >
               <Play size={13} aria-hidden="true" />
               {due ? `Review all ${due}` : "Nothing due"}
             </button>
           </div>
           {totalCards === 0 ? (
             <p className="panel-empty">
-              No flashcards yet. Type <kbd>/card</kbd> in a note, or click a highlight in a PDF and choose “Flashcard”.
+              No flashcards yet. Type <kbd>/card</kbd> in a note, or click a
+              highlight in a PDF and choose “Flashcard”.
             </p>
           ) : (
             <div className="review-courses">
@@ -63,8 +74,16 @@ export function TodayView() {
                   const course = courseOf(c.courseId)!;
                   return (
                     <div key={c.courseId} className="review-course-row">
-                      <button type="button" className="review-course-name" onClick={() => openCourse(c.courseId)}>
-                        <span className="course-dot" style={{ background: course.color }} aria-hidden="true" />
+                      <button
+                        type="button"
+                        className="review-course-name"
+                        onClick={() => openCourse(c.courseId)}
+                      >
+                        <span
+                          className="course-dot"
+                          style={{ background: course.color }}
+                          aria-hidden="true"
+                        />
                         {course.name}
                       </button>
                       <Stat value={c.due} label="due" />
@@ -85,32 +104,42 @@ export function TodayView() {
           )}
         </section>
 
-        <section className="panel" aria-labelledby="soon-title">
-          <div className="panel-head">
-            <h2 id="soon-title">Coming up</h2>
-            <span className="panel-meta">next 60 days</span>
-          </div>
-          <DeadlineList
-            deadlines={soon}
-            showCourse
-            emptyText="No exams or deadlines in the next two months. Add them in a course’s overview."
-          />
-        </section>
+        {/* Two independent columns, so a tall to-do list doesn't push Focus down under Coming up. */}
+        <div className="study-columns">
+          <div className="study-column">
+            <section className="panel" aria-labelledby="soon-title">
+              <div className="panel-head">
+                <h2 id="soon-title">Coming up</h2>
+                <span className="panel-meta">next 60 days</span>
+              </div>
+              <DeadlineList
+                deadlines={soon}
+                showCourse
+                emptyText="No exams or deadlines in the next two months. Add them in a course’s overview."
+              />
+            </section>
 
-        <section className="panel" aria-labelledby="todo-title">
-          <div className="panel-head">
-            <h2 id="todo-title">To-dos</h2>
-            {data && data.todos.length > 0 && <span className="panel-meta">{data.todos.length} open</span>}
+            <FocusPanel />
           </div>
-          <TodoList
-            todos={data?.todos ?? []}
-            courses={courses.map((c) => ({ id: c.id, name: c.name }))}
-            showCourse
-            emptyText={courses.length ? "Nothing open." : "Add a course first."}
-          />
-        </section>
-
-        <FocusPanel />
+          <div className="study-column">
+            <section className="panel" aria-labelledby="todo-title">
+              <div className="panel-head">
+                <h2 id="todo-title">To-dos</h2>
+                {data && data.todos.length > 0 && (
+                  <span className="panel-meta">{data.todos.length} open</span>
+                )}
+              </div>
+              <TodoList
+                todos={data?.todos ?? []}
+                courses={courses.map((c) => ({ id: c.id, name: c.name }))}
+                showCourse
+                emptyText={
+                  courses.length ? "Nothing open." : "Add a course first."
+                }
+              />
+            </section>
+          </div>
+        </div>
       </div>
     </section>
   );

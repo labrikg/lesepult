@@ -2570,8 +2570,25 @@ button.tag-chip-name:hover {
   align-items: start;
 }
 
+/* Panels stacked per column (each column as tall as its own panels). */
+.study-columns {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  align-items: start;
+}
+
+.study-column {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
 @media (max-width: 1100px) {
-  .study-grid {
+  .study-grid,
+  .study-columns {
     grid-template-columns: minmax(0, 1fr);
   }
 }
