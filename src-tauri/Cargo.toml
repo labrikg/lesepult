@@ -1,6 +1,6 @@
 [package]
 name = "lesepult"
-version = "0.2.1"
+version = "0.2.2"
 description = "Lesepult — notes, PDFs and learning material"
 authors = ["Labrik Gashi"]
 license = "GPL-3.0-or-later"
