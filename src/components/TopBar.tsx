@@ -65,7 +65,7 @@ export function TopBar() {
           </>
         ) : (
           <span className="breadcrumb-current">
-            {view.kind === "today" ? "Today" : "Lesepult"}
+            {view.kind === "today" ? "Today" : view.kind === "stats" ? "Statistics" : "Lesepult"}
           </span>
         )}
       </nav>

@@ -22,7 +22,11 @@ import {
 export type ViewMode = "pdf" | "split" | "note";
 
 /** What the main area shows: the open page, the Today overview, or a course's overview. */
-export type MainView = { kind: "page" } | { kind: "today" } | { kind: "course"; courseId: string };
+export type MainView =
+  | { kind: "page" }
+  | { kind: "today" }
+  | { kind: "stats" }
+  | { kind: "course"; courseId: string };
 
 interface State {
   ready: boolean;
@@ -56,14 +60,16 @@ interface State {
   /** Bumped whenever cards, dates or to-dos change, so study views reload. */
   studyVersion: number;
   /** An open review session (null: none); courseId null = all courses. */
-  review: { courseId: string | null } | null;
+  review: { courseId: string | null; cram?: boolean } | null;
   /** Small study facts the sidebar shows: cards due now, and each course's next exam. */
   studyMeta: { dueCards: number; nextExam: Record<string, { date: string; title: string }> };
   loadStudyMeta(): Promise<void>;
   openToday(): void;
   openCourse(courseId: string): void;
   bumpStudy(): void;
-  startReview(courseId: string | null): void;
+  /** Reviews the due cards (of a course, or all); `cram` goes through every card of the course instead. */
+  startReview(courseId: string | null, cram?: boolean): void;
+  openStats(): void;
   endReview(): void;
 
   /** Tags in use (with counts), the open page's tags, and the sidebar's tag filter. */
@@ -186,9 +192,13 @@ export const useStore = create<State>((set, get) => ({
       if (d.kind === "exam" && !nextExam[d.courseId]) nextExam[d.courseId] = { date: d.date, title: d.title };
     set({ studyMeta: { dueCards: counts.reduce((n, c) => n + c.due, 0), nextExam } });
   }),
-  startReview(courseId) {
+  startReview(courseId, cram = false) {
     get().flushNote?.().catch(() => {});
-    set({ review: { courseId } });
+    set({ review: { courseId, cram } });
+  },
+  openStats() {
+    set({ view: { kind: "stats" } });
+    getDb().then((db) => repo.kvSet(db, "mainView", "stats"));
   },
   endReview() {
     set({ review: null });
@@ -270,6 +280,7 @@ export const useStore = create<State>((set, get) => ({
     if (lastPage) await get().selectPage(lastPage);
     // Reopen Today or a course overview if that was showing.
     if (mainView === "today") set({ view: { kind: "today" } });
+    else if (mainView === "stats") set({ view: { kind: "stats" } });
     else if (mainView?.startsWith("course:")) {
       const courseId = mainView.slice("course:".length);
       if (tree.some((s) => s.courses.some((c) => c.id === courseId))) set({ view: { kind: "course", courseId } });

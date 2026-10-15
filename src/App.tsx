@@ -11,6 +11,7 @@ import { InlineInput } from "./components/InlineInput";
 import { applyTheme, onSystemThemeChange } from "./lib/theme";
 import { TodayView } from "./study/TodayView";
 import { CourseView } from "./study/CourseView";
+import { StatsView } from "./study/StatsView";
 import { ReviewSession } from "./study/ReviewSession";
 import { TimerHost } from "./study/Timer";
 
@@ -59,7 +60,7 @@ export default function App() {
       </main>
       <SearchDialog />
       <TimerHost />
-      {review && <ReviewSession courseId={review.courseId} />}
+      {review && <ReviewSession courseId={review.courseId} cram={!!review.cram} />}
       {notice && !error && (
         <div className="toast toast--ok" role="status">
           <Check size={15} aria-hidden="true" />
@@ -98,6 +99,12 @@ function Workspace() {
     return (
       <div className="study-pane">
         <TodayView />
+      </div>
+    );
+  if (view.kind === "stats")
+    return (
+      <div className="study-pane">
+        <StatsView />
       </div>
     );
   if (view.kind === "course")

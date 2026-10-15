@@ -2292,12 +2292,18 @@ button.tag-chip-name:hover {
 
 /* ---------- Sidebar: Today, course overview, exam chips ---------- */
 
+.nav-items {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: -8px;
+}
+
 .today-item {
   display: flex;
   align-items: center;
   gap: 10px;
-  min-height: 36px;
-  margin-top: -8px;
+  min-height: 34px;
   padding: 0 10px;
   border: 0;
   border-radius: var(--radius-sm);
@@ -2517,6 +2523,10 @@ button.tag-chip-name:hover {
 
 .panel-head .btn {
   margin-left: auto;
+}
+
+.panel-head .btn + .btn {
+  margin-left: 0;
 }
 
 .panel-meta {
@@ -3530,4 +3540,493 @@ button.tag-chip-name:hover {
 .focus-bar-value {
   color: var(--muted);
   font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Cram mode ---------- */
+
+.cram-chip {
+  margin-right: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--tag-ochre-bg);
+  color: var(--tag-ochre-fg);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.grade-row--cram .grade {
+  min-width: 160px;
+}
+
+.grade .grade-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.review-foot-note {
+  position: absolute;
+  left: 24px;
+  bottom: 30px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+/* ---------- Statistics ---------- */
+
+.stats-filters {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.stats-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.stats-filter select {
+  max-width: 260px;
+}
+
+.study-grid.is-loading {
+  opacity: 0.55;
+}
+
+.panel-note {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--muted);
+  list-style: none;
+}
+
+.stats-table-toggle {
+  width: 30px;
+  height: 30px;
+  color: var(--muted);
+}
+
+.stats-table-toggle.is-pushed {
+  margin-left: auto;
+}
+
+.stats-table-toggle[aria-pressed="true"] {
+  background: var(--segment);
+  color: var(--ink);
+}
+
+.stats-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.stats-table th {
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.stats-table td {
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--line-card);
+}
+
+.stats-table th:not(:first-child),
+.stats-table td:not(:first-child) {
+  text-align: right;
+}
+
+/* Activity: heatmap plus a column of facts */
+
+.activity {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 24px 40px;
+}
+
+.heatmap-wrap {
+  position: relative;
+  flex: 1 1 520px;
+  min-width: 0;
+}
+
+.heatmap {
+  position: relative;
+  --cell: 15px;
+  --gap: 3px;
+  width: max-content;
+  max-width: 100%;
+}
+
+.heatmap-months,
+.heatmap-grid {
+  display: grid;
+  grid-template-columns: repeat(26, var(--cell));
+  gap: var(--gap);
+}
+
+.heatmap-months {
+  margin-left: 34px;
+  margin-bottom: 4px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.heatmap-months span {
+  white-space: nowrap;
+  overflow: visible;
+}
+
+.heatmap-body {
+  display: flex;
+  gap: 6px;
+}
+
+.heatmap-days {
+  display: grid;
+  grid-template-rows: repeat(7, var(--cell));
+  gap: var(--gap);
+  width: 28px;
+  font-size: 10.5px;
+  line-height: var(--cell);
+  color: var(--muted);
+}
+
+.heatmap-grid {
+  grid-template-rows: repeat(7, var(--cell));
+  grid-auto-flow: column;
+}
+
+.heat {
+  display: block;
+  width: var(--cell);
+  height: var(--cell);
+  border-radius: 3px;
+}
+
+.heatmap-grid .heat:hover {
+  outline: 1.5px solid var(--ink-soft);
+  outline-offset: 1px;
+}
+
+/* One hue, light to dark (and dim to bright in the dark theme, where the accent is lighter). */
+.heat-0 {
+  background: color-mix(in oklab, var(--ink) 9%, var(--paper));
+}
+.heat-1 {
+  background: color-mix(in oklab, var(--accent) 28%, var(--paper));
+}
+.heat-2 {
+  background: color-mix(in oklab, var(--accent) 52%, var(--paper));
+}
+.heat-3 {
+  background: color-mix(in oklab, var(--accent) 76%, var(--paper));
+}
+.heat-4 {
+  background: var(--accent);
+}
+.heat-x {
+  background: transparent;
+}
+
+.heat.is-today {
+  box-shadow: 0 0 0 1.5px var(--ink-soft);
+}
+
+.heatmap-legend {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  margin-top: 10px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.heatmap-legend .heat {
+  width: 12px;
+  height: 12px;
+}
+
+.heatmap-legend span:first-child {
+  margin-right: 4px;
+}
+
+.heatmap-legend span:last-child {
+  margin-left: 4px;
+}
+
+.activity-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(110px, auto));
+  gap: 14px 28px;
+  flex: 0 0 auto;
+}
+
+.fact {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fact-value {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 500;
+  line-height: 1.1;
+}
+
+.fact-unit {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.fact-label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* Tooltip shared by the charts: value first, then what it is */
+
+.chart-tip {
+  position: absolute;
+  z-index: 5;
+  transform: translate(-50%, calc(-100% - 8px));
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--paper);
+  box-shadow: var(--shadow-pop);
+  font-size: 12px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.chart-tip strong {
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.chart-tip span {
+  color: var(--muted);
+}
+
+/* Column charts */
+
+.columns {
+  position: relative;
+}
+
+.columns-plot {
+  display: flex;
+  align-items: flex-end;
+  height: 150px;
+  padding-top: 22px;
+  border-bottom: 1px solid var(--line);
+}
+
+.column-slot {
+  position: relative;
+  flex: 1 1 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.column-bar {
+  position: relative;
+  display: block;
+  width: min(24px, 62%);
+  min-height: 0;
+  border-radius: 4px 4px 0 0;
+  background: var(--accent);
+}
+
+.column-slot:hover .column-bar {
+  background: var(--accent-hover);
+}
+
+.column-value {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.columns-axis {
+  display: flex;
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.columns-axis span {
+  flex: 1 1 0;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Retention and exam readiness: labelled rows with a meter */
+
+.retention-rows,
+.exam-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.retention-rows li {
+  display: grid;
+  grid-template-columns: minmax(0, 160px) minmax(60px, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.retention-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.meter {
+  position: relative;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--segment);
+}
+
+.meter-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+.meter-fill.is-faint {
+  background: color-mix(in oklab, var(--accent) 45%, var(--segment));
+}
+
+.meter-target {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 2px;
+  margin-left: -1px;
+  border-radius: 1px;
+  background: var(--ink-soft);
+}
+
+.retention-value {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.retention-value strong {
+  font-size: 14px;
+}
+
+.retention-value span {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.exam-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line-card);
+}
+
+.exam-row-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.exam-row-course {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.exam-row-course:hover {
+  text-decoration: underline;
+}
+
+.exam-row-when {
+  margin-left: auto;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--tag-ochre-bg);
+  color: var(--tag-ochre-fg);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.exam-row-when.is-close {
+  background: var(--danger-tint);
+  color: var(--danger);
+}
+
+.exam-row-title {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.exam-recall {
+  display: grid;
+  grid-template-columns: minmax(60px, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.exam-row-facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 16px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.exam-row-facts .btn {
+  margin-left: auto;
 }

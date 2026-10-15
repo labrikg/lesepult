@@ -62,6 +62,17 @@ Built with Tauri 2, React + TypeScript and SQLite. Runs on macOS and Linux.
     exams & deadlines (add, edit, tick off), to-dos with due dates and a progress bar.
   - **Today** (top of the sidebar): cards due per course, exams and deadlines in the next 60 days, all open to-dos.
     The badge counts cards due; a course shows "12 d" when its exam is within 30 days.
+  - **Cram mode**: *Cram all* in a course's overview (or under *Exam readiness* in the statistics) goes through every
+    card of the course, weakest first, e.g. before an exam. **1** = Again (comes back a few cards later), **2** or
+    Space = Knew it. Cramming counts as study activity but doesn't change when cards are due.
+  - **Statistics** (sidebar, under *Today*), for all courses or one:
+    - *Activity*: a heatmap of the last six months (cards answered plus focus time per day), streaks, last 30 days.
+    - *Coming due*: learned cards due on each of the next 14 days (overdue ones count for today), plus new cards waiting.
+    - *Focus per week*: Pomodoro minutes over the last 12 weeks.
+    - *Retention*: per course, how often you still knew a learned card in the last 30 days (FSRS aims for 90%).
+    - *Exam readiness*: per course with an exam coming up, the share of its cards you'd likely remember on exam day
+      if you stopped reviewing now (FSRS's forgetting curve; new cards count as not known), cards learned, focus time.
+    - Every chart can be switched to a table (the table icon), and hovering shows each value.
   - **Pomodoro timer** (top bar): 25 min focus, 5 min breaks, a 15 min break after every 4th round (all adjustable
     under *Settings* in the timer). Breaks start by themselves; a soft chime marks each switch, and a notification
     appears when Lesepult isn't the front window. The countdown also shows in the window title.
@@ -145,7 +156,8 @@ src/
   export/                 Markdown converter, library layout, export + print actions
   study/                  Today and course overview, review session, FSRS scheduling (srs.ts),
                           to-do and deadline lists, date helpers, Pomodoro timer (pomodoro.ts:
-                          pure transitions, timerStore.ts: live timer + log, Timer.tsx: UI)
+                          pure transitions, timerStore.ts: live timer + log, Timer.tsx: UI),
+                          statistics (stats.ts: pure aggregation, StatsView.tsx: charts)
   lib/studyRepo.ts        SQL for cards, reviews, deadlines, to-dos, focus time
   lib/pdfTextRepo.ts      SQL for PDF page text: indexing state, search across PDFs
   components/             Sidebar, TopBar, NotePane, PdfPane, SearchDialog, …
@@ -159,6 +171,7 @@ src-tauri/
   migrations/0004_study.sql       cards (mirrored from note blocks), reviews, deadlines, todos
   migrations/0005_focus.sql       focus_sessions (Pomodoro log)
   migrations/0006_pdf_text.sql    pdf_text_fts (page text, trigram index) + documents.text_indexed
+  migrations/0007_cram.sql        reviews.cram (cram answers: activity, not schedule)
   src/lib.rs                registers plugins, migrations and commands
   src/files.rs              import_pdf / save_png / remove_stored_file / prune_stored_files
   src/export.rs             export_bundle (writes/copies files into a chosen folder) / print_window
@@ -179,3 +192,4 @@ New schema changes go in a new `migrations/000N_*.sql` file registered in `lib.r
 8. ~~v2: flashcards with spaced repetition, deadlines & exam dates, to-dos per course~~ ✓
 9. ~~Pomodoro timer with focus time per course~~ ✓
 10. ~~Search inside PDFs, find in PDF~~ ✓
+11. ~~Statistics (heatmap, forecast, retention, focus, exam readiness), cram mode~~ ✓

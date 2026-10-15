@@ -1,20 +1,32 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowUpRight, PartyPopper, X } from "lucide-react";
+import { ArrowUpRight, PartyPopper, RotateCcw, Check, X } from "lucide-react";
 import { getDb } from "../lib/db";
 import * as study from "../lib/studyRepo";
 import type { Card } from "../lib/studyRepo";
 import { useStore } from "../store";
 import { MathText } from "../editor/MathText";
-import { preview } from "./srs";
+import { preview, recallAt } from "./srs";
 
 /** Cards due within this window come back in the same session (like Anki's learn-ahead). */
 const LEARN_AHEAD_MS = 20 * 60_000;
+/** In cram mode, a missed card comes back after this many others. */
+const CRAM_AGAIN_GAP = 3;
 
 /**
  * A review session over the due cards of one course (or all): question, reveal, rate.
  * Space shows the answer, 1–4 rate it (Space after revealing = Good), Esc ends the session.
+ *
+ * Cram mode goes through every card of the course, weakest first, before an exam: "Again" (1)
+ * brings a card back a little later, "Knew it" (2 or Space) puts it away. Cram answers count as
+ * study activity but don't change when cards are due.
  */
-export function ReviewSession({ courseId }: { courseId: string | null }) {
+export function ReviewSession({
+  courseId,
+  cram = false,
+}: {
+  courseId: string | null;
+  cram?: boolean;
+}) {
   const tree = useStore((s) => s.tree);
   const endReview = useStore((s) => s.endReview);
   const [queue, setQueue] = useState<Card[] | null>(null);
@@ -25,21 +37,49 @@ export function ReviewSession({ courseId }: { courseId: string | null }) {
 
   useEffect(() => {
     getDb()
-      .then((db) =>
-        study.dueCards(db, new Date().toISOString(), courseId ?? undefined),
-      )
+      .then(async (db) => {
+        if (!cram)
+          return study.dueCards(
+            db,
+            new Date().toISOString(),
+            courseId ?? undefined,
+          );
+        const now = new Date();
+        const all = await study.listCards(db, courseId ?? undefined);
+        const recall = new Map(
+          all.map((c) => [c.id, recallAt(c.srs, c.state, now)]),
+        );
+        return all.sort((a, b) => recall.get(a.id)! - recall.get(b.id)!);
+      })
       .then((cards) => {
         setQueue(cards);
         setStartTotal(cards.length);
       })
       .catch((e) => useStore.setState({ error: String(e) }));
-  }, [courseId]);
+  }, [courseId, cram]);
 
   const card = queue?.[0] ?? null;
   const options = useMemo(
     () => (card ? preview(card.srs, card.state) : []),
     [card],
   );
+  const cramAnswer = useCallback(
+    async (knew: boolean) => {
+      if (!card || !revealed) return;
+      await study.recordCramAnswer(await getDb(), card.id, knew, card.state);
+      setReviewed((n) => n + 1);
+      setRevealed(false);
+      if (knew) setSeen((s) => new Set(s).add(card.id));
+      setQueue((q) => {
+        if (!q) return q;
+        const rest = q.slice(1);
+        if (!knew) rest.splice(Math.min(CRAM_AGAIN_GAP, rest.length), 0, card);
+        return rest;
+      });
+    },
+    [card, revealed],
+  );
+
   const courseName = courseId
     ? (tree.flatMap((s) => s.courses).find((c) => c.id === courseId)?.name ??
       "Course")
@@ -89,6 +129,18 @@ export function ReviewSession({ courseId }: { courseId: string | null }) {
       } else if (!revealed && (e.key === " " || e.key === "Enter")) {
         e.preventDefault();
         if (card) setRevealed(true);
+      } else if (
+        cram &&
+        revealed &&
+        (e.key === " " || e.key === "Enter" || e.key === "2")
+      ) {
+        e.preventDefault();
+        cramAnswer(true);
+      } else if (cram && revealed && e.key === "1") {
+        e.preventDefault();
+        cramAnswer(false);
+      } else if (cram) {
+        return;
       } else if (revealed && (e.key === " " || e.key === "Enter")) {
         e.preventDefault();
         answer(2);
@@ -99,20 +151,26 @@ export function ReviewSession({ courseId }: { courseId: string | null }) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [answer, card, revealed, endReview]);
+  }, [answer, cramAnswer, cram, card, revealed, endReview]);
 
   return (
     <div
       className="review"
       role="dialog"
       aria-modal="true"
-      aria-label={`Review: ${courseName}`}
+      aria-label={`${cram ? "Cram" : "Review"}: ${courseName}`}
     >
       <header className="review-bar">
-        <span className="review-course">{courseName}</span>
+        <span className="review-course">
+          {cram && <span className="cram-chip">Cram</span>}
+          {courseName}
+        </span>
         {queue && startTotal > 0 && (
           <span className="review-progress" aria-live="polite">
-            {reviewed} reviewed · {queue.length} left
+            {cram
+              ? `${seen.size} of ${startTotal} known`
+              : `${reviewed} reviewed`}{" "}
+            · {queue.length} left
           </span>
         )}
         <span className="toolbar-spacer" />
@@ -131,7 +189,7 @@ export function ReviewSession({ courseId }: { courseId: string | null }) {
         <div className="review-meter" aria-hidden="true">
           <div
             style={{
-              width: `${Math.min(100, (reviewed / Math.max(1, reviewed + queue.length)) * 100)}%`,
+              width: `${Math.min(100, cram ? (seen.size / Math.max(1, startTotal)) * 100 : (reviewed / Math.max(1, reviewed + queue.length)) * 100)}%`,
             }}
           />
         </div>
@@ -178,7 +236,36 @@ export function ReviewSession({ courseId }: { courseId: string | null }) {
                 </button>
               )}
             </article>
-            {revealed ? (
+            {revealed && cram ? (
+              <div
+                className="grade-row grade-row--cram"
+                role="group"
+                aria-label="Did you know it?"
+              >
+                <button
+                  type="button"
+                  className="grade grade--again"
+                  onClick={() => cramAnswer(false)}
+                >
+                  <span className="grade-label">
+                    <RotateCcw size={14} aria-hidden="true" /> Again
+                  </span>
+                  <span className="grade-interval">comes back soon</span>
+                  <kbd>1</kbd>
+                </button>
+                <button
+                  type="button"
+                  className="grade grade--good"
+                  onClick={() => cramAnswer(true)}
+                >
+                  <span className="grade-label">
+                    <Check size={14} aria-hidden="true" /> Knew it
+                  </span>
+                  <span className="grade-interval">done for this session</span>
+                  <kbd>2</kbd>
+                </button>
+              </div>
+            ) : revealed ? (
               <div
                 className="grade-row"
                 role="group"
@@ -207,12 +294,22 @@ export function ReviewSession({ courseId }: { courseId: string | null }) {
           <div className="review-done">
             <PartyPopper size={36} strokeWidth={1.5} aria-hidden="true" />
             <h2>
-              {startTotal === 0 ? "Nothing due right now" : "All done for now"}
+              {startTotal === 0
+                ? cram
+                  ? "No cards in this course"
+                  : "Nothing due right now"
+                : cram
+                  ? "You knew every card"
+                  : "All done for now"}
             </h2>
             <p>
               {startTotal === 0
-                ? "There are no cards to review in this course at the moment. New cards show up as soon as you add them to a note."
-                : `You went through ${seen.size} ${seen.size === 1 ? "card" : "cards"}${reviewed > seen.size ? ` (${reviewed} answers)` : ""}. They come back when they're due.`}
+                ? cram
+                  ? "Add flashcards to this course's notes to cram them."
+                  : "There are no cards to review in this course at the moment. New cards show up as soon as you add them to a note."
+                : cram
+                  ? `${startTotal} ${startTotal === 1 ? "card" : "cards"}, ${reviewed} answers. Cramming doesn't change when cards are due, so your regular reviews stay as they were.`
+                  : `You went through ${seen.size} ${seen.size === 1 ? "card" : "cards"}${reviewed > seen.size ? ` (${reviewed} answers)` : ""}. They come back when they're due.`}
             </p>
             <button
               type="button"
@@ -228,6 +325,11 @@ export function ReviewSession({ courseId }: { courseId: string | null }) {
 
       {card && (
         <footer className="review-foot">
+          {cram && (
+            <span className="review-foot-note">
+              Cramming doesn't change when cards are due.
+            </span>
+          )}
           <button
             type="button"
             className="pdf-block-jump review-open"

@@ -81,3 +81,12 @@ export function formatInterval(ms: number): string {
   const y = d / 365;
   return `${y < 10 ? y.toFixed(1).replace(/\.0$/, "") : Math.round(y)} y`;
 }
+
+/** How likely the card is remembered at a moment (0..1): FSRS's forgetting curve. New cards: 0. */
+export function recallAt(srs: string | null, state: CardState, at: Date): number {
+  if (!srs || state === 0) return 0;
+  const card = load(srs, at);
+  if (!card.stability) return 0;
+  const r = scheduler.get_retrievability(card, at, false);
+  return Number.isFinite(r) ? Math.min(1, Math.max(0, r)) : 0;
+}

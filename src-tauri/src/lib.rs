@@ -45,6 +45,12 @@ pub fn migrations() -> Vec<Migration> {
             sql: include_str!("../migrations/0006_pdf_text.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 7,
+            description: "cram answers",
+            sql: include_str!("../migrations/0007_cram.sql"),
+            kind: MigrationKind::Up,
+        },
     ]
 }
 

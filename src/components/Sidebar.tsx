@@ -11,6 +11,7 @@ import {
   Settings,
   Sun,
   X,
+  ChartColumn,
 } from "lucide-react";
 import { countdown, daysBetween, todayISO } from "../study/dates";
 import { folderPath, useStore } from "../store";
@@ -69,7 +70,10 @@ export function Sidebar() {
         <kbd>{isMac ? "⌘K" : "Ctrl K"}</kbd>
       </button>
 
-      <TodayButton />
+      <div className="nav-items">
+        <TodayButton />
+        <StatsButton />
+      </div>
 
       <div className="tree">
         {filterTag && (
@@ -428,6 +432,21 @@ function TodayButton() {
           {due}
         </span>
       )}
+    </button>
+  );
+}
+
+function StatsButton() {
+  const active = useStore((s) => s.view.kind === "stats");
+  return (
+    <button
+      type="button"
+      className="today-item"
+      aria-current={active ? "page" : undefined}
+      onClick={() => useStore.getState().openStats()}
+    >
+      <ChartColumn size={16} aria-hidden="true" />
+      <span>Statistics</span>
     </button>
   );
 }

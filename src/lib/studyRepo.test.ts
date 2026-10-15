@@ -189,4 +189,38 @@ describe("study tools", () => {
       expect((await study.focusStats(db, at(0))).byCourse.get("")).toBe(55); // time is kept
     });
   });
+  describe("statistics", () => {
+    it("logs answers with their course; cram answers leave the schedule alone", async () => {
+      await study.syncCards(db, page, [{ blockId: "b1", front: "Q", back: "A" }]);
+      const [card] = await study.listCards(db);
+      const good = preview(null, 0, new Date("2026-10-14T10:00:00Z"))[2];
+      await study.recordReview(db, card.id, good.result);
+      const before = (await study.listCards(db))[0];
+      await study.recordCramAnswer(db, card.id, false, before.state);
+      const after = (await study.listCards(db))[0];
+      expect([after.due, after.state, after.srs]).toEqual([before.due, before.state, before.srs]);
+
+      const log = await study.reviewLog(db, "2026-01-01T00:00:00Z");
+      expect(log.map((r) => [r.rating, r.cram, r.courseId])).toEqual([
+        [3, false, course],
+        [1, true, course],
+      ]);
+      expect(await study.reviewLog(db, "2026-01-01T00:00:00Z", other)).toEqual([]);
+    });
+
+    it("lists focus time per course", async () => {
+      const at = (h: number) => `2026-10-14T${String(h).padStart(2, "0")}:00:00.000Z`;
+      await study.logFocus(db, { courseId: course, startedAt: at(8), endedAt: at(9), minutes: 25, completed: true });
+      await study.logFocus(db, { courseId: other, startedAt: at(10), endedAt: at(11), minutes: 50, completed: true });
+      await study.logFocus(db, { courseId: null, startedAt: at(12), endedAt: at(12), minutes: 5, completed: true });
+      expect((await study.focusLog(db, at(0))).length).toBe(3);
+      expect((await study.focusLog(db, at(0), other)).map((f) => f.minutes)).toEqual([50]);
+      expect(await study.focusTotals(db)).toEqual(
+        new Map([
+          [course, 25],
+          [other, 50],
+        ]),
+      );
+    });
+  });
 });

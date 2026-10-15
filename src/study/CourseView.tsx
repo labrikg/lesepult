@@ -6,6 +6,7 @@ import {
   Layers,
   Play,
   Timer as TimerIcon,
+  Zap,
 } from "lucide-react";
 import * as study from "../lib/studyRepo";
 import { useStore } from "../store";
@@ -101,6 +102,17 @@ export function CourseView({ courseId }: { courseId: string }) {
               <Layers size={16} aria-hidden="true" />
               Flashcards
             </h2>
+            {counts.total > 0 && (
+              <button
+                type="button"
+                className="btn btn--ghost btn--sm"
+                title="Go through every card of this course, e.g. before the exam. Doesn't change when cards are due."
+                onClick={() => startReview(courseId, true)}
+              >
+                <Zap size={13} aria-hidden="true" />
+                Cram all
+              </button>
+            )}
             <button
               type="button"
               className="btn btn--primary btn--sm"

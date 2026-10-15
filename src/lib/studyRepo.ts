@@ -159,6 +159,14 @@ export async function recordReview(db: Db, cardId: string, r: ReviewResult) {
   );
 }
 
+/** Logs a cram answer: counts as activity, but leaves the card's schedule alone. */
+export async function recordCramAnswer(db: Db, cardId: string, knew: boolean, state: CardState) {
+  await db.execute(
+    "INSERT INTO reviews (id, card_id, rating, state, scheduled_days, reviewed_at, cram) VALUES ($1, $2, $3, $4, 0, $5, 1)",
+    [uid(), cardId, knew ? 3 : 1, state, now()],
+  );
+}
+
 /** Puts a card back to new (forgets its schedule; the review log stays). */
 export async function resetCard(db: Db, cardId: string) {
   await db.execute("UPDATE cards SET srs = NULL, state = 0, due = $1 WHERE id = $2", [now(), cardId]);
@@ -379,4 +387,61 @@ export async function focusStats(db: Db, since: string): Promise<FocusStats> {
     rounds: rows.reduce((n, r) => n + num(r.rounds), 0),
     byCourse,
   };
+}
+
+/* ---------- Statistics ---------- */
+
+export interface ReviewLogRow {
+  reviewedAt: string;
+  rating: number;
+  /** The card's state before the answer (2 = it was a learned card). */
+  state: number;
+  cram: boolean;
+  courseId: string;
+}
+
+/** Every answer since a moment (of one course, if given), oldest first. */
+export async function reviewLog(db: Db, since: string, courseId?: string | null): Promise<ReviewLogRow[]> {
+  const rows = await db.select<Row>(
+    `SELECT r.reviewed_at, r.rating, r.state, r.cram, p.course_id
+       FROM reviews r JOIN cards k ON k.id = r.card_id JOIN pages p ON p.id = k.page_id
+      WHERE r.reviewed_at >= $1 ${courseId ? "AND p.course_id = $2" : ""}
+      ORDER BY r.reviewed_at`,
+    courseId ? [since, courseId] : [since],
+  );
+  return rows.map((r) => ({
+    reviewedAt: str(r.reviewed_at),
+    rating: num(r.rating),
+    state: num(r.state),
+    cram: num(r.cram) === 1,
+    courseId: str(r.course_id),
+  }));
+}
+
+export interface FocusLogRow {
+  startedAt: string;
+  minutes: number;
+  courseId: string | null;
+}
+
+/** Every focus stretch since a moment (of one course, if given). */
+export async function focusLog(db: Db, since: string, courseId?: string | null): Promise<FocusLogRow[]> {
+  const rows = await db.select<Row>(
+    `SELECT started_at, minutes, course_id FROM focus_sessions
+      WHERE started_at >= $1 ${courseId ? "AND course_id = $2" : ""} ORDER BY started_at`,
+    courseId ? [since, courseId] : [since],
+  );
+  return rows.map((r) => ({
+    startedAt: str(r.started_at),
+    minutes: num(r.minutes),
+    courseId: r.course_id == null ? null : str(r.course_id),
+  }));
+}
+
+/** Total focus minutes per course (all time). */
+export async function focusTotals(db: Db): Promise<Map<string, number>> {
+  const rows = await db.select<Row>(
+    "SELECT course_id, SUM(minutes) AS minutes FROM focus_sessions WHERE course_id IS NOT NULL GROUP BY course_id",
+  );
+  return new Map(rows.map((r) => [str(r.course_id), num(r.minutes)]));
 }
