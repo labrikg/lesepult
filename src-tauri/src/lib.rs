@@ -39,6 +39,12 @@ pub fn migrations() -> Vec<Migration> {
             sql: include_str!("../migrations/0005_focus.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 6,
+            description: "PDF text for search",
+            sql: include_str!("../migrations/0006_pdf_text.sql"),
+            kind: MigrationKind::Up,
+        },
     ]
 }
 

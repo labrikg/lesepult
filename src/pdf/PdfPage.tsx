@@ -1,11 +1,21 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { TextLayer } from "pdfjs-dist";
 import { ArrowUpRight, MessageSquare } from "lucide-react";
 import type { PDFDocumentProxy } from "./pdfjs";
 import type { Highlight, NormRect } from "../lib/repo";
-import { fillFor } from "./highlights";
+import { fillFor, mergeLineRects } from "./highlights";
 import { registerTextLayer } from "./textSelection";
 import { annotateTextLayer } from "./textRuns";
+import { piecesOf } from "./indexer";
+import { findMatches, fold, joinPieces, pieceSegments, toRaw, type Piece } from "./textMatch";
+
+/** Find-in-PDF on this page: what to mark, which match is current, when to scroll to it. */
+export interface PageFind {
+  terms: string[];
+  /** The current match's index on this page, if it's here. */
+  active: number | null;
+  reveal: number;
+}
 
 interface Props {
   pdf: PDFDocumentProxy;
@@ -22,6 +32,9 @@ interface Props {
   onOpenLink(highlightId: string): void;
   snipRect: NormRect | null;
   onOpenHighlight(id: string, anchor: { left: number; top: number; right: number; bottom: number }): void;
+  find: PageFind | null;
+  /** Scroll so this spot (page-relative y, 0..1) is in view; `reveal` says which request it answers. */
+  onReveal(y: number, reveal: number): void;
 }
 
 /**
@@ -42,10 +55,16 @@ export function PdfPage({
   onOpenLink,
   snipRect,
   onOpenHighlight,
+  find,
+  onReveal,
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
+  const pageRef = useRef<HTMLDivElement>(null);
   const [rendered, setRendered] = useState(false);
+  /** The text layer's spans and the text items they show, once rendered. */
+  const layer = useRef<{ pieces: Piece[]; spans: HTMLElement[] } | null>(null);
+  const [layerVersion, setLayerVersion] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -53,6 +72,7 @@ export function PdfPage({
     let textLayer: TextLayer | null = null;
     let unregister: (() => void) | null = null;
     setRendered(false);
+    layer.current = null;
 
     (async () => {
       const page = await pdf.getPage(pageNumber);
@@ -86,6 +106,8 @@ export function PdfPage({
       if (cancelled) return;
       annotateTextLayer(textLayer.textDivs, content.items, page);
       unregister = registerTextLayer(textDiv);
+      layer.current = { pieces: piecesOf(content.items), spans: textLayer.textDivs };
+      setLayerVersion((v) => v + 1);
     })().catch((e) => {
       if (!cancelled && e?.name !== "RenderingCancelledException") console.warn(`page ${pageNumber}`, e);
     });
@@ -98,8 +120,57 @@ export function PdfPage({
     };
   }, [pdf, pageNumber, scale]);
 
+  /* ---- Find: mark the matches on the text layer ---- */
+  const [matches, setMatches] = useState<NormRect[][]>([]);
+  const terms = find?.terms;
+  useLayoutEffect(() => {
+    const l = layer.current;
+    const pageEl = pageRef.current;
+    if (!l || !pageEl || !terms?.length) {
+      setMatches([]);
+      return;
+    }
+    const { raw, starts } = joinPieces(l.pieces);
+    const f = fold(raw);
+    const box = pageEl.getBoundingClientRect();
+    const range = document.createRange();
+    const found = findMatches(f.text, terms).map((m) => {
+      const rects: NormRect[] = [];
+      for (const seg of pieceSegments(starts, l.pieces, toRaw(f, raw, m))) {
+        const node = l.spans[seg.piece]?.firstChild;
+        if (!node?.textContent) continue;
+        range.setStart(node, Math.min(seg.start, node.textContent.length));
+        range.setEnd(node, Math.min(seg.end, node.textContent.length));
+        for (const r of range.getClientRects()) {
+          if (r.width < 0.5 || r.height < 0.5) continue;
+          rects.push({
+            x: (r.left - box.left) / box.width,
+            y: (r.top - box.top) / box.height,
+            w: r.width / box.width,
+            h: r.height / box.height,
+          });
+        }
+      }
+      return mergeLineRects(rects);
+    });
+    setMatches(found.filter((rects) => rects.length));
+  }, [layerVersion, terms, width, height]);
+
+  // The current match: clamp (the page may show a match fewer than its stored text) and reveal it.
+  const active = find?.active != null && matches.length ? Math.min(find.active, matches.length - 1) : null;
+  const revealed = useRef(0);
+  const reveal = find?.reveal ?? 0;
+  useEffect(() => {
+    if (active === null || revealed.current === reveal) return;
+    const r = matches[active]?.[0];
+    if (!r) return;
+    revealed.current = reveal;
+    onReveal(r.y + r.h / 2, reveal);
+  }, [active, reveal, matches, onReveal]);
+
   return (
     <div
+      ref={pageRef}
       className="pdf-page"
       data-page={pageNumber}
       style={
@@ -133,6 +204,24 @@ export function PdfPage({
           )),
         )}
       </div>
+      {matches.length > 0 && (
+        <div className="find-layer" aria-hidden="true">
+          {matches.flatMap((rects, i) =>
+            rects.map((r, j) => (
+              <div
+                key={`${i}-${j}`}
+                className={`find-rect${i === active ? " is-current" : ""}`}
+                style={{
+                  left: `${r.x * 100}%`,
+                  top: `${r.y * 100}%`,
+                  width: `${r.w * 100}%`,
+                  height: `${r.h * 100}%`,
+                }}
+              />
+            )),
+          )}
+        </div>
+      )}
       <div ref={textRef} className="textLayer" />
       <div className="hl-badges">
         {highlights

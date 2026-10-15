@@ -43,6 +43,10 @@
   --hl-blue: #bfd6e8;
   --hl-green: #c9ddb8;
   --hl-blend: multiply;
+  /* Find in PDF: orange, so it doesn't look like a highlight. */
+  --find-match: rgba(236, 140, 40, 0.32);
+  --find-current: rgba(236, 140, 40, 0.62);
+  --find-current-ring: #c8661a;
   --hl-opacity: 0.85;
   --mark: #f3d27a;
   --text-selection: rgba(226, 182, 73, 0.4);

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, FileX2, Maximize2, Minus, Plus, Replace, Scissors } from "lucide-react";
+import { ArrowLeft, FileX2, Maximize2, Minus, Plus, Replace, Scissors, Search } from "lucide-react";
 import { openPdf, type PDFDocumentProxy } from "./pdfjs";
 import { PdfPage } from "./PdfPage";
 import {
@@ -28,6 +28,8 @@ import { hitTest, HIGHLIGHT_COLORS } from "./highlights";
 import { createSnip, type Highlight, type HighlightColor, type NormRect } from "../lib/repo";
 import { useStore } from "../store";
 import { cardBlock, quoteBlock, renderAndStoreSnip, snipBlock } from "./toNote";
+import { usePdfFind } from "./useFind";
+import { FindBar } from "./FindBar";
 
 type Anchor = ViewerSelection["anchor"];
 
@@ -253,6 +255,58 @@ export function PdfViewer({ doc, onReplace, onRemove, onRename, isPageDoc, onSho
     if (el && layout.tops.length) el.scrollTop = scrollTopFor(layout, n);
   };
 
+  /* ---- Find in this PDF (⌘F, or opened from a search hit) ---- */
+  const find = usePdfFind(doc.id, pdf, page);
+  const findInput = useRef<HTMLInputElement>(null);
+  const openFind = find.show;
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === "f") {
+        e.preventDefault();
+        openFind();
+        requestAnimationFrame(() => findInput.current?.select());
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [openFind]);
+
+  const pdfFind = useStore((s) => s.pdfFind);
+  useEffect(() => {
+    if (!pdfFind || pdfFind.documentId !== doc.id || !pdf || !layout.tops.length || !scale) return;
+    useStore.setState({ pdfFind: null });
+    restoreTo.current = null;
+    goTo(pdfFind.pageNumber);
+    openFind(pdfFind.query, pdfFind.pageNumber);
+    // goTo depends on the layout, which is ready here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pdfFind, doc.id, pdf, layout.tops.length, scale, openFind]);
+
+  // Bring the current match's page into view; the page itself then centres the match.
+  const findSpot = find.current;
+  useEffect(() => {
+    if (!findSpot || find.reveal === 0) return;
+    if (findSpot.page < first || findSpot.page > last) goTo(findSpot.page);
+    // Only when a new match becomes current, not on every scroll.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [find.reveal]);
+
+  const handledReveal = useRef(0);
+  const revealMatch = useCallback(
+    (pageNumber: number, y: number, reveal: number) => {
+      const el = scrollRef.current;
+      if (!el || handledReveal.current === reveal || !lastLayout.current.tops.length) return;
+      handledReveal.current = reveal;
+      const lay = lastLayout.current;
+      const target = lay.tops[pageNumber - 1] + y * lay.heights[pageNumber - 1];
+      // Leave the view alone if the match is already comfortably visible.
+      if (target > el.scrollTop + 60 && target < el.scrollTop + el.clientHeight - 60) return;
+      el.scrollTop = Math.max(0, target - el.clientHeight / 3);
+      setViewport((v) => ({ ...v, scrollTop: el.scrollTop }));
+    },
+    [],
+  );
+
   /* ---- "Jump to page" from a note block ---- */
   const pdfJump = useStore((s) => s.pdfJump);
   useLayoutEffect(() => {
@@ -447,6 +501,22 @@ export function PdfViewer({ doc, onReplace, onRemove, onRename, isPageDoc, onSho
         <button
           type="button"
           className="tool-btn"
+          aria-label="Find in this PDF"
+          title="Find in this PDF (⌘F)"
+          aria-pressed={find.open}
+          onClick={() => {
+            if (find.open) find.close();
+            else {
+              openFind();
+              requestAnimationFrame(() => findInput.current?.select());
+            }
+          }}
+        >
+          <Search size={16} aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          className="tool-btn"
           aria-label="Snip a region into the note"
           title="Snip a region into the note (Esc to stop)"
           aria-pressed={snipMode}
@@ -482,6 +552,20 @@ export function PdfViewer({ doc, onReplace, onRemove, onRename, isPageDoc, onSho
         )}
       </div>
 
+      {find.open && (
+        <FindBar
+          inputRef={findInput}
+          query={find.query}
+          onQuery={find.setQuery}
+          total={find.total}
+          position={find.position}
+          loading={find.loading}
+          searching={find.terms.length > 0}
+          onNext={find.next}
+          onPrev={find.prev}
+          onClose={find.close}
+        />
+      )}
       {snipMode && !snipDraft?.done && (
         <div className="snip-hint" role="status">
           Drag over the part of the page you want to snip · Esc to cancel
@@ -528,6 +612,16 @@ export function PdfViewer({ doc, onReplace, onRemove, onRename, isPageDoc, onSho
                   onOpenLink={openLink}
                   onOpenHighlight={(id, anchor) => setOpen({ id, anchor, focusComment: false })}
                   snipRect={snipDraft?.pageNumber === n ? snipDraft.rect : null}
+                  find={
+                    find.terms.length
+                      ? {
+                          terms: find.terms,
+                          active: findSpot?.page === n ? findSpot.index : null,
+                          reveal: find.reveal,
+                        }
+                      : null
+                  }
+                  onReveal={(y, reveal) => revealMatch(n, y, reveal)}
                 />
               );
             })}

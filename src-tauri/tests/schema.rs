@@ -112,3 +112,43 @@ async fn tags_have_a_colour_and_cascade() {
         .get(0);
     assert_eq!(links, 0, "deleting a page removes its tag links");
 }
+
+#[tokio::test]
+async fn pdf_text_finds_parts_of_words_and_goes_with_its_document() {
+    let db = pool().await;
+    sqlx::raw_sql(
+        "INSERT INTO semesters (id, name, position) VALUES ('s1', 'Winter', 1);
+         INSERT INTO courses (id, semester_id, name, color, position) VALUES ('c1', 's1', 'DaKo', '#4A6741', 1);
+         INSERT INTO documents (id, course_id, title, file_name, stored_path, position)
+           VALUES ('d1', 'c1', 'VL 3', 'vl3.pdf', 'documents/a.pdf', 1);
+         INSERT INTO pdf_text_fts (document_id, page_number, text)
+           VALUES ('d1', 4, 'Die Überlastkontrolle von TCP halbiert das Fenster');",
+    )
+    .execute(&db)
+    .await
+    .unwrap();
+
+    for q in ["\"kontrolle\"", "\"uberlast\"", "\"TCP\" \"fenster\""] {
+        let pages: Vec<i64> =
+            sqlx::query("SELECT page_number FROM pdf_text_fts WHERE pdf_text_fts MATCH ?")
+                .bind(q)
+                .fetch_all(&db)
+                .await
+                .unwrap()
+                .iter()
+                .map(|r| r.get(0))
+                .collect();
+        assert_eq!(pages, vec![4], "query {q}");
+    }
+
+    sqlx::query("DELETE FROM courses WHERE id = 'c1'")
+        .execute(&db)
+        .await
+        .unwrap();
+    let left: i64 = sqlx::query("SELECT count(*) FROM pdf_text_fts")
+        .fetch_one(&db)
+        .await
+        .unwrap()
+        .get(0);
+    assert_eq!(left, 0, "a deleted course takes its PDFs' text along");
+}

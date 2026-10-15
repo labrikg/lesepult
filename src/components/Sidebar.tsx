@@ -65,7 +65,7 @@ export function Sidebar() {
 
       <button type="button" className="search-trigger" onClick={() => setSearchOpen(true)}>
         <Search size={16} aria-hidden="true" />
-        <span>Search notes</span>
+        <span>Search</span>
         <kbd>{isMac ? "⌘K" : "Ctrl K"}</kbd>
       </button>
 

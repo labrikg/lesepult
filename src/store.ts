@@ -7,6 +7,7 @@ import { extractCards, extractNoteRefs } from "./editor/content";
 import * as study from "./lib/studyRepo";
 import { todayISO } from "./study/dates";
 import { repairOldPdfText } from "./lib/repair";
+import { indexPdfs } from "./pdf/indexer";
 import {
   applyTheme,
   readDarkPdf,
@@ -40,6 +41,10 @@ interface State {
   focusBlock: { pageId: string; blockId: string; nonce: number } | null;
   /** Ask the PDF viewer to scroll to a page (and highlight). */
   pdfJump: { documentId: string; pageNumber: number; highlightId?: string; nonce: number } | null;
+  /** Open the PDF's find bar with a search (from ⌘K), starting at a page. */
+  pdfFind: { documentId: string; query: string; pageNumber: number; nonce: number } | null;
+  /** While PDFs are being read for search: progress. */
+  pdfIndexing: { done: number; total: number; title: string } | null;
   /** Bumped whenever note ↔ highlight links change, so the viewer reloads its "In note" chips. */
   refsVersion: number;
   /** Short confirmation shown in a toast (e.g. after an export). */
@@ -120,6 +125,8 @@ interface State {
   takeNoteQueue(): unknown[];
   focusNoteBlock(pageId: string, blockId: string): Promise<void>;
   jumpToPdf(documentId: string, pageNumber: number, highlightId?: string): Promise<void>;
+  /** Opens a PDF search hit: its note, the PDF at that page, and the find bar with the search. */
+  openPdfHit(pageId: string, documentId: string, pageNumber: number, query: string): Promise<void>;
 }
 
 /** Wraps an action so a database failure shows up in the UI instead of vanishing. */
@@ -146,6 +153,8 @@ export const useStore = create<State>((set, get) => ({
   noteQueue: [],
   focusBlock: null,
   pdfJump: null,
+  pdfFind: null,
+  pdfIndexing: null,
   refsVersion: 0,
   notice: null,
   flushNote: null,
@@ -265,6 +274,8 @@ export const useStore = create<State>((set, get) => ({
       const courseId = mainView.slice("course:".length);
       if (tree.some((s) => s.courses.some((c) => c.id === courseId))) set({ view: { kind: "course", courseId } });
     }
+    // Read PDFs that search doesn't know yet (in the background).
+    indexPdfs();
     // Housekeeping: drop snips no note uses, then files nothing refers to (e.g. from deleted courses).
     (async () => {
       await repo.deleteUnusedSnips(db);
@@ -446,6 +457,7 @@ export const useStore = create<State>((set, get) => ({
     if (get().viewMode === "note") get().setViewMode("split");
     await get().refresh();
     await reloadOpenPage(get);
+    indexPdfs();
   }),
 
   renamePdf: guard(async (title) => {
@@ -488,6 +500,17 @@ export const useStore = create<State>((set, get) => ({
     }
     if (get().viewMode === "note") get().setViewMode("split");
     set({ pdfJump: { documentId, pageNumber, highlightId, nonce: Date.now() } });
+  }),
+
+  openPdfHit: guard(async (pageId, documentId, pageNumber, query) => {
+    if (get().selectedPageId !== pageId || get().view.kind !== "page") await get().selectPage(pageId);
+    if (get().pdf?.id !== documentId) {
+      const doc = await repo.getDocument(await getDb(), documentId);
+      if (!doc) throw new Error("That PDF has been removed.");
+      set({ pdf: doc });
+    }
+    if (get().viewMode === "note") get().setViewMode("split");
+    set({ pdfFind: { documentId, query, pageNumber, nonce: Date.now() } });
   }),
 
   removePdf: guard(async () => {

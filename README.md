@@ -16,6 +16,12 @@ Built with Tauri 2, React + TypeScript and SQLite. Runs on macOS and Linux.
 - LaTeX blocks render with KaTeX; click a formula to edit its source. Code blocks have syntax highlighting (pick the language at the top left of the block).
 - Everything saves automatically; full-text search covers titles, text, code and formulas: **⌘K** (macOS) / **Ctrl K** (Linux).
   Add `#tag` to a search to narrow it to tagged pages (`#exam hashing`); a search of only `#exam` lists all those pages.
+- **Search inside PDFs**: the same search also looks through the text of every attached PDF, one result per PDF with
+  the best page, an excerpt and the other pages that match. It finds parts of words ("kontrolle" finds
+  "Staukontrolle"), ignores case and accents, and reads across hyphenated line breaks. Opening a result shows the PDF at
+  that page with the matches marked. PDFs are read in the background when attached (older ones on the next start).
+  - **Find in a PDF**: **⌘F** / **Ctrl F** (or the magnifier in the PDF toolbar). Enter / ⇧Enter step through the
+    matches, Esc closes. Scanned PDFs without a text layer can't be searched.
 - **Tags**: *Add tag* under a note's title finds or creates a tag (Enter adds it, Backspace in the empty field removes the last one).
   Click a tag on a note, or under **Tags** in the sidebar, to show only pages with that tag. The **⋯** menu on a sidebar tag
   renames it (renaming to an existing tag merges the two), changes its colour, or deletes it from all pages.
@@ -132,13 +138,16 @@ src/
                           content ↔ plain text and note → highlight links
   pdf/                    PDF viewer: PDF.js setup, page rendering + text layer, layout maths,
                           highlights (selection → page-relative boxes, toolbar, popover),
-                          mathText.ts: selected text → text with inline LaTeX, umlaut repair
+                          mathText.ts: selected text → text with inline LaTeX, umlaut repair,
+                          textMatch.ts: matching for PDF search, indexer.ts: reads PDFs' text,
+                          useFind.ts + FindBar.tsx: find in the open PDF
   lib/files.ts            PDF import / removal via the Rust commands
   export/                 Markdown converter, library layout, export + print actions
   study/                  Today and course overview, review session, FSRS scheduling (srs.ts),
                           to-do and deadline lists, date helpers, Pomodoro timer (pomodoro.ts:
                           pure transitions, timerStore.ts: live timer + log, Timer.tsx: UI)
   lib/studyRepo.ts        SQL for cards, reviews, deadlines, to-dos, focus time
+  lib/pdfTextRepo.ts      SQL for PDF page text: indexing state, search across PDFs
   components/             Sidebar, TopBar, NotePane, PdfPane, SearchDialog, …
   styles/tokens.css       design tokens (colours, fonts): light theme + dark theme
   lib/theme.ts            theme preference, system light/dark, window title bar
@@ -149,6 +158,7 @@ src-tauri/
   migrations/0003_folders.sql     folders (nested) and pages.folder_id
   migrations/0004_study.sql       cards (mirrored from note blocks), reviews, deadlines, todos
   migrations/0005_focus.sql       focus_sessions (Pomodoro log)
+  migrations/0006_pdf_text.sql    pdf_text_fts (page text, trigram index) + documents.text_indexed
   src/lib.rs                registers plugins, migrations and commands
   src/files.rs              import_pdf / save_png / remove_stored_file / prune_stored_files
   src/export.rs             export_bundle (writes/copies files into a chosen folder) / print_window
@@ -168,3 +178,4 @@ New schema changes go in a new `migrations/000N_*.sql` file registered in `lib.r
 7. ~~Folders, formulas from PDFs, app icon~~ ✓
 8. ~~v2: flashcards with spaced repetition, deadlines & exam dates, to-dos per course~~ ✓
 9. ~~Pomodoro timer with focus time per course~~ ✓
+10. ~~Search inside PDFs, find in PDF~~ ✓

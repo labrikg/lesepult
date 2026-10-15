@@ -619,11 +619,15 @@ kbd {
   overflow-y: auto;
 }
 
-.search-results li[aria-selected="true"] button {
+.search-results li[role="option"] {
+  border-radius: var(--radius-sm);
+}
+
+.search-results li[aria-selected="true"] {
   background: var(--hover-menu);
 }
 
-.search-results button {
+.search-hit-main {
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -661,6 +665,74 @@ kbd {
 
 .search-empty {
   padding: 12px 10px;
+  color: var(--muted);
+}
+
+.search-section {
+  padding: 10px 10px 4px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.search-section:first-child {
+  padding-top: 4px;
+}
+
+.search-pdf-icon {
+  flex: none;
+  margin: 0 -1px 0 -2px;
+}
+
+.search-page-badge {
+  flex: none;
+  padding: 0 6px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+
+.search-hit-head .row-meta {
+  margin-left: auto;
+  flex: none;
+}
+
+.search-more-pages {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 0 10px 8px 27px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.search-more-pages > span:first-child {
+  margin-right: 2px;
+}
+
+.search-page-link {
+  padding: 1px 7px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+
+.search-page-link:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.search-indexing {
+  padding: 8px 10px 4px;
+  font-size: 12px;
   color: var(--muted);
 }
 
@@ -883,6 +955,9 @@ kbd {
     --hl-opacity: 0.4;
     --on-page-ink: #ede4d6;
     --on-page-paper: #1d1915;
+    --find-match: rgba(236, 140, 40, 0.3);
+    --find-current: rgba(236, 140, 40, 0.55);
+    --find-current-ring: #f0a050;
   }
 
   :root[data-theme="dark"][data-dark-pdf="on"] .pdf-page {
@@ -1450,6 +1525,69 @@ kbd {
   100% {
     box-shadow: 0 0 0 0 transparent;
   }
+}
+
+/* ---------- Find in PDF ---------- */
+
+.find-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 42px;
+  padding: 0 10px 0 16px;
+  background: var(--toolbar);
+  border-bottom: 1px solid var(--line-pane);
+  color: var(--muted);
+}
+
+.find-input {
+  flex: 1;
+  min-width: 0;
+  min-height: 30px;
+  margin-left: 6px;
+  border: 0;
+  background: transparent;
+  font-size: 14px;
+  color: var(--ink);
+  outline: none;
+}
+
+.find-status {
+  margin-right: 4px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.find-status.is-empty {
+  color: var(--danger, #a4552c);
+}
+
+.find-bar .tool-btn:disabled {
+  opacity: 0.4;
+  background: transparent;
+}
+
+.find-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.find-rect {
+  position: absolute;
+  margin: -1px;
+  padding: 1px;
+  box-sizing: content-box;
+  border-radius: 3px;
+  background: var(--find-match);
+  mix-blend-mode: var(--hl-blend);
+}
+
+.find-rect.is-current {
+  background: var(--find-current);
+  box-shadow: 0 0 0 1.5px var(--find-current-ring);
 }
 
 /* ---------- Snip tool ---------- */
