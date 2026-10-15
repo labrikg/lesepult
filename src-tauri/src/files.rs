@@ -207,7 +207,7 @@ mod tests {
         assert!(resolve_stored(root, "documents/a.pdf").is_ok());
         for bad in [
             "../etc/passwd",
-            "documents/../studyhub.db",
+            "documents/../lesepult.db",
             "/etc/passwd",
             "documents",
             "other/a.pdf",

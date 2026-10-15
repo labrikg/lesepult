@@ -2,7 +2,7 @@
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Lesepult",
   "version": "0.1.0",
-  "identifier": "app.studyhub.desktop",
+  "identifier": "io.github.labrikg.lesepult",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -18,7 +18,8 @@
         "minWidth": 900,
         "minHeight": 600,
         "center": true,
-        "dragDropEnabled": false
+        "dragDropEnabled": false,
+        "create": false
       }
     ],
     "security": {
@@ -44,7 +45,20 @@
     "macOS": {
       "files": {
         "Resources/Assets.car": "./icons/Assets.car"
-      }
+      },
+      "minimumSystemVersion": "12.0"
+    },
+    "category": "Education",
+    "shortDescription": "Notes, lecture PDFs and flashcards in one place",
+    "longDescription": "Lesepult is a desktop study hub: notes in a block editor next to your lecture PDFs, highlights that link both ways, flashcards with spaced repetition, exams and to-dos per course, a Pomodoro timer and statistics.",
+    "publisher": "Labrik Gashi",
+    "copyright": "© 2026 Labrik Gashi. Licensed under the GPL-3.0.",
+    "homepage": "https://github.com/labrikg/lesepult",
+    "license": "GPL-3.0-or-later",
+    "licenseFile": "../LICENSE",
+    "resources": {
+      "../LICENSE": "LICENSE",
+      "../THIRD_PARTY_LICENSES.md": "THIRD_PARTY_LICENSES.md"
     }
   }
 }

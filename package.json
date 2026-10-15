@@ -11,7 +11,8 @@
     "test": "vitest run",
     "preview": "vite preview",
     "tauri": "tauri",
-    "skins": "node scripts/build-skins.mjs"
+    "skins": "node scripts/build-skins.mjs",
+    "licenses": "node scripts/third-party.mjs"
   },
   "dependencies": {
     "@blocknote/code-block": "^0.55.0",
@@ -46,5 +47,10 @@
     "typescript": "~6.0.3",
     "vite": "^8.0.16",
     "vitest": "^5.0.4"
+  },
+  "license": "GPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/labrikg/lesepult"
   }
 }

@@ -171,7 +171,7 @@ mod tests {
         let escape_store = ExportEntry {
             path: "x.pdf".into(),
             text: None,
-            stored_path: Some("../studyhub.db".into()),
+            stored_path: Some("../lesepult.db".into()),
         };
         assert!(export_into(&data, &out, None, &[escape_store]).is_err());
         assert!(export_into(&data, Path::new("relative/dir"), None, &[]).is_err());

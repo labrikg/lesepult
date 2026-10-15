@@ -7,7 +7,7 @@ export interface Db {
 }
 
 /** Must match `DB_URL` in `src-tauri/src/lib.rs` — migrations are registered for this URL. */
-const DB_URL = "sqlite:studyhub.db";
+const DB_URL = "sqlite:lesepult.db";
 
 let instance: Promise<Db> | null = null;
 

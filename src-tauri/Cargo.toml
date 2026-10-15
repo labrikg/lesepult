@@ -3,6 +3,8 @@ name = "lesepult"
 version = "0.1.0"
 description = "Lesepult — notes, PDFs and learning material"
 authors = ["Labrik Gashi"]
+license = "GPL-3.0-or-later"
+repository = "https://github.com/labrikg/lesepult"
 edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
