@@ -61,9 +61,11 @@ GitHub Actions runs all of these on Linux and Windows for every push and pull re
    (NSIS, installs per user) and Linux `.AppImage`, `.deb` and `.rpm`, and attaches them to a **draft** release.
    Check it, write the notes, publish.
 
-Neither the macOS nor the Windows build is signed, so both systems ask users to confirm the first launch (see the
-README). Signing needs a paid Apple Developer account or a Windows code-signing certificate; the workflow notes where
-the secrets go.
+Neither build is signed by a known developer, so both systems ask users to confirm the first launch (see the README).
+The macOS app is signed ad hoc (`"signingIdentity": "-"` in tauri.conf.json): without that, a downloaded app has no
+sealed signature and Apple Silicon Macs call it "damaged" instead of offering "Open Anyway". Proper signing needs a
+paid Apple Developer account (Developer ID + notarization; `APPLE_SIGNING_IDENTITY` then overrides the `-`) or a
+Windows code-signing certificate; the workflow notes where the secrets go.
 
 ## Where data lives
 
