@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Check, X } from "lucide-react";
 import { BrandMark } from "./components/BrandMark";
 import { useStore } from "./store";
@@ -6,6 +6,7 @@ import { Sidebar } from "./components/Sidebar";
 import { TopBar } from "./components/TopBar";
 import { PdfPane } from "./components/PdfPane";
 import { NotePane } from "./components/NotePane";
+import { readSplit, SplitDivider } from "./components/SplitDivider";
 import { SearchDialog } from "./components/SearchDialog";
 import { InlineInput } from "./components/InlineInput";
 import { applyTheme, onSystemThemeChange } from "./lib/theme";
@@ -109,6 +110,8 @@ function Workspace() {
   const page = useStore((s) => s.page);
   const viewMode = useStore((s) => s.viewMode);
   const view = useStore((s) => s.view);
+  const workspace = useRef<HTMLDivElement>(null);
+  const [split, setSplit] = useState(readSplit);
 
   if (view.kind === "today")
     return (
@@ -131,8 +134,13 @@ function Workspace() {
   if (!page) return <Welcome />;
 
   return (
-    <div className={`workspace workspace--${viewMode}`}>
+    <div
+      ref={workspace}
+      className={`workspace workspace--${viewMode}`}
+      style={{ "--split": `${split * 100}%` } as React.CSSProperties}
+    >
       {viewMode !== "note" && <PdfPane />}
+      {viewMode === "split" && <SplitDivider ratio={split} onChange={setSplit} workspace={workspace} />}
       {viewMode !== "pdf" && <NotePane page={page} />}
     </div>
   );

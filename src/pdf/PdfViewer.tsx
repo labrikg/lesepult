@@ -96,15 +96,22 @@ export function PdfViewer({ doc, onReplace, onRemove, onRename, isPageDoc, onSho
   }, [doc.id, doc.storedPath]);
 
   /* ---- Track the viewport size ---- */
+  // While the PDF/note divider is dragged, keep the zoom (and the rendered pages) as they are;
+  // take the new size once the drag ends.
+  const resizingPanes = useStore((s) => s.resizingPanes);
+  const holdSize = useRef(false);
+  holdSize.current = resizingPanes;
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    const ro = new ResizeObserver(() =>
-      setViewport((v) => ({ ...v, width: el.clientWidth, height: el.clientHeight })),
-    );
+    const measure = () => {
+      if (!holdSize.current) setViewport((v) => ({ ...v, width: el.clientWidth, height: el.clientHeight }));
+    };
+    const ro = new ResizeObserver(measure);
     ro.observe(el);
+    if (!resizingPanes) measure();
     return () => ro.disconnect();
-  }, []);
+  }, [resizingPanes]);
 
   const scale = viewport.width ? scaleFor(zoom, viewport.width, sizes) : 0;
   const layout = useMemo(() => computeLayout(sizes, scale), [sizes, scale]);

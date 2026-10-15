@@ -51,6 +51,8 @@ interface State {
   /** The left sidebar is folded away (⌘. or the button in the top bar). */
   sidebarHidden: boolean;
   toggleSidebar(): void;
+  /** True while the PDF/note divider is being dragged (the PDF holds its zoom until it ends). */
+  resizingPanes: boolean;
 
   /** Blocks waiting to be inserted into the open note (e.g. "Send to note" from the PDF). */
   noteQueue: unknown[];
@@ -169,6 +171,7 @@ export const useStore = create<State>((set, get) => ({
   pdf: null,
   viewMode: "split",
   searchOpen: false,
+  resizingPanes: false,
   sidebarHidden: readSidebarHidden(),
   toggleSidebar() {
     const hidden = !get().sidebarHidden;

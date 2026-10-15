@@ -14,6 +14,8 @@ Built with Tauri 2, React + TypeScript and SQLite. Runs on macOS and Linux.
   **Tab** picks the highlighted command; typing a full command and a space applies it directly (`/latex␣`, `/h2␣`, `/code␣`).
   Markdown shortcuts work too (`# `, `- `, `1. `, `[] `, `> `). Drag blocks by the ⋮⋮ handle; click below the last block to add one.
 - LaTeX blocks render with KaTeX; click a formula to edit its source. Code blocks have syntax highlighting (pick the language at the top left of the block).
+- **Resize PDF and note**: drag the line between them in split view; double-click it for half and half. With the line
+  focused, ← / → move it. The width is remembered; the PDF keeps its zoom while you drag and refits when you let go.
 - **Hide the sidebar** for more room: the panel button at the top left, or **⌘.** / **Ctrl .** (remembered across restarts).
   Search (⌘K) and everything else keep working while it's hidden.
 - Everything saves automatically; full-text search covers titles, text, code and formulas: **⌘K** (macOS) / **Ctrl K** (Linux).

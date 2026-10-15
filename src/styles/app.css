@@ -465,7 +465,69 @@ kbd {
 }
 
 .workspace--split {
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  /* The saved share, kept within the panes' minimum widths (440px PDF, 320px note) whatever
+     the window or sidebar does; in a very narrow window both get half. */
+  grid-template-columns:
+    clamp(min(440px, 50%), var(--split, 50%), calc(100% - min(320px, 50%) - 1px))
+    1px minmax(0, 1fr);
+}
+
+/* A narrow PDF pane condenses its toolbar instead of wrapping it. */
+.pdf-pane {
+  container-type: inline-size;
+}
+
+@container (max-width: 560px) {
+  .pane-toolbar {
+    gap: 6px;
+    padding: 0 10px;
+  }
+
+  .zoom-value,
+  .pane-toolbar .toolbar-divider {
+    display: none;
+  }
+}
+
+/* The PDF/note divider: a hairline with a wider grab area around it. */
+.split-divider {
+  position: relative;
+  z-index: 3;
+  background: var(--line-pane);
+  cursor: col-resize;
+  touch-action: none;
+  outline: none;
+}
+
+.split-divider::before {
+  content: "";
+  position: absolute;
+  inset: 0 -5px;
+}
+
+.split-divider:hover,
+.split-divider:focus-visible,
+body.is-resizing-panes .split-divider {
+  background: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+body.is-resizing-panes {
+  cursor: col-resize;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+body.is-resizing-panes .workspace {
+  pointer-events: none;
+}
+
+body.is-resizing-panes .split-divider {
+  pointer-events: auto;
+}
+
+.workspace--split .pdf-pane {
+  border-right: 0;
 }
 
 .workspace--pdf,
@@ -951,6 +1013,12 @@ kbd {
 }
 
 @media print {
+  .split-divider {
+    display: none !important;
+  }
+}
+
+@media print {
   .note-editor .bn-block-content[data-content-type="codeBlock"] .shiki {
     color: var(--shiki-light);
   }
@@ -1007,9 +1075,11 @@ kbd {
 }
 
 .page-jump {
+  flex: none;
   display: flex;
   align-items: center;
   gap: 4px;
+  white-space: nowrap;
   font-size: 12px;
   color: var(--muted);
 }
@@ -1287,6 +1357,7 @@ kbd {
 
 .pdf-title {
   max-width: 220px;
+  min-width: 56px;
   padding: 3px 6px;
   margin-left: -6px;
   border: 0;
