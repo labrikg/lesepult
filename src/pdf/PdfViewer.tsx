@@ -505,7 +505,7 @@ export function PdfViewer({ doc, onReplace, onRemove, onRename, isPageDoc, onSho
           <button type="button" aria-label="Zoom out" onClick={() => setZoom(zoomOut(effectiveZoom))}>
             <Minus size={15} aria-hidden="true" />
           </button>
-          <span className="zoom-value">{Math.round(effectiveZoom * 100)}%</span>
+          <span className="zoom-value">{sizes.length ? `${Math.round(effectiveZoom * 100)}%` : "–"}</span>
           <button type="button" aria-label="Zoom in" onClick={() => setZoom(zoomIn(effectiveZoom))}>
             <Plus size={15} aria-hidden="true" />
           </button>

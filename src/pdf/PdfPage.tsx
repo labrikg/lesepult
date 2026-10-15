@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { TextLayer } from "pdfjs-dist";
+import { TextLayer } from "pdfjs-dist/legacy/build/pdf.mjs";
 import { ArrowUpRight, MessageSquare } from "lucide-react";
 import type { PDFDocumentProxy } from "./pdfjs";
 import type { Highlight, NormRect } from "../lib/repo";
