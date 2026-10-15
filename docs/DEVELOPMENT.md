@@ -1,7 +1,7 @@
 # Developing Lesepult
 
 Lesepult is a [Tauri 2](https://tauri.app) app: a React + TypeScript frontend (Vite) in a Rust shell, with SQLite for
-all data. It runs on macOS and Linux.
+all data. It runs on macOS, Windows and Linux.
 
 ## Setup
 
@@ -23,7 +23,14 @@ sudo apt install libwebkit2gtk-4.1-dev build-essential curl wget file \
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
-Other distributions: see https://tauri.app/start/prerequisites/
+**Windows**
+
+1. [Microsoft C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/): in the installer, tick
+   *Desktop development with C++*.
+2. Rust with [rustup-init.exe](https://rustup.rs) (the default MSVC toolchain), and Node.js from nodejs.org.
+3. WebView2 is part of Windows 11 and current Windows 10.
+
+Other systems and details: https://tauri.app/start/prerequisites/
 
 ## Run and build
 
@@ -31,7 +38,8 @@ Other distributions: see https://tauri.app/start/prerequisites/
 npm install
 npm run tauri dev                      # first run compiles the Rust side, takes a few minutes
 npm run tauri build -- --bundles app   # macOS: Lesepult.app in src-tauri/target/release/bundle/macos/
-npm run tauri build                    # every installer for this platform (.dmg, .deb, .AppImage, …)
+npm run tauri build                    # every installer for this platform (.dmg, .deb, .AppImage, .msi, …)
+npm run tauri build -- --bundles nsis  # Windows: the setup .exe in src-tauri/target/release/bundle/nsis/
 ```
 
 ## Tests
@@ -42,18 +50,20 @@ npx tsc --noEmit               # type check
 cd src-tauri && cargo test     # file handling, data migration, and the schema on the app's own SQLite
 ```
 
-GitHub Actions runs all of these on every push and pull request (`.github/workflows/ci.yml`).
+GitHub Actions runs all of these on Linux and Windows for every push and pull request (`.github/workflows/ci.yml`).
 
 ## Releasing
 
 1. Bump the version in `package.json`, `src-tauri/Cargo.toml` and `src-tauri/tauri.conf.json`.
 2. If dependencies changed: `npm run licenses` (regenerates `THIRD_PARTY_LICENSES.md`, which is bundled with the app).
 3. Commit, then tag and push: `git tag v0.2.0 && git push origin v0.2.0`.
-4. `.github/workflows/release.yml` builds a universal macOS `.dmg` (Apple Silicon + Intel) and Linux `.AppImage`,
-   `.deb` and `.rpm`, and attaches them to a **draft** release. Check it, write the notes, publish.
+4. `.github/workflows/release.yml` builds a universal macOS `.dmg` (Apple Silicon + Intel), a Windows setup `.exe`
+   (NSIS, installs per user) and Linux `.AppImage`, `.deb` and `.rpm`, and attaches them to a **draft** release.
+   Check it, write the notes, publish.
 
-The macOS build is not signed with an Apple Developer ID, so macOS asks users to confirm the first launch (see the
-README). Signing and notarizing needs a paid Apple Developer account; the workflow has the place for the secrets.
+Neither the macOS nor the Windows build is signed, so both systems ask users to confirm the first launch (see the
+README). Signing needs a paid Apple Developer account or a Windows code-signing certificate; the workflow notes where
+the secrets go.
 
 ## Where data lives
 
@@ -65,6 +75,9 @@ README). Signing and notarizing needs a paid Apple Developer account; the workfl
 |---|---|---|
 | macOS | `~/Library/Application Support/io.github.labrikg.lesepult/` | same |
 | Linux | `~/.config/io.github.labrikg.lesepult/` | `~/.local/share/io.github.labrikg.lesepult/` |
+| Windows | `%APPDATA%\io.github.labrikg.lesepult\` | same |
+
+On Windows the web view's storage is in `%LOCALAPPDATA%\io.github.labrikg.lesepult\EBWebView\`.
 
 Until v0.1 the app ID was `app.studyhub.desktop` and the database `studyhub.db`. On start, `src-tauri/src/migrate.rs`
 moves those folders (and on macOS the web view storage) to the new ID once, before the window opens.
@@ -96,6 +109,7 @@ src/
   styles/tokens.css       design tokens (colours, fonts): light + dark
   styles/skins.css        colour themes (generated, see below)
   lib/theme.ts            light/dark preference, colour theme, window title bar
+  lib/platform.ts         macOS / Windows / Linux: shortcut labels (⌘ or Ctrl)
 src-tauri/
   migrations/0001_init.sql        schema: semesters, courses, documents, pages, highlights,
                                   snips, note_refs, tags, kv, pages_fts (FTS5)
@@ -105,7 +119,8 @@ src-tauri/
   migrations/0005_focus.sql       focus_sessions (Pomodoro log)
   migrations/0006_pdf_text.sql    pdf_text_fts (page text, trigram index) + documents.text_indexed
   migrations/0007_cram.sql        reviews.cram (cram answers: activity, not schedule)
-  src/lib.rs                      plugins, migrations, commands; creates the window after migrate.rs
+  src/lib.rs                      plugins, migrations, commands; creates the window after migrate.rs;
+                                  switches off WebView2's browser keys on Windows (F5, Ctrl+R, Ctrl+P)
   src/migrate.rs                  moves data from the old app ID
   src/files.rs                    import_pdf / save_png / remove_stored_file / prune_stored_files
   src/export.rs                   export_bundle (writes/copies files into a chosen folder) / print_window

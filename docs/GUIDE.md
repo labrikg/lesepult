@@ -1,6 +1,6 @@
 # Using Lesepult
 
-Everything Lesepult does, and how. Shortcuts are given for macOS (⌘); on Linux use Ctrl.
+Everything Lesepult does, and how. Shortcuts are given for macOS (⌘); on Windows and Linux use Ctrl.
 
 - Sidebar: semesters → courses → **folders** (nested as deep as you like) → pages. Add with **+**, rename with a
   double-click, delete with the bin (click twice to confirm). The folder button on a course creates a folder; a folder's
@@ -13,15 +13,15 @@ Everything Lesepult does, and how. Shortcuts are given for macOS (⌘); on Linux
 - LaTeX blocks render with KaTeX; click a formula to edit its source. Code blocks have syntax highlighting (pick the language at the top left of the block).
 - **Resize PDF and note**: drag the line between them in split view; double-click it for half and half. With the line
   focused, ← / → move it. The width is remembered; the PDF keeps its zoom while you drag and refits when you let go.
-- **Hide the sidebar** for more room: the panel button at the top left, or **⌘.** / **Ctrl .** (remembered across restarts).
+- **Hide the sidebar** for more room: the panel button at the top left, or **⌘.** / **Ctrl+.** (remembered across restarts).
   Search (⌘K) and everything else keep working while it's hidden.
-- Everything saves automatically; full-text search covers titles, text, code and formulas: **⌘K** (macOS) / **Ctrl K** (Linux).
+- Everything saves automatically; full-text search covers titles, text, code and formulas: **⌘K** / **Ctrl+K**.
   Add `#tag` to a search to narrow it to tagged pages (`#exam hashing`); a search of only `#exam` lists all those pages.
 - **Search inside PDFs**: the same search also looks through the text of every attached PDF, one result per PDF with
   the best page, an excerpt and the other pages that match. It finds parts of words ("kontrolle" finds
   "Staukontrolle"), ignores case and accents, and reads across hyphenated line breaks. Opening a result shows the PDF at
   that page with the matches marked. PDFs are read in the background when attached (older ones on the next start).
-  - **Find in a PDF**: **⌘F** / **Ctrl F** (or the magnifier in the PDF toolbar). Enter / ⇧Enter step through the
+  - **Find in a PDF**: **⌘F** / **Ctrl+F** (or the magnifier in the PDF toolbar). Enter / ⇧Enter step through the
     matches, Esc closes. Scanned PDFs without a text layer can't be searched.
 - **Tags**: *Add tag* under a note's title finds or creates a tag (Enter adds it, Backspace in the empty field removes the last one).
   Click a tag on a note, or under **Tags** in the sidebar, to show only pages with that tag. The **⋯** menu on a sidebar tag
@@ -52,7 +52,7 @@ Everything Lesepult does, and how. Shortcuts are given for macOS (⌘); on Linux
 - **Export**:
   - *Export note → Markdown file…* writes the note as `.md` (formulas as `$$…$$`, quotes with source and page,
     code with its language) plus an `assets/` folder for snip images.
-  - *Export note → PDF…* opens the print dialog with just the note laid out for A4; on macOS choose **PDF → Save as PDF**.
+  - *Export note → PDF…* opens the print dialog with just the note laid out for A4; on macOS choose **PDF → Save as PDF**, on Windows the printer **Microsoft Print to PDF**.
   - *Export everything…* (sidebar) writes your whole library as a folder you can read without Lesepult:
     `Semester/Course/[Folder/…]/Page.md`, each course's PDFs in `PDFs/` (linked from the notes) and snips in `assets/`.
   - Exported notes list their tags as hashtags (`Tags: #exam #AVL-trees`), which Obsidian and similar apps pick up.

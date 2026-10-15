@@ -5,7 +5,7 @@
 <h1 align="center">Lesepult</h1>
 
 <p align="center">
-  Notes, lecture PDFs and flashcards in one place: a desktop study hub for macOS and Linux.
+  Notes, lecture PDFs and flashcards in one place: a desktop study hub for macOS, Windows and Linux.
 </p>
 
 <p align="center">
@@ -26,7 +26,7 @@ on your computer in a single local database; nothing is sent anywhere.
   Highlight on the slide, send it to the note as a quote that jumps back to the page, or snip a region as an image.
   Text from LaTeX slides keeps its formulas (`$i_1 \cdot i_2 \in \mathbf{N}$`) and its umlauts.
 - **Search everything.** ⌘K searches notes and the text of every PDF, finds parts of German compound words
-  ("kontrolle" → "Staukontrolle"), and opens the slide with the matches marked. ⌘F finds inside the open PDF.
+  ("kontrolle" → "Staukontrolle"), and opens the slide with the matches marked. ⌘F finds inside the open PDF (Ctrl+K and Ctrl+F on Windows and Linux).
 - **Flashcards with spaced repetition.** Make a card from any highlight or with `/card`; reviews are scheduled with
   FSRS, as in modern Anki. Before an exam, *cram mode* goes through a whole course.
 - **Exams, deadlines and to-dos** per course, with a *Today* view of what's due and coming up.
@@ -60,10 +60,13 @@ Lesepult isn't signed with a paid Apple developer certificate yet, so macOS bloc
 
 After that it opens normally.
 
+**Windows** (10 and 11): run `Lesepult_…_x64-setup.exe`. It installs Lesepult for your user account, without
+administrator rights, and adds it to the Start menu. The installer isn't signed with a paid certificate yet, so
+Windows SmartScreen may warn that it "protected your PC": click **More info**, then **Run anyway**. Lesepult uses the
+Microsoft Edge WebView2 runtime, which Windows 11 has built in; on Windows 10 the installer fetches it if it's missing.
+
 **Linux:** the `.AppImage` runs on most distributions (`chmod +x Lesepult_*.AppImage`, then start it). There are also
 `.deb` (Debian, Ubuntu) and `.rpm` (Fedora) packages.
-
-Windows isn't supported for now.
 
 ## Build from source
 
@@ -74,7 +77,7 @@ npm install
 npm run tauri dev
 ```
 
-You need Node.js 20+ and Rust; see [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for the system packages, tests and the
+You need Node.js 20+ and Rust (on Windows also the Microsoft C++ Build Tools); see [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for the system packages, tests and the
 project layout.
 
 ## Licence
