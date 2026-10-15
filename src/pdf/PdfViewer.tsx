@@ -45,6 +45,18 @@ interface Props {
 
 const positionKey = (docId: string) => `pdfPos:${docId}`;
 
+/** Device pixel ratio, updated when the window moves between a Retina and a normal display. */
+function useDevicePixelRatio() {
+  const [dpr, setDpr] = useState(() => window.devicePixelRatio || 1);
+  useEffect(() => {
+    const mq = window.matchMedia(`(resolution: ${dpr}dppx)`);
+    const update = () => setDpr(window.devicePixelRatio || 1);
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, [dpr]);
+  return dpr;
+}
+
 export function PdfViewer({ doc, onReplace, onRemove, onRename, isPageDoc, onShowPagePdf }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [pdf, setPdf] = useState<PDFDocumentProxy | null>(null);
@@ -116,6 +128,9 @@ export function PdfViewer({ doc, onReplace, onRemove, onRename, isPageDoc, onSho
   const scale = viewport.width ? scaleFor(zoom, viewport.width, sizes) : 0;
   const layout = useMemo(() => computeLayout(sizes, scale), [sizes, scale]);
   const contentWidth = Math.max(0, ...layout.widths) + PAGE_PADDING * 2;
+  const dpr = useDevicePixelRatio();
+  /** Pages are centred on whole pixels (see .pdf-page). */
+  const pageLeft = (w: number) => Math.max(PAGE_PADDING, Math.floor((Math.max(viewport.width, contentWidth) - w) / 2));
   const page = currentPage(layout, viewport.scrollTop, viewport.height);
   const [first, last] = visibleRange(layout, viewport.scrollTop, viewport.height);
 
@@ -609,7 +624,9 @@ export function PdfViewer({ doc, onReplace, onRemove, onRename, isPageDoc, onSho
                   pdf={pdf}
                   pageNumber={n}
                   scale={scale}
+                  dpr={dpr}
                   top={layout.tops[n - 1]}
+                  left={pageLeft(layout.widths[n - 1])}
                   width={layout.widths[n - 1]}
                   height={layout.heights[n - 1]}
                   highlights={byPage.get(n) ?? []}

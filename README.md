@@ -30,7 +30,7 @@ Built with Tauri 2, React + TypeScript and SQLite. Runs on macOS and Linux.
   Click a tag on a note, or under **Tags** in the sidebar, to show only pages with that tag. The **⋯** menu on a sidebar tag
   renames it (renaming to an existing tag merges the two), changes its colour, or deletes it from all pages.
 - **Appearance** (Settings in the sidebar): light, dark ("library at night") or match the system. In the dark theme,
-  *Dark PDF pages* turns slides into light-on-dark too, snips included. Printing and PDF export always use the light look.
+  Slides keep their true colours in the dark theme; *Dark PDF pages* turns them into light-on-dark, snips included. Printing and PDF export always use the light look.
 - **PDFs**: "Attach PDF" copies a file into Lesepult and opens it next to the note (split view). Continuous scrolling,
   page jump, zoom (− / + / fit width), selectable text. Each PDF remembers where you stopped reading.
   Click the PDF's name in the toolbar to rename it; replace or remove it from there too. A paperclip in the sidebar marks pages with a PDF.

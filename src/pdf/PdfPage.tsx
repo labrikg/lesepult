@@ -22,7 +22,10 @@ interface Props {
   pageNumber: number;
   /** PDF points → CSS px. */
   scale: number;
+  /** Device pixels per CSS pixel (2 on Retina); the canvas is drawn at exactly this resolution. */
+  dpr: number;
   top: number;
+  left: number;
   width: number;
   height: number;
   highlights: Highlight[];
@@ -45,7 +48,9 @@ export function PdfPage({
   pdf,
   pageNumber,
   scale,
+  dpr,
   top,
+  left,
   width,
   height,
   highlights,
@@ -82,17 +87,17 @@ export function PdfPage({
       const textDiv = textRef.current;
       if (!canvas || !textDiv) return;
 
-      // Render at device resolution so slides stay crisp on Retina screens.
-      const dpr = window.devicePixelRatio || 1;
-      canvas.width = Math.floor(viewport.width * dpr);
-      canvas.height = Math.floor(viewport.height * dpr);
+      // One canvas pixel per screen pixel: the canvas gets exactly the page box's size in device
+      // pixels and the page is drawn to fill it, so the browser never has to resample (blur) it.
+      canvas.width = Math.max(1, Math.round(width * dpr));
+      canvas.height = Math.max(1, Math.round(height * dpr));
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
       renderTask = page.render({
         canvasContext: ctx,
         canvas,
         viewport,
-        transform: dpr === 1 ? undefined : [dpr, 0, 0, dpr, 0, 0],
+        transform: [canvas.width / viewport.width, 0, 0, canvas.height / viewport.height, 0, 0],
       });
       await renderTask.promise;
       if (cancelled) return;
@@ -118,7 +123,7 @@ export function PdfPage({
       textLayer?.cancel();
       unregister?.();
     };
-  }, [pdf, pageNumber, scale]);
+  }, [pdf, pageNumber, scale, dpr, width, height]);
 
   /* ---- Find: mark the matches on the text layer ---- */
   const [matches, setMatches] = useState<NormRect[][]>([]);
@@ -176,6 +181,7 @@ export function PdfPage({
       style={
         {
           top,
+          left,
           width,
           height,
           "--total-scale-factor": scale,
