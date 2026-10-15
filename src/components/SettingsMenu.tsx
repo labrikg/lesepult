@@ -2,7 +2,32 @@ import type { RefObject } from "react";
 import { Check, Monitor, Moon, Sun } from "lucide-react";
 import { useStore } from "../store";
 import type { ThemePref } from "../lib/theme";
+import { SKINS, type SkinSwatch } from "../lib/skins";
 import { Popover } from "./Popover";
+
+/** The built-in look first, then the generated themes (see scripts/build-skins.mjs). */
+const ALL_SKINS = [
+  {
+    id: "lesepult",
+    name: "Lesepult",
+    light: { bg: "#f4eee4", paper: "#fffefb", ink: "#2a2420", accent: "#4a6741", line: "#dcd1bf" },
+    dark: { bg: "#1d1915", paper: "#2a251f", ink: "#ede4d6", accent: "#8fae7f", line: "#352f28" },
+  },
+  ...SKINS,
+];
+
+/** A tiny picture of the theme: its page colour, a card with two lines of text and an accent. */
+function SkinPreview({ s }: { s: SkinSwatch }) {
+  return (
+    <span className="skin-preview" style={{ background: s.bg, borderColor: s.line }} aria-hidden="true">
+      <span className="skin-preview-card" style={{ background: s.paper, borderColor: s.line }}>
+        <span style={{ background: s.ink, width: "70%" }} />
+        <span style={{ background: s.ink, width: "45%", opacity: 0.55 }} />
+        <span className="skin-preview-accent" style={{ background: s.accent }} />
+      </span>
+    </span>
+  );
+}
 
 const THEMES: { value: ThemePref; label: string; icon: typeof Sun }[] = [
   { value: "system", label: "Match system", icon: Monitor },
@@ -14,11 +39,29 @@ export function SettingsMenu({ anchor, onClose }: { anchor: RefObject<HTMLElemen
   const themePref = useStore((s) => s.themePref);
   const theme = useStore((s) => s.theme);
   const darkPdf = useStore((s) => s.darkPdf);
-  const { setThemePref, setDarkPdf } = useStore.getState();
+  const skin = useStore((s) => s.skin);
+  const { setThemePref, setDarkPdf, setSkin } = useStore.getState();
 
   return (
-    <Popover anchor={anchor} onClose={onClose} label="Settings" width={272}>
-      <div className="menu-label">Appearance</div>
+    <Popover anchor={anchor} onClose={onClose} label="Settings" width={296}>
+      <div className="menu-label">Theme</div>
+      <div className="skin-grid" role="group" aria-label="Theme">
+        {ALL_SKINS.map((k) => (
+          <button
+            key={k.id}
+            type="button"
+            role="menuitemradio"
+            aria-checked={skin === k.id}
+            className="skin-option"
+            onClick={() => setSkin(k.id)}
+          >
+            <SkinPreview s={theme === "dark" ? k.dark : k.light} />
+            <span className="skin-name">{k.name}</span>
+          </button>
+        ))}
+      </div>
+      <div className="menu-divider" role="separator" />
+      <div className="menu-label">Light or dark</div>
       {THEMES.map(({ value, label, icon: Icon }) => (
         <button
           key={value}

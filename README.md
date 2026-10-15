@@ -29,6 +29,10 @@ Built with Tauri 2, React + TypeScript and SQLite. Runs on macOS and Linux.
 - **Tags**: *Add tag* under a note's title finds or creates a tag (Enter adds it, Backspace in the empty field removes the last one).
   Click a tag on a note, or under **Tags** in the sidebar, to show only pages with that tag. The **⋯** menu on a sidebar tag
   renames it (renaming to an existing tag merges the two), changes its colour, or deletes it from all pages.
+- **Themes** (Settings in the sidebar): Lesepult's own look plus Catppuccin, Rosé Pine, Nord, Gruvbox and Solarized,
+  each with a light and a dark version. The themes are generated from their palettes by `npm run skins`
+  (`scripts/build-skins.mjs` → `src/styles/skins.css`); where a palette colour is too faint for text, the script nudges
+  it toward legible (WCAG 4.5:1) and lists what it changed.
 - **Appearance** (Settings in the sidebar): light, dark ("library at night") or match the system. In the dark theme,
   Slides keep their true colours in the dark theme; *Dark PDF pages* turns them into light-on-dark, snips included. Printing and PDF export always use the light look.
 - **PDFs**: "Attach PDF" copies a file into Lesepult and opens it next to the note (split view). Continuous scrolling,
@@ -166,6 +170,7 @@ src/
   lib/pdfTextRepo.ts      SQL for PDF page text: indexing state, search across PDFs
   components/             Sidebar, TopBar, NotePane, PdfPane, SearchDialog, …
   styles/tokens.css       design tokens (colours, fonts): light theme + dark theme
+  styles/skins.css        colour themes (generated; see scripts/build-skins.mjs)
   lib/theme.ts            theme preference, system light/dark, window title bar
 src-tauri/
   migrations/0001_init.sql  schema: semesters, courses, documents, pages, highlights,

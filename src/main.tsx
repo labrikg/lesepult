@@ -5,6 +5,7 @@ import "@fontsource-variable/figtree";
 import "@fontsource/jetbrains-mono/400.css";
 import "@fontsource/jetbrains-mono/500.css";
 import "./styles/tokens.css";
+import "./styles/skins.css";
 import "./styles/app.css";
 import App from "./App";
 

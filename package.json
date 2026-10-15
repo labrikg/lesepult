@@ -10,7 +10,8 @@
     "build": "tsc && vite build",
     "test": "vitest run",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "skins": "node scripts/build-skins.mjs"
   },
   "dependencies": {
     "@blocknote/code-block": "^0.55.0",

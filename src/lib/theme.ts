@@ -9,6 +9,7 @@ export type ResolvedTheme = "light" | "dark";
  */
 const THEME_KEY = "lesepult.theme";
 const DARK_PDF_KEY = "lesepult.darkPdf";
+const SKIN_KEY = "lesepult.skin";
 
 const darkQuery = () => window.matchMedia("(prefers-color-scheme: dark)");
 
@@ -35,6 +36,22 @@ export function readThemePref(): ThemePref {
 
 export function readDarkPdf(): boolean {
   return read(DARK_PDF_KEY) === "on";
+}
+
+/** The colour theme ("skin"): "lesepult" is the built-in look; others are in skins.css. */
+export function readSkin(): string {
+  return read(SKIN_KEY) || "lesepult";
+}
+
+export function saveSkin(id: string) {
+  write(SKIN_KEY, id);
+}
+
+/** Puts the colour theme on <html> (no attribute for the built-in look). */
+export function applySkin(id: string) {
+  const root = document.documentElement;
+  if (id === "lesepult") delete root.dataset.skin;
+  else root.dataset.skin = id;
 }
 
 export function saveThemePref(pref: ThemePref) {

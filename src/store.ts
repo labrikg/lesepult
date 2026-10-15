@@ -9,11 +9,14 @@ import { todayISO } from "./study/dates";
 import { repairOldPdfText } from "./lib/repair";
 import { indexPdfs } from "./pdf/indexer";
 import {
+  applySkin,
   applyTheme,
   readDarkPdf,
+  readSkin,
   readThemePref,
   resolveTheme,
   saveDarkPdf,
+  saveSkin,
   saveThemePref,
   type ResolvedTheme,
   type ThemePref,
@@ -104,6 +107,9 @@ interface State {
   theme: ResolvedTheme;
   darkPdf: boolean;
   setThemePref(pref: ThemePref): void;
+  /** Colour theme id ("lesepult" = built-in). */
+  skin: string;
+  setSkin(id: string): void;
   setDarkPdf(on: boolean): void;
   /** Re-evaluates "system" after the OS switched between light and dark. */
   syncSystemTheme(): void;
@@ -271,6 +277,12 @@ export const useStore = create<State>((set, get) => ({
   themePref: readThemePref(),
   theme: resolveTheme(readThemePref()),
   darkPdf: readDarkPdf(),
+  skin: readSkin(),
+  setSkin(id) {
+    saveSkin(id);
+    applySkin(id);
+    set({ skin: id });
+  },
 
   setThemePref(pref) {
     saveThemePref(pref);
