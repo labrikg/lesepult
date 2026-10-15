@@ -58,7 +58,8 @@ Everything Lesepult does, and how. Shortcuts are given for macOS (⌘); on Windo
   - Exported notes list their tags as hashtags (`Tags: #exam #AVL-trees`), which Obsidian and similar apps pick up.
 
 - **Study tools**:
-  - **Flashcards**: type `/card` in a note (or click a highlight → *Flashcard*: the highlighted text becomes the answer).
+  - **Flashcards**: type `/card` in a note, or select text in a PDF and choose *Flashcard* (or press **C**); on an existing
+    highlight it's in its popover. The highlighted text becomes the answer; you type the question.
     Click a side to edit it; Tab or Enter moves on; formulas go between `$…$`. Cards live in the note and are reviewed
     with spaced repetition (FSRS, as in modern Anki).
   - **Review**: *Today* or a course's overview → *Review*. Space shows the answer, **1–4** rate it (Again, Hard, Good,

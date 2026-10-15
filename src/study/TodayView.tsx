@@ -62,8 +62,8 @@ export function TodayView() {
           </div>
           {totalCards === 0 ? (
             <p className="panel-empty">
-              No flashcards yet. Type <kbd>/card</kbd> in a note, or click a
-              highlight in a PDF and choose “Flashcard”.
+              No flashcards yet. Type <kbd>/card</kbd> in a note, or select text
+              in a PDF and choose “Flashcard”.
             </p>
           ) : (
             <div className="review-courses">

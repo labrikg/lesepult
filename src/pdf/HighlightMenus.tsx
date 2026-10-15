@@ -26,11 +26,12 @@ interface ToolbarProps {
   onPick(color: HighlightColor): void;
   onComment(): void;
   onSendToNote(): void;
+  onMakeCard(): void;
 }
 
-/** Appears next to a fresh text selection: pick a colour, or highlight and comment. */
-export function SelectionToolbar({ anchor, onPick, onComment, onSendToNote }: ToolbarProps) {
-  const { ref, pos } = useFloatingPosition(anchor, 290);
+/** Appears next to a fresh text selection: pick a colour, or highlight and comment, quote or card it. */
+export function SelectionToolbar({ anchor, onPick, onComment, onSendToNote, onMakeCard }: ToolbarProps) {
+  const { ref, pos } = useFloatingPosition(anchor, 400);
   return createPortal(
     <div
       ref={ref}
@@ -65,6 +66,15 @@ export function SelectionToolbar({ anchor, onPick, onComment, onSendToNote }: To
       >
         <NotebookPen size={16} aria-hidden="true" />
         <span>To note</span>
+      </button>
+      <button
+        type="button"
+        className="hl-action"
+        onClick={onMakeCard}
+        title="Highlight and make a flashcard in the note, with this text as the answer (C)"
+      >
+        <Layers size={16} aria-hidden="true" />
+        <span>Flashcard</span>
       </button>
     </div>,
     document.body,

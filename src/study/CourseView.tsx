@@ -135,8 +135,8 @@ export function CourseView({ courseId }: { courseId: string }) {
           </div>
           {counts.total === 0 ? (
             <p className="panel-empty">
-              No cards yet. Type <kbd>/card</kbd> in a note, or click a
-              highlight in a PDF and choose “Flashcard”.
+              No cards yet. Type <kbd>/card</kbd> in a note, or select text
+              in a PDF and choose “Flashcard”.
             </p>
           ) : (
             <>

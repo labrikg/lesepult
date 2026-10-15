@@ -20,8 +20,13 @@ export function quoteBlock(h: Highlight, doc: Document) {
 }
 
 /** A flashcard with the highlighted text as its answer; the question is left to write. */
-export function cardBlock(h: Highlight) {
-  return { type: "flashcard", props: { front: "", back: h.text, highlightId: h.id } };
+/**
+ * A flashcard with the highlighted text as the answer. A selection across a page break makes one
+ * highlight per page; their texts are joined into one answer, linked to the first highlight.
+ */
+export function cardBlock(hs: Highlight[]) {
+  const back = hs.map((h) => h.text).join(" ");
+  return { type: "flashcard", props: { front: "", back, highlightId: hs[0].id } };
 }
 
 /** The note block for a snip. */

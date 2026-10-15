@@ -194,7 +194,10 @@ export function PdfViewer({ doc, onReplace, onRemove, onRename, isPageDoc, onSho
   const [open, setOpen] = useState<{ id: string; anchor: Anchor; focusComment: boolean } | null>(null);
   const openHighlight = highlights.find((h) => h.id === open?.id) ?? null;
 
-  const highlightSelection = async (color: HighlightColor, then: "none" | "comment" | "note" = "none") => {
+  const highlightSelection = async (
+    color: HighlightColor,
+    then: "none" | "comment" | "note" | "card" = "none",
+  ) => {
     if (!selection) return;
     const made = await create(selection.pages, color);
     window.getSelection()?.removeAllRanges();
@@ -203,6 +206,7 @@ export function PdfViewer({ doc, onReplace, onRemove, onRename, isPageDoc, onSho
     if (then === "comment" && made.length)
       setOpen({ id: made[made.length - 1].id, anchor, focusComment: true });
     if (then === "note") sendToNote(made);
+    if (then === "card" && made.length) useStore.getState().sendToNote([cardBlock(made)]);
   };
 
   // After a mouse-up: a text selection gets the colour toolbar; a plain click on a highlight opens it.
@@ -258,6 +262,9 @@ export function PdfViewer({ doc, onReplace, onRemove, onRename, isPageDoc, onSho
       } else if (e.key.toLowerCase() === "n" && !e.metaKey && !e.ctrlKey && !e.altKey) {
         e.preventDefault();
         highlightSelection("yellow", "note");
+      } else if (e.key.toLowerCase() === "c" && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        e.preventDefault();
+        highlightSelection("yellow", "card");
       } else if (e.key === "Escape") {
         window.getSelection()?.removeAllRanges();
         setSelection(null);
@@ -659,6 +666,7 @@ export function PdfViewer({ doc, onReplace, onRemove, onRename, isPageDoc, onSho
           onPick={(c) => highlightSelection(c)}
           onComment={() => highlightSelection("yellow", "comment")}
           onSendToNote={() => highlightSelection("yellow", "note")}
+          onMakeCard={() => highlightSelection("yellow", "card")}
         />
       )}
       {open && openHighlight && (
@@ -680,7 +688,7 @@ export function PdfViewer({ doc, onReplace, onRemove, onRename, isPageDoc, onSho
             setOpen(null);
           }}
           onMakeCard={() => {
-            useStore.getState().sendToNote([cardBlock(openHighlight)]);
+            useStore.getState().sendToNote([cardBlock([openHighlight])]);
             setOpen(null);
           }}
         />
