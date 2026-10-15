@@ -1,6 +1,6 @@
 # Builds the installers when a version tag is pushed (git tag v0.2.0 && git push origin v0.2.0)
-# and attaches them to a draft release: a universal macOS .dmg (Apple Silicon + Intel) and Linux
-# .AppImage, .deb and .rpm. Check the draft, write the notes, then publish it.
+# and attaches them to a draft release: a universal macOS .dmg (Apple Silicon + Intel), a Windows
+# setup .exe, and Linux .AppImage, .deb and .rpm. Check the draft, write the notes, then publish it.
 name: Release
 
 on:
@@ -18,6 +18,8 @@ jobs:
         include:
           - platform: macos-latest
             args: --target universal-apple-darwin
+          - platform: windows-latest
+            args: --bundles nsis
           - platform: ubuntu-22.04
             args: ""
     runs-on: ${{ matrix.platform }}
@@ -51,12 +53,13 @@ jobs:
           # To sign and notarize the macOS app (needs a paid Apple Developer account), add these
           # repository secrets: APPLE_CERTIFICATE, APPLE_CERTIFICATE_PASSWORD, APPLE_SIGNING_IDENTITY,
           # APPLE_ID, APPLE_PASSWORD, APPLE_TEAM_ID; tauri-action picks them up from the environment.
+          # Windows code signing needs a certificate too; see https://tauri.app/distribute/sign/windows/
         with:
           tagName: ${{ github.ref_name }}
           releaseName: Lesepult __VERSION__
           releaseBody: |
-            Downloads below: the .dmg for macOS (Apple Silicon and Intel), the .AppImage, .deb or .rpm for Linux.
-            On macOS the first launch has to be confirmed under System Settings → Privacy & Security ("Open Anyway"); see the README.
+            Downloads below: the .dmg for macOS (Apple Silicon and Intel), the -setup.exe for Windows, the .AppImage, .deb or .rpm for Linux.
+            The first launch has to be confirmed once: on macOS under System Settings → Privacy & Security ("Open Anyway"), on Windows with "More info" → "Run anyway". See the README.
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}

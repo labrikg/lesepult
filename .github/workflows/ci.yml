@@ -1,14 +1,19 @@
-# Tests and type checks on every push and pull request.
+# Tests and type checks on every push and pull request, on Linux and Windows.
 name: CI
 
 on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 
 jobs:
   test:
-    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v5
 
@@ -17,7 +22,8 @@ jobs:
           node-version: 22
           cache: npm
 
-      - name: System libraries for Tauri
+      - name: System libraries for Tauri (Linux)
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev libssl-dev
@@ -34,4 +40,8 @@ jobs:
       - run: npm run build
       - name: Rust tests
         run: cargo test
+        working-directory: src-tauri
+      - name: Release build compiles (Windows-only code)
+        if: runner.os == 'Windows'
+        run: cargo check --release
         working-directory: src-tauri

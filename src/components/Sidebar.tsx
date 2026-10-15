@@ -24,8 +24,8 @@ import { exportLibrary } from "../export/exporter";
 import { SettingsMenu } from "./SettingsMenu";
 import { BrandMark } from "./BrandMark";
 import { TagChip, TagMenu } from "./Tags";
+import { shortcut } from "../lib/platform";
 
-const isMac = navigator.userAgent.includes("Mac");
 
 export function Sidebar() {
   const fullTree = useStore((s) => s.tree);
@@ -67,7 +67,7 @@ export function Sidebar() {
       <button type="button" className="search-trigger" onClick={() => setSearchOpen(true)}>
         <Search size={16} aria-hidden="true" />
         <span>Search</span>
-        <kbd>{isMac ? "⌘K" : "Ctrl K"}</kbd>
+        <kbd>{shortcut("K")}</kbd>
       </button>
 
       <div className="nav-items">

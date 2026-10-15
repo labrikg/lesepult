@@ -18,6 +18,8 @@
         var dark = pref === "dark" || (pref !== "light" && matchMedia("(prefers-color-scheme: dark)").matches);
         document.documentElement.dataset.theme = dark ? "dark" : "light";
         document.documentElement.dataset.darkPdf = pdf === "on" ? "on" : "off";
+        var ua = navigator.userAgent;
+        document.documentElement.dataset.os = ua.indexOf("Mac") >= 0 ? "mac" : ua.indexOf("Windows") >= 0 ? "windows" : "linux";
       })();
     </script>
   </head>

@@ -30,6 +30,7 @@ import { useStore } from "../store";
 import { cardBlock, quoteBlock, renderAndStoreSnip, snipBlock } from "./toNote";
 import { usePdfFind } from "./useFind";
 import { FindBar } from "./FindBar";
+import { shortcut } from "../lib/platform";
 
 type Anchor = ViewerSelection["anchor"];
 
@@ -524,7 +525,7 @@ export function PdfViewer({ doc, onReplace, onRemove, onRename, isPageDoc, onSho
           type="button"
           className="tool-btn"
           aria-label="Find in this PDF"
-          title="Find in this PDF (⌘F)"
+          title={`Find in this PDF (${shortcut("F")})`}
           aria-pressed={find.open}
           onClick={() => {
             if (find.open) find.close();

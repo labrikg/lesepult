@@ -4,6 +4,7 @@ import { ArrowUpRight, Check, Pencil, Scissors } from "lucide-react";
 import { MathText } from "./MathText";
 import { useStore } from "../store";
 import { storedFileUrl } from "../lib/files";
+import { modKey } from "../lib/platform";
 
 /**
  * Note blocks that point back into a PDF. Both keep a copy of what they show (the quoted text,
@@ -156,7 +157,7 @@ function QuoteView({ props: p, onSaveText }: { props: QuoteProps; onSaveText(tex
             <MathText text={draft} />
           </div>
           <div className="pdf-quote-hint">
-            Formulas between <code>$…$</code>, e.g. <code>{"$i_1 \\cdot i_2$"}</code>. ⌘/Ctrl + Enter saves, Esc cancels.
+            Formulas between <code>$…$</code>, e.g. <code>{"$i_1 \\cdot i_2$"}</code>. {modKey} + Enter saves, Esc cancels.
           </div>
         </div>
       ) : (

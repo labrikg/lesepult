@@ -13,6 +13,7 @@ import { locatePage, useStore, type ViewMode } from "../store";
 import { exportNoteMarkdown, exportNotePdf } from "../export/exporter";
 import { Popover } from "./Popover";
 import { TimerPill } from "../study/Timer";
+import { shortcut } from "../lib/platform";
 
 const MODES: { mode: ViewMode; label: string; Icon: typeof Columns2 }[] = [
   { mode: "pdf", label: "PDF", Icon: FileText },
@@ -40,7 +41,7 @@ export function TopBar() {
 
   const sidebarHidden = useStore((s) => s.sidebarHidden);
   const toggleSidebar = useStore((s) => s.toggleSidebar);
-  const shortcut = navigator.userAgent.includes("Mac") ? "⌘." : "Ctrl+.";
+  const keys = shortcut(".");
 
   return (
     <header className="topbar">
@@ -49,7 +50,7 @@ export function TopBar() {
         className="tool-btn sidebar-toggle"
         aria-label={sidebarHidden ? "Show sidebar" : "Hide sidebar"}
         aria-expanded={!sidebarHidden}
-        title={`${sidebarHidden ? "Show" : "Hide"} sidebar (${shortcut})`}
+        title={`${sidebarHidden ? "Show" : "Hide"} sidebar (${keys})`}
         onClick={toggleSidebar}
       >
         {sidebarHidden ? <PanelLeftOpen size={18} aria-hidden="true" /> : <PanelLeftClose size={18} aria-hidden="true" />}

@@ -16,7 +16,7 @@ function licenseTexts(dir) {
   return readdirSync(dir)
     .filter((f) => LICENSE_FILE.test(f))
     .sort()
-    .map((f) => ({ file: f, text: readFileSync(join(dir, f), "utf8").trim() }));
+    .map((f) => ({ file: f, text: readFileSync(join(dir, f), "utf8").replace(/\r\n?/g, "\n").trim() }));
 }
 
 // The Apache-2.0 terms are the same for every package: print them once at the end.

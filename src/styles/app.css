@@ -4228,3 +4228,10 @@ button.tag-chip-name:hover {
 .skin-name {
   white-space: nowrap;
 }
+
+/* Windows draws wide grey scrollbars with arrow buttons; make them thin and in the theme's
+   colours (macOS and Linux already show slim overlay scrollbars). */
+[data-os="windows"] * {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklab, var(--ink) 28%, transparent) transparent;
+}

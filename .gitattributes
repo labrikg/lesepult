@@ -1,0 +1,2 @@
+# Check out text files with LF on every system (Windows too), so tests and fixtures match.
+* text=auto eol=lf

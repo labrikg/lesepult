@@ -15,10 +15,12 @@ export function safeName(name: string, fallback = "Untitled"): string {
     .replace(/\s*:\s*/g, " - ") // "Hashing: open addressing" → "Hashing - open addressing"
     .replace(/[/\\*?"<>|\u0000-\u001f]/g, "-")
     .replace(/\s+/g, " ")
-    .replace(/^[.\s-]+|[.\s]+$/g, "")
+    .replace(/^[.\s-]+/, "")
     .slice(0, 80)
-    .trim();
-  return cleaned || fallback;
+    .replace(/[.\s]+$/, ""); // Windows drops trailing dots and spaces
+  if (!cleaned) return fallback;
+  // Windows reserves device names, whatever follows the first dot ("Aux.md", "nul.backup.md").
+  return cleaned.replace(/^(con|prn|aux|nul|com[0-9¹²³]|lpt[0-9¹²³])(?=\.|$)/i, "$1_");
 }
 
 /** Picks names that don't collide (case-insensitively) within one folder: "Notes", "Notes (2)", … */

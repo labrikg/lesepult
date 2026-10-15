@@ -11,6 +11,16 @@ describe("file names", () => {
     expect(safeName("..hidden")).toBe("hidden");
     expect(safeName("Winter 26/27")).toBe("Winter 26-27");
     expect(safeName("x".repeat(200))).toHaveLength(80);
+    expect(safeName(`${"x".repeat(79)}. more`)).toHaveLength(79);
+  });
+
+  it("avoids names Windows reserves for devices", () => {
+    expect(safeName("Aux")).toBe("Aux_");
+    expect(safeName("con")).toBe("con_");
+    expect(safeName("COM1")).toBe("COM1_");
+    expect(safeName("nul.backup")).toBe("nul_.backup");
+    expect(safeName("Auxiliary")).toBe("Auxiliary");
+    expect(safeName("Console")).toBe("Console");
   });
 
   it("numbers duplicates, ignoring case", () => {

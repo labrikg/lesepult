@@ -56,6 +56,24 @@ pub fn migrations() -> Vec<Migration> {
     ]
 }
 
+/// WebView2 (Windows) reacts to browser keys of its own: F5 and Ctrl+R reload the app, Ctrl+P
+/// prints the whole window, Ctrl+F opens Edge's find bar. Lesepult handles its keys itself, so the
+/// browser ones are switched off in release builds (copy, paste, undo and arrows keep working).
+#[cfg(all(windows, not(debug_assertions)))]
+fn disable_browser_keys(window: &tauri::WebviewWindow) {
+    use webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2Settings3;
+    use windows_core::Interface;
+    let result = window.with_webview(|webview| unsafe {
+        let settings = webview.controller().CoreWebView2().and_then(|core| core.Settings());
+        if let Ok(settings) = settings.and_then(|s| s.cast::<ICoreWebView2Settings3>()) {
+            let _ = settings.SetAreBrowserAcceleratorKeysEnabled(false);
+        }
+    });
+    if let Err(e) = result {
+        eprintln!("Lesepult: couldn't switch off the browser keys: {e}");
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -89,7 +107,9 @@ pub fn run() {
                 }
             }
             if let Some(window) = app.config().app.windows.first().cloned() {
-                WebviewWindowBuilder::from_config(app.handle(), &window)?.build()?;
+                let _window = WebviewWindowBuilder::from_config(app.handle(), &window)?.build()?;
+                #[cfg(all(windows, not(debug_assertions)))]
+                disable_browser_keys(&_window);
             }
             Ok(())
         })
