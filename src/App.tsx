@@ -43,6 +43,19 @@ export default function App() {
   }, []);
 
   const review = useStore((s) => s.review);
+  const sidebarHidden = useStore((s) => s.sidebarHidden);
+
+  // ⌘. / Ctrl+. folds the sidebar away and back (a single key on German keyboards too).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && !e.altKey && !e.shiftKey && e.key === ".") {
+        e.preventDefault();
+        useStore.getState().toggleSidebar();
+      }
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, []);
 
   // Theme: match the window to the saved choice, and follow the system when set to "System".
   useEffect(() => {
@@ -52,8 +65,10 @@ export default function App() {
   }, []);
 
   return (
-    <div className="app">
-      <Sidebar />
+    <div className={`app${sidebarHidden ? " is-sidebar-hidden" : ""}`}>
+      <div className="sidebar-shell" inert={sidebarHidden}>
+        <Sidebar />
+      </div>
       <main className="main">
         <TopBar />
         {ready ? <Workspace /> : <div className="loading" aria-busy="true" />}

@@ -21,6 +21,16 @@ import {
 
 export type ViewMode = "pdf" | "split" | "note";
 
+/** Whether the sidebar is hidden is a per-window preference, kept in web storage. */
+const SIDEBAR_KEY = "lesepult.sidebarHidden";
+function readSidebarHidden(): boolean {
+  try {
+    return localStorage.getItem(SIDEBAR_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
 /** What the main area shows: the open page, the Today overview, or a course's overview. */
 export type MainView =
   | { kind: "page" }
@@ -38,6 +48,9 @@ interface State {
   pdf: Document | null;
   viewMode: ViewMode;
   searchOpen: boolean;
+  /** The left sidebar is folded away (⌘. or the button in the top bar). */
+  sidebarHidden: boolean;
+  toggleSidebar(): void;
 
   /** Blocks waiting to be inserted into the open note (e.g. "Send to note" from the PDF). */
   noteQueue: unknown[];
@@ -156,6 +169,16 @@ export const useStore = create<State>((set, get) => ({
   pdf: null,
   viewMode: "split",
   searchOpen: false,
+  sidebarHidden: readSidebarHidden(),
+  toggleSidebar() {
+    const hidden = !get().sidebarHidden;
+    set({ sidebarHidden: hidden });
+    try {
+      localStorage.setItem(SIDEBAR_KEY, hidden ? "1" : "0");
+    } catch {
+      // Only a convenience: it just won't be remembered.
+    }
+  },
   noteQueue: [],
   focusBlock: null,
   pdfJump: null,

@@ -5,6 +5,8 @@ import {
   FileDown,
   FileText,
   NotebookPen,
+  PanelLeftClose,
+  PanelLeftOpen,
   Printer,
 } from "lucide-react";
 import { locatePage, useStore, type ViewMode } from "../store";
@@ -36,8 +38,22 @@ export function TopBar() {
   const exportButton = useRef<HTMLButtonElement>(null);
   const closeExport = useCallback(() => setExportOpen(false), []);
 
+  const sidebarHidden = useStore((s) => s.sidebarHidden);
+  const toggleSidebar = useStore((s) => s.toggleSidebar);
+  const shortcut = navigator.userAgent.includes("Mac") ? "⌘." : "Ctrl+.";
+
   return (
     <header className="topbar">
+      <button
+        type="button"
+        className="tool-btn sidebar-toggle"
+        aria-label={sidebarHidden ? "Show sidebar" : "Hide sidebar"}
+        aria-expanded={!sidebarHidden}
+        title={`${sidebarHidden ? "Show" : "Hide"} sidebar (${shortcut})`}
+        onClick={toggleSidebar}
+      >
+        {sidebarHidden ? <PanelLeftOpen size={18} aria-hidden="true" /> : <PanelLeftClose size={18} aria-hidden="true" />}
+      </button>
       <nav className="breadcrumb" aria-label="Breadcrumb">
         {where ? (
           <>

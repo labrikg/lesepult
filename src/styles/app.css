@@ -61,6 +61,31 @@ button:disabled {
   overflow: hidden;
 }
 
+/* The sidebar folds away by narrowing its shell; the sidebar inside keeps its width, so its
+   contents slide out instead of squashing. */
+.sidebar-shell {
+  flex-shrink: 0;
+  width: 288px;
+  display: flex;
+  overflow: hidden;
+  transition: width 0.22s ease;
+}
+
+.app.is-sidebar-hidden .sidebar-shell {
+  width: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-shell {
+    transition: none;
+  }
+}
+
+.sidebar-toggle {
+  flex: none;
+  margin-left: -8px;
+}
+
 .main {
   flex: 1;
   min-width: 0;
