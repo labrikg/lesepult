@@ -272,6 +272,124 @@ const THEMES = [
       })(),
     },
   },
+  {
+    id: "bubblegum",
+    name: "Bubblegum",
+    // Lesepult's own: candy pink with plum ink by day, a berry night with bubblegum pink after dark.
+    variants: {
+      light: (() => {
+        const b = {
+          blush: "#fdeef5", petal: "#fbe2ee", cream: "#fff7fb", white: "#ffffff", rose: "#f6cfe0", rose2: "#eeb9d0",
+          plum: "#4a2040", plum2: "#64355a", mauve: "#7d5272", lilac: "#a07f96",
+          pink: "#e8448d", red: "#e5486b", peach: "#ff8a65", butter: "#e9a93a", mint: "#3fa37c", sky: "#4f8fe6", lavender: "#9a6bea",
+        };
+        return {
+          bg: b.blush, sidebar: b.petal, surface: b.cream, paper: b.white,
+          pdfBackdrop: mix(b.rose, b.petal, 0.3), toolbar: b.petal, segment: mix(b.rose, b.cream, 0.45),
+          field: b.cream, line: b.rose, lineStrong: b.rose2, linePane: mix(b.rose, b.petal, 0.4), lineCard: mix(b.rose, b.cream, 0.45),
+          sidebarActive: b.rose, hoverMenu: mix(b.rose, b.cream, 0.55), hoverTool: b.rose, rowActions: mix(b.rose, b.cream, 0.35),
+          ink: b.plum, inkSoft: b.plum2, meta: b.mauve, muted: b.mauve, faint: b.lilac,
+          accent: b.pink, onAccent: b.white, danger: b.red,
+          hues: { red: b.red, orange: b.peach, yellow: b.butter, green: b.mint, blue: b.sky, purple: b.lavender },
+        };
+      })(),
+      dark: (() => {
+        const b = {
+          night: "#24131f", berry: "#2c1727", berry2: "#341c2f", berry3: "#3f2339", line: "#4d2c46", line2: "#62395a",
+          ink: "#ffe8f3", ink2: "#f3cde0", muted: "#cfa0bd", faint: "#9c7390",
+          pink: "#ff8fc4", red: "#ff7a9a", peach: "#ffb08a", butter: "#ffd98a", mint: "#8fe3c0", sky: "#9cc8ff", lavender: "#d3b0ff",
+        };
+        return {
+          bg: b.berry, sidebar: b.night, surface: mix(b.berry, b.berry2, 0.5), paper: b.berry3,
+          pdfBackdrop: mix(b.night, "#000000", 0.3), toolbar: mix(b.night, b.berry, 0.5), segment: b.berry3,
+          field: b.night, line: b.line, lineStrong: b.line2, linePane: mix(b.berry3, b.line, 0.5), lineCard: b.line,
+          sidebarActive: b.berry3, hoverMenu: b.line, hoverTool: b.berry3, rowActions: b.berry2,
+          ink: b.ink, inkSoft: b.ink2, meta: b.muted, muted: b.muted, faint: b.faint,
+          accent: b.pink, onAccent: b.night, danger: b.red,
+          hues: { red: b.red, orange: b.peach, yellow: b.butter, green: b.mint, blue: b.sky, purple: b.lavender },
+        };
+      })(),
+    },
+  },
+  {
+    id: "everforest",
+    name: "Everforest",
+    variants: {
+      light: (() => {
+        // Light, medium contrast
+        const e = {
+          bgDim: "#efebd4", bg0: "#fdf6e3", bg1: "#f4f0d9", bg2: "#efebd4", bg3: "#e6e2cc", bg4: "#e0dcc7", bg5: "#bdc3af",
+          fg: "#5c6a72", grey0: "#a6b0a0", grey1: "#939f91", grey2: "#829181",
+          red: "#f85552", orange: "#f57d26", yellow: "#dfa000", green: "#8da101", aqua: "#35a77c", blue: "#3a94c5", purple: "#df69ba",
+        };
+        return {
+          bg: e.bg1, sidebar: e.bg2, surface: e.bg0, paper: mix(e.bg0, "#ffffff", 0.4),
+          pdfBackdrop: e.bg4, toolbar: e.bg2, segment: e.bg3,
+          field: e.bg0, line: e.bg4, lineStrong: mix(e.bg4, e.bg5, 0.5), linePane: e.bg3, lineCard: e.bg3,
+          sidebarActive: e.bg3, hoverMenu: mix(e.bg2, e.bg3, 0.5), hoverTool: e.bg3, rowActions: e.bg2,
+          ink: mix(e.fg, "#2b3339", 0.35), inkSoft: e.fg, meta: e.grey2, muted: e.grey2, faint: e.grey1,
+          accent: e.green, onAccent: e.bg0, danger: e.red,
+          hues: { red: e.red, orange: e.orange, yellow: e.yellow, green: e.aqua, blue: e.blue, purple: e.purple },
+        };
+      })(),
+      dark: (() => {
+        // Dark, medium contrast
+        const e = {
+          bgDim: "#232a2e", bg0: "#2d353b", bg1: "#343f44", bg2: "#3d484d", bg3: "#475258", bg4: "#4f585e",
+          fg: "#d3c6aa", grey0: "#7a8478", grey1: "#859289", grey2: "#9da9a0",
+          red: "#e67e80", orange: "#e69875", yellow: "#dbbc7f", green: "#a7c080", aqua: "#83c092", blue: "#7fbbb3", purple: "#d699b6",
+        };
+        return {
+          bg: e.bg0, sidebar: e.bgDim, surface: mix(e.bg0, e.bg1, 0.3), paper: e.bg1,
+          pdfBackdrop: mix(e.bgDim, "#000000", 0.25), toolbar: mix(e.bg0, e.bgDim, 0.5), segment: e.bg2,
+          field: e.bgDim, line: e.bg2, lineStrong: e.bg3, linePane: mix(e.bg1, e.bg2, 0.5), lineCard: e.bg2,
+          sidebarActive: e.bg2, hoverMenu: e.bg2, hoverTool: e.bg2, rowActions: e.bg1,
+          ink: e.fg, inkSoft: mix(e.fg, e.grey2, 0.35), meta: e.grey2, muted: e.grey2, faint: e.grey1,
+          accent: e.green, onAccent: e.bg0, danger: e.red,
+          hues: { red: e.red, orange: e.orange, yellow: e.yellow, green: e.aqua, blue: e.blue, purple: e.purple },
+        };
+      })(),
+    },
+  },
+  {
+    id: "one",
+    name: "One",
+    // Atom's One Light / One Dark (as in many editors).
+    variants: {
+      light: (() => {
+        const o = {
+          bg: "#fafafa", bg2: "#f0f0f0", bg3: "#e5e5e6", line: "#dbdbdc", line2: "#c9c9ca",
+          fg: "#383a42", fg2: "#4f525e", comment: "#696c77", faint: "#a0a1a7",
+          red: "#e45649", orange: "#986801", yellow: "#c18401", green: "#50a14f", blue: "#4078f2", purple: "#a626a4", cyan: "#0184bc",
+        };
+        return {
+          bg: o.bg2, sidebar: mix(o.bg2, o.bg3, 0.5), surface: o.bg, paper: "#ffffff",
+          pdfBackdrop: o.bg3, toolbar: mix(o.bg2, o.bg3, 0.4), segment: o.bg3,
+          field: o.bg, line: o.line, lineStrong: o.line2, linePane: o.line, lineCard: mix(o.bg3, o.line, 0.5),
+          sidebarActive: o.bg3, hoverMenu: mix(o.bg2, o.bg3, 0.6), hoverTool: o.bg3, rowActions: o.bg3,
+          ink: o.fg, inkSoft: o.fg2, meta: o.comment, muted: o.comment, faint: o.faint,
+          accent: o.blue, onAccent: "#ffffff", danger: o.red,
+          hues: { red: o.red, orange: o.orange, yellow: o.yellow, green: o.green, blue: o.blue, purple: o.purple },
+        };
+      })(),
+      dark: (() => {
+        const o = {
+          bg: "#282c34", darker: "#21252b", darkest: "#1b1d23", raised: "#2c313a", line: "#3e4451", line2: "#4b5263",
+          fg: "#abb2bf", fg2: "#9da5b4", comment: "#7f848e", faint: "#5c6370",
+          red: "#e06c75", orange: "#d19a66", yellow: "#e5c07b", green: "#98c379", blue: "#61afef", purple: "#c678dd", cyan: "#56b6c2",
+        };
+        return {
+          bg: o.bg, sidebar: o.darker, surface: o.bg, paper: o.raised,
+          pdfBackdrop: o.darkest, toolbar: o.darker, segment: o.raised,
+          field: o.darker, line: o.line, lineStrong: o.line2, linePane: mix(o.raised, o.line, 0.5), lineCard: o.line,
+          sidebarActive: o.raised, hoverMenu: o.line, hoverTool: o.raised, rowActions: o.raised,
+          ink: mix(o.fg, "#ffffff", 0.25), inkSoft: o.fg, meta: o.fg2, muted: o.comment, faint: o.faint,
+          accent: o.blue, onAccent: o.darkest, danger: o.red,
+          hues: { red: o.red, orange: o.orange, yellow: o.yellow, green: o.green, blue: o.blue, purple: o.purple },
+        };
+      })(),
+    },
+  },
 ];
 
 /* ---------- Palette → tokens ---------- */
@@ -287,7 +405,7 @@ function tokens(t, v, dark) {
   P.faint = legible(P.faint, backs, towardText, 3, label("faint"));
   // Accent: its button label must read (4.5:1); moving the accent away from the label colour
   // also keeps accent-coloured text legible on the page.
-  P.accent = legible(P.accent, [P.onAccent], dark ? "#ffffff" : P.ink, 4.5, label("accent"));
+  P.accent = legible(P.accent, [P.onAccent], dark ? "#ffffff" : "#000000", 4.5, label("accent"));
   P.danger = legible(P.danger, [P.paper, P.surface], towardText, 4.5, label("danger"));
 
   const H = P.hues;

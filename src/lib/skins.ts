@@ -41,7 +41,7 @@ export const SKINS: Skin[] = [
       "bg": "#faf4ed",
       "paper": "#fffcf8",
       "ink": "#575279",
-      "accent": "#9e607a",
+      "accent": "#a1586d",
       "line": "#dfdad9"
     },
     "dark": {
@@ -59,7 +59,7 @@ export const SKINS: Skin[] = [
       "bg": "#e5e9f0",
       "paper": "#f5f7f9",
       "ink": "#2e3440",
-      "accent": "#526e91",
+      "accent": "#4e6c91",
       "line": "#ccd2de"
     },
     "dark": {
@@ -95,7 +95,7 @@ export const SKINS: Skin[] = [
       "bg": "#f6f0dd",
       "paper": "#fefaf0",
       "ink": "#073642",
-      "accent": "#1e76ad",
+      "accent": "#1e74b1",
       "line": "#d2d2c5"
     },
     "dark": {
@@ -104,6 +104,60 @@ export const SKINS: Skin[] = [
       "ink": "#bbc0b8",
       "accent": "#3f95d6",
       "line": "#234651"
+    }
+  },
+  {
+    "id": "bubblegum",
+    "name": "Bubblegum",
+    "light": {
+      "bg": "#fdeef5",
+      "paper": "#ffffff",
+      "ink": "#4a2040",
+      "accent": "#d03c7e",
+      "line": "#f6cfe0"
+    },
+    "dark": {
+      "bg": "#2c1727",
+      "paper": "#3f2339",
+      "ink": "#ffe8f3",
+      "accent": "#ff8fc4",
+      "line": "#4d2c46"
+    }
+  },
+  {
+    "id": "everforest",
+    "name": "Everforest",
+    "light": {
+      "bg": "#f4f0d9",
+      "paper": "#fefaee",
+      "ink": "#4a565d",
+      "accent": "#677601",
+      "line": "#e0dcc7"
+    },
+    "dark": {
+      "bg": "#2d353b",
+      "paper": "#343f44",
+      "ink": "#d3c6aa",
+      "accent": "#a7c080",
+      "line": "#3d484d"
+    }
+  },
+  {
+    "id": "one",
+    "name": "One",
+    "light": {
+      "bg": "#f0f0f0",
+      "paper": "#ffffff",
+      "ink": "#383a42",
+      "accent": "#386bd9",
+      "line": "#dbdbdc"
+    },
+    "dark": {
+      "bg": "#282c34",
+      "paper": "#2c313a",
+      "ink": "#bfc5cf",
+      "accent": "#61afef",
+      "line": "#3e4451"
     }
   }
 ];

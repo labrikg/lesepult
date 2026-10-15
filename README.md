@@ -29,8 +29,9 @@ Built with Tauri 2, React + TypeScript and SQLite. Runs on macOS and Linux.
 - **Tags**: *Add tag* under a note's title finds or creates a tag (Enter adds it, Backspace in the empty field removes the last one).
   Click a tag on a note, or under **Tags** in the sidebar, to show only pages with that tag. The **⋯** menu on a sidebar tag
   renames it (renaming to an existing tag merges the two), changes its colour, or deletes it from all pages.
-- **Themes** (Settings in the sidebar): Lesepult's own look plus Catppuccin, Rosé Pine, Nord, Gruvbox and Solarized,
-  each with a light and a dark version. The themes are generated from their palettes by `npm run skins`
+- **Themes** (Settings in the sidebar): Lesepult's own look plus Catppuccin, Rosé Pine, Nord, Gruvbox, Solarized,
+  Bubblegum (Lesepult's own pink one), Everforest and One, each with a light and a dark version. Two rows show at a
+  time; scroll the grid for the rest. The themes are generated from their palettes by `npm run skins`
   (`scripts/build-skins.mjs` → `src/styles/skins.css`); where a palette colour is too faint for text, the script nudges
   it toward legible (WCAG 4.5:1) and lists what it changed.
 - **Appearance** (Settings in the sidebar): light, dark ("library at night") or match the system. In the dark theme,

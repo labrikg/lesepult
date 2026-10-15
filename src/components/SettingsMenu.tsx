@@ -1,4 +1,4 @@
-import type { RefObject } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import { Check, Monitor, Moon, Sun } from "lucide-react";
 import { useStore } from "../store";
 import type { ThemePref } from "../lib/theme";
@@ -42,10 +42,34 @@ export function SettingsMenu({ anchor, onClose }: { anchor: RefObject<HTMLElemen
   const skin = useStore((s) => s.skin);
   const { setThemePref, setDarkPdf, setSkin } = useStore.getState();
 
+  // Two rows of themes show at once; the rest scroll in. The bottom edge fades while there is more.
+  const grid = useRef<HTMLDivElement>(null);
+  const [atEnd, setAtEnd] = useState(false);
+  const measure = () => {
+    const el = grid.current;
+    if (el) setAtEnd(el.scrollTop + el.clientHeight >= el.scrollHeight - 4);
+  };
+  // The menu focuses the chosen theme when it opens, which also scrolls it into view.
+  useEffect(() => {
+    requestAnimationFrame(measure);
+  }, []);
+
   return (
-    <Popover anchor={anchor} onClose={onClose} label="Settings" width={296}>
+    <Popover
+      anchor={anchor}
+      onClose={onClose}
+      label="Settings"
+      width={296}
+      focusSelector='.skin-option[aria-checked="true"]'
+    >
       <div className="menu-label">Theme</div>
-      <div className="skin-grid" role="group" aria-label="Theme">
+      <div
+        ref={grid}
+        className={`skin-grid${atEnd ? "" : " has-more"}`}
+        role="group"
+        aria-label="Theme"
+        onScroll={measure}
+      >
         {ALL_SKINS.map((k) => (
           <button
             key={k.id}
