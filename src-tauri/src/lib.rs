@@ -53,6 +53,12 @@ pub fn migrations() -> Vec<Migration> {
             sql: include_str!("../migrations/0007_cram.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 8,
+            description: "handwritten sheets",
+            sql: include_str!("../migrations/0008_ink.sql"),
+            kind: MigrationKind::Up,
+        },
     ]
 }
 

@@ -6,6 +6,7 @@ import {
   FileText,
   NotebookPen,
   PanelLeftClose,
+  PenLine,
   PanelLeftOpen,
   Printer,
 } from "lucide-react";
@@ -26,6 +27,7 @@ export function TopBar() {
   const selectedPageId = useStore((s) => s.selectedPageId);
   const viewMode = useStore((s) => s.viewMode);
   const setViewMode = useStore((s) => s.setViewMode);
+  const rightPane = useStore((s) => s.rightPane);
   const view = useStore((s) => s.view);
   const onPage = view.kind === "page";
   const where = onPage ? locatePage(tree, selectedPageId) : null;
@@ -91,7 +93,9 @@ export function TopBar() {
 
       {onPage && (
         <div className="segmented" role="group" aria-label="View mode">
-          {MODES.map(({ mode, label, Icon }) => (
+          {MODES.map(({ mode, label, Icon }) =>
+            mode === "note" && rightPane === "pad" ? { mode, label: "Pad", Icon: PenLine } : { mode, label, Icon },
+          ).map(({ mode, label, Icon }) => (
             <button
               key={mode}
               type="button"
@@ -140,7 +144,7 @@ export function TopBar() {
             <span>
               <span className="menu-item-title">Markdown file…</span>
               <span className="menu-item-sub">
-                Text, formulas and quotes; snips as images
+                Text, formulas and quotes; snips and handwriting as images
               </span>
             </span>
           </button>

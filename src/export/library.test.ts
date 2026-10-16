@@ -113,4 +113,35 @@ describe("library export", () => {
     // A folder can't take the name of the PDFs folder.
     expect(paths.some((p) => p.includes("/PDFs (2)"))).toBe(false); // empty folders write nothing
   });
+
+  it("adds handwritten sheets as images below the note, linked from a sub-folder too", () => {
+    const entries = buildLibraryExport([
+      {
+        name: "Winter",
+        courses: [
+          {
+            name: "Algorithms",
+            documents: [],
+            folders: [{ id: "f1", name: "Lectures", parentId: null }],
+            pages: [
+              { id: "p1", title: "Hashing", content: "[]", plainText: "", documentId: null, sheets: 2 },
+              { id: "p2", title: "Trees", content: "[]", plainText: "", documentId: null, folderId: "f1", sheets: 1 },
+              { id: "p3", title: "Empty", content: "[]", plainText: "", documentId: null },
+            ],
+          },
+        ],
+      },
+    ]);
+    const md = (path: string) => entries.find((e) => e.path === path)?.text ?? "";
+    expect(md("Winter/Algorithms/Hashing.md")).toContain(
+      "## Handwritten\n\n![Sheet 1](<assets/Hashing - sheet 1.png>)\n\n![Sheet 2](<assets/Hashing - sheet 2.png>)",
+    );
+    expect(md("Winter/Algorithms/Lectures/Trees.md")).toContain("![Sheet 1](<../assets/Trees - sheet 1.png>)");
+    expect(md("Winter/Algorithms/Empty.md")).not.toContain("Handwritten");
+    expect(entries.filter((e) => e.sheet)).toEqual([
+      { path: "Winter/Algorithms/assets/Hashing - sheet 1.png", sheet: { pageId: "p1", index: 0 } },
+      { path: "Winter/Algorithms/assets/Hashing - sheet 2.png", sheet: { pageId: "p1", index: 1 } },
+      { path: "Winter/Algorithms/assets/Trees - sheet 1.png", sheet: { pageId: "p2", index: 0 } },
+    ]);
+  });
 });

@@ -1,4 +1,4 @@
-import { pageToMarkdown } from "./markdown";
+import { handwritingMarkdown, pageToMarkdown } from "./markdown";
 
 /** One file to write: either text, or a copy of a file from Lesepult's data folder. */
 export interface ExportEntry {
@@ -6,6 +6,10 @@ export interface ExportEntry {
   path: string;
   text?: string;
   storedPath?: string;
+  /** Bytes made in the app, base64-encoded (filled in from `sheet` before writing). */
+  base64?: string;
+  /** A handwritten sheet still to be drawn as PNG: the page and the sheet's 0-based index. */
+  sheet?: { pageId: string; index: number };
 }
 
 /** Turns a title into a safe file or folder name on macOS, Linux and Windows. */
@@ -43,6 +47,8 @@ export interface LibraryPage {
   tags?: string[];
   /** The folder it sits in (null or missing: directly in the course). */
   folderId?: string | null;
+  /** How many handwritten sheets (with ink) the page has. */
+  sheets?: number;
 }
 
 export interface LibraryFolder {
@@ -71,7 +77,8 @@ export interface LibrarySemester {
 
 /**
  * The whole library as files: Semester/Course/[Folder/…]/Page.md, the course's PDFs in
- * Course/PDFs/, snip images in Course/assets/. Notes link to both with relative paths.
+ * Course/PDFs/, snip images and handwritten sheets in Course/assets/. Notes link to them with
+ * relative paths.
  */
 export function buildLibraryExport(semesters: LibrarySemester[]): ExportEntry[] {
   const entries: ExportEntry[] = [];
@@ -123,6 +130,7 @@ export function buildLibraryExport(semesters: LibrarySemester[]): ExportEntry[] 
       for (const f of folders) dirOf(f.id);
 
       const assets = new Set<string>();
+      const sheetNames = uniqueNamer();
       for (const page of course.pages) {
         const folderId = page.folderId && byId.has(page.folderId) ? page.folderId : null;
         const dir = folderId ? dirOf(folderId) : [];
@@ -141,7 +149,14 @@ export function buildLibraryExport(semesters: LibrarySemester[]): ExportEntry[] 
           { assetDir: `${up}assets` },
         );
         const file = namerFor(folderId ?? "")(safeName(page.title), ".md");
-        entries.push({ path: [cDir, ...dir, file].join("/"), text: markdown });
+        const sheetFiles = Array.from({ length: page.sheets ?? 0 }, (_, i) =>
+          sheetNames(`${safeName(page.title)} - sheet ${i + 1}`, ".png"),
+        );
+        const ink = handwritingMarkdown(sheetFiles.map((f) => `${up}assets/${f}`));
+        entries.push({ path: [cDir, ...dir, file].join("/"), text: markdown + ink });
+        sheetFiles.forEach((f, index) =>
+          entries.push({ path: `${cDir}/assets/${f}`, sheet: { pageId: page.id, index } }),
+        );
         for (const a of pageAssets) {
           const name = a.storedPath.split("/").pop() ?? a.storedPath;
           if (assets.has(name)) continue;

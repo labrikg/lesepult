@@ -25,6 +25,8 @@ on your computer in a single local database; nothing is sent anywhere.
 - **Notes next to the slides.** A block editor (headings, lists, tables, code, LaTeX formulas) beside the PDF.
   Highlight on the slide, send it to the note as a quote that jumps back to the page, or snip a region as an image.
   Text from LaTeX slides keeps its formulas (`$i_1 \cdot i_2 \in \mathbf{N}$`) and its umlauts.
+- **Write by hand.** Switch the note to *Pad* and write on lined, grid or dotted sheets next to the slides with a pen
+  tablet, a pen laptop (Surface, Windows Ink) or the mouse; on a Mac, an iPad works through Sidecar.
 - **Search everything.** ⌘K searches notes and the text of every PDF, finds parts of German compound words
   ("kontrolle" → "Staukontrolle"), and opens the slide with the matches marked. ⌘F finds inside the open PDF (Ctrl+K and Ctrl+F on Windows and Linux).
 - **Flashcards with spaced repetition.** Make a card from any highlight or with `/card`; reviews are scheduled with

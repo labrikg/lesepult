@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useDevicePixelRatio } from "../lib/useDevicePixelRatio";
 import { ArrowLeft, FileX2, Maximize2, Minus, Plus, Replace, Scissors, Search } from "lucide-react";
 import { openPdf, type PDFDocumentProxy } from "./pdfjs";
 import { PdfPage } from "./PdfPage";
@@ -45,18 +46,6 @@ interface Props {
 }
 
 const positionKey = (docId: string) => `pdfPos:${docId}`;
-
-/** Device pixel ratio, updated when the window moves between a Retina and a normal display. */
-function useDevicePixelRatio() {
-  const [dpr, setDpr] = useState(() => window.devicePixelRatio || 1);
-  useEffect(() => {
-    const mq = window.matchMedia(`(resolution: ${dpr}dppx)`);
-    const update = () => setDpr(window.devicePixelRatio || 1);
-    mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
-  }, [dpr]);
-  return dpr;
-}
 
 export function PdfViewer({ doc, onReplace, onRemove, onRename, isPageDoc, onShowPagePdf }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);

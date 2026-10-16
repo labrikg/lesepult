@@ -6,6 +6,7 @@ import { Sidebar } from "./components/Sidebar";
 import { TopBar } from "./components/TopBar";
 import { PdfPane } from "./components/PdfPane";
 import { NotePane } from "./components/NotePane";
+import { PadPane } from "./ink/PadPane";
 import { readSplit, SplitDivider } from "./components/SplitDivider";
 import { SearchDialog } from "./components/SearchDialog";
 import { InlineInput } from "./components/InlineInput";
@@ -109,6 +110,7 @@ export default function App() {
 function Workspace() {
   const page = useStore((s) => s.page);
   const viewMode = useStore((s) => s.viewMode);
+  const rightPane = useStore((s) => s.rightPane);
   const view = useStore((s) => s.view);
   const workspace = useRef<HTMLDivElement>(null);
   const [split, setSplit] = useState(readSplit);
@@ -141,7 +143,7 @@ function Workspace() {
     >
       {viewMode !== "note" && <PdfPane />}
       {viewMode === "split" && <SplitDivider ratio={split} onChange={setSplit} workspace={workspace} />}
-      {viewMode !== "pdf" && <NotePane page={page} />}
+      {viewMode !== "pdf" && (rightPane === "pad" ? <PadPane page={page} /> : <NotePane page={page} />)}
     </div>
   );
 }

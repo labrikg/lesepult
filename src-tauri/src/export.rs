@@ -1,7 +1,8 @@
-//! Writing exports (Markdown notes, copied PDFs and snip images) to a folder the user picked,
+//! Writing exports (Markdown notes, copied PDFs, snip images and handwritten sheets) to a folder the user picked,
 //! and printing the window (the macOS print dialog has "Save as PDF").
 
 use crate::files::resolve_stored;
+use base64::Engine;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Component, Path, PathBuf};
@@ -15,6 +16,8 @@ pub struct ExportEntry {
     pub text: Option<String>,
     /// A file in Lesepult's data folder to copy (documents/…).
     pub stored_path: Option<String>,
+    /// Bytes made in the app (a handwritten sheet as PNG), base64-encoded.
+    pub base64: Option<String>,
 }
 
 #[derive(Debug, Serialize, PartialEq)]
@@ -70,13 +73,19 @@ pub fn export_into(
         if let Some(parent) = dest.parent() {
             fs::create_dir_all(parent).map_err(|e| e.to_string())?;
         }
-        match (&entry.text, &entry.stored_path) {
-            (Some(text), _) => fs::write(&dest, text).map_err(|e| e.to_string())?,
-            (None, Some(stored)) => {
+        match (&entry.text, &entry.stored_path, &entry.base64) {
+            (Some(text), _, _) => fs::write(&dest, text).map_err(|e| e.to_string())?,
+            (None, Some(stored), _) => {
                 let src = resolve_stored(data_root, stored)?;
                 fs::copy(&src, &dest).map_err(|e| format!("couldn't copy {stored}: {e}"))?;
             }
-            (None, None) => return Err(format!("nothing to write for {}", entry.path)),
+            (None, None, Some(b64)) => {
+                let bytes = base64::engine::general_purpose::STANDARD
+                    .decode(b64)
+                    .map_err(|e| format!("bad data for {}: {e}", entry.path))?;
+                fs::write(&dest, bytes).map_err(|e| e.to_string())?;
+            }
+            (None, None, None) => return Err(format!("nothing to write for {}", entry.path)),
         }
         files += 1;
     }
@@ -123,6 +132,7 @@ mod tests {
             path: path.into(),
             text: Some(t.into()),
             stored_path: None,
+            base64: None,
         }
     }
 
@@ -139,10 +149,17 @@ mod tests {
                 path: "Winter/Algorithms/PDFs/Lecture 07.pdf".into(),
                 text: None,
                 stored_path: Some("documents/a.pdf".into()),
+                base64: None,
+            },
+            ExportEntry {
+                path: "Winter/Algorithms/assets/Hashing-sheet-1.png".into(),
+                text: None,
+                stored_path: None,
+                base64: Some("iVBORw0K".into()),
             },
         ];
         let first = export_into(&data, &out, Some("Lesepult export"), &entries).unwrap();
-        assert_eq!(first.files, 2);
+        assert_eq!(first.files, 3);
         assert!(first.dir.ends_with("Lesepult export"));
         let dir = PathBuf::from(&first.dir);
         assert_eq!(
@@ -152,6 +169,10 @@ mod tests {
         assert_eq!(
             fs::read(dir.join("Winter/Algorithms/PDFs/Lecture 07.pdf")).unwrap(),
             b"%PDF-1.7"
+        );
+        assert_eq!(
+            fs::read(dir.join("Winter/Algorithms/assets/Hashing-sheet-1.png")).unwrap(),
+            b"\x89PNG\r\n"
         );
 
         let second = export_into(&data, &out, Some("Lesepult export"), &entries).unwrap();
@@ -172,6 +193,7 @@ mod tests {
             path: "x.pdf".into(),
             text: None,
             stored_path: Some("../lesepult.db".into()),
+            base64: None,
         };
         assert!(export_into(&data, &out, None, &[escape_store]).is_err());
         assert!(export_into(&data, Path::new("relative/dir"), None, &[]).is_err());

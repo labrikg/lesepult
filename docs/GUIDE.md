@@ -42,6 +42,17 @@ Everything Lesepult does, and how. Shortcuts are given for macOS (⌘); on Windo
   this way; *Edit text* on a quote lets you fix or complete the text (formulas between `$…$`). Click a highlight to recolour it, edit its comment (⌘/Ctrl + Enter saves) or delete it.
   Highlights with a comment show a small speech bubble.
 - View modes PDF / Split / Note; the app remembers the last page and view.
+- **Pad (handwriting)**: the *Note / Pad* switch at the top of the note pane swaps the typed note for sheets of paper to
+  write on (it's per page, next to the same PDF; the top bar's third view mode then reads *Pad*).
+  - Tools: **pen** (P), **highlighter** (H, drawn under the ink) and **eraser** (E, removes whole strokes; the eraser
+    end of a Surface Pen or Wacom pen works too), each with four colours and three thicknesses.
+    Undo / redo: **⌘Z** / **⇧⌘Z** (Ctrl+Z / Ctrl+Y).
+  - Input: pens with pressure draw thicker when you press harder (Wacom, Surface Pen, other Windows Ink pens); the mouse
+    and the Apple Pencil through **Sidecar** (iPad as a second Mac screen) draw with even strokes. Fingers scroll so a
+    resting hand leaves no marks; *Draw with finger* in the paper menu (the sliders button) changes that.
+  - Paper: blank, lined, grid or dots (for all of a page's sheets). *New sheet* at the bottom adds one; the bin on a
+    sheet (click twice) deletes it. Ink colours follow the theme on screen; exports and printing use light paper.
+  - Handwriting isn't searchable (it's ink, not text).
 - **Linking PDF and note**:
   - *Send to note* (in a highlight's popover, *To note* on a fresh selection, or press **N**) adds the highlight as a quote
     block where your cursor was in the note, with its comment and source page.
@@ -51,10 +62,13 @@ Everything Lesepult does, and how. Shortcuts are given for macOS (⌘); on Windo
   - Quoted text is searchable. Snips no note uses any more are cleaned up on the next start.
 - **Export**:
   - *Export note → Markdown file…* writes the note as `.md` (formulas as `$$…$$`, quotes with source and page,
-    code with its language) plus an `assets/` folder for snip images.
-  - *Export note → PDF…* opens the print dialog with just the note laid out for A4; on macOS choose **PDF → Save as PDF**, on Windows the printer **Microsoft Print to PDF**.
+    code with its language) plus an `assets/` folder for snip images and the Pad's sheets (PNG, added under
+    "Handwritten").
+  - *Export note → PDF…* opens the print dialog with just the note laid out for A4, followed by the Pad's sheets, one per
+    page; on macOS choose **PDF → Save as PDF**, on Windows the printer **Microsoft Print to PDF**.
   - *Export everything…* (sidebar) writes your whole library as a folder you can read without Lesepult:
-    `Semester/Course/[Folder/…]/Page.md`, each course's PDFs in `PDFs/` (linked from the notes) and snips in `assets/`.
+    `Semester/Course/[Folder/…]/Page.md`, each course's PDFs in `PDFs/` (linked from the notes), snips and handwritten
+    sheets in `assets/`.
   - Exported notes list their tags as hashtags (`Tags: #exam #AVL-trees`), which Obsidian and similar apps pick up.
 
 - **Study tools**:

@@ -2160,6 +2160,7 @@ dependencies = [
 name = "lesepult"
 version = "0.2.2"
 dependencies = [
+ "base64 0.22.1",
  "hex",
  "serde",
  "serde_json",

@@ -566,6 +566,248 @@ body.is-resizing-panes .split-divider {
 
 /* Note pane */
 
+/* Note / Pad switch sits in a strip that lines up with the PDF toolbar. */
+.note-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+}
+
+.segmented--sm {
+  padding: 2px;
+}
+
+.segmented--sm button {
+  min-height: 26px;
+  padding: 0 10px;
+  gap: 5px;
+  font-size: 12px;
+}
+
+/* Pad: sheets of paper to write on */
+
+.pad-pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--pdf-backdrop);
+  container-type: inline-size;
+}
+
+.pad-toolbar {
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-block: 8px;
+}
+
+.pad-tools,
+.pad-colors,
+.pad-sizes {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.pad-colors {
+  gap: 6px;
+  padding: 0 4px;
+}
+
+.pad-toolbar .tool-btn[aria-pressed="true"] {
+  background: var(--hover-tool);
+  color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+}
+
+.pad-toolbar .tool-btn:disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.pad-swatch {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--swatch);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18);
+}
+
+.pad-swatch[aria-checked="true"] {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.pad-size {
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+}
+
+.pad-size span {
+  border-radius: 50%;
+  background: var(--ink-soft);
+}
+
+.pad-size[aria-checked="true"] {
+  background: var(--hover-tool);
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+}
+
+.pad-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.pad-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 24px 24px 48px;
+}
+
+.pad-sheet {
+  position: relative;
+  flex: none;
+  background: var(--paper);
+  border-radius: 2px;
+  box-shadow: var(--shadow-page);
+}
+
+.pad-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Pen and finger strokes go to the page, not to scrolling, text selection or a long-press menu. */
+.pad-input {
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  cursor: crosshair;
+}
+
+.pad-input--eraser {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20'%3E%3Ccircle cx='10' cy='10' r='8' fill='none' stroke='%23888' stroke-width='1.5'/%3E%3C/svg%3E")
+      10 10,
+    cell;
+}
+
+.pad-sheet-number {
+  position: absolute;
+  right: 12px;
+  bottom: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--faint);
+  pointer-events: none;
+}
+
+.pad-sheet-delete {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  min-width: 28px;
+  justify-content: center;
+  padding: 0 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 12px;
+  opacity: 0;
+  transition: opacity 120ms;
+}
+
+.pad-sheet:hover .pad-sheet-delete,
+.pad-sheet-delete:focus-visible,
+.pad-sheet-delete.is-armed {
+  opacity: 1;
+}
+
+.pad-sheet-delete.is-armed {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+.pad-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 56px;
+  border: 1.5px dashed var(--line-strong);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.pad-add:hover {
+  color: var(--ink);
+  border-color: var(--muted);
+  background: var(--hover);
+}
+
+/* Handwritten sheets in the printed note (exportNotePdf fills them in) */
+.print-sheets {
+  display: none;
+}
+
+@media print {
+  .print-sheets {
+    display: block;
+  }
+
+  .print-sheets img {
+    display: block;
+    width: 100%;
+    break-before: page;
+  }
+}
+
+.paper-icon {
+  width: 14px;
+  height: 18px;
+  flex: none;
+  border: 1px solid var(--line-strong);
+  border-radius: 2px;
+  background-color: var(--paper);
+}
+
+.paper-icon--lined {
+  background-image: repeating-linear-gradient(to bottom, transparent 0 3px, var(--faint) 3px 4px);
+}
+
+.paper-icon--grid {
+  background-image:
+    repeating-linear-gradient(to bottom, transparent 0 3px, var(--line-strong) 3px 4px),
+    repeating-linear-gradient(to right, transparent 0 3px, var(--line-strong) 3px 4px);
+}
+
+.paper-icon--dots {
+  background-image: radial-gradient(var(--faint) 0.8px, transparent 1px);
+  background-size: 4px 4px;
+}
+
 .note-pane {
   background: var(--surface);
   overflow-y: auto;
@@ -1935,7 +2177,9 @@ body.is-resizing-panes .split-divider {
   .bn-source-block-popup,
   .hl-toolbar,
   .hl-popover,
-  .snip-toolbar {
+  .snip-toolbar,
+  .note-toolbar,
+  .pad-pane {
     display: none !important;
   }
 

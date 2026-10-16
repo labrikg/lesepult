@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { PaneSwitch } from "./PaneSwitch";
 import { useStore } from "../store";
 import type { Page, PagePatch } from "../lib/repo";
 import { relativeTime } from "../lib/time";
@@ -10,6 +11,7 @@ const SAVE_DELAY_MS = 400;
 
 export function NotePane({ page }: { page: Page }) {
   const savePage = useStore((s) => s.savePage);
+  const printSheets = useStore((s) => s.printSheets);
   const [title, setTitle] = useState(page.title);
   const pending = useRef<PagePatch>({});
   const timer = useRef<number | undefined>(undefined);
@@ -62,6 +64,9 @@ export function NotePane({ page }: { page: Page }) {
 
   return (
     <section className="note-pane" aria-label="Note editor">
+      <div className="pane-toolbar note-toolbar">
+        <PaneSwitch />
+      </div>
       <div className="note-inner">
         <div className="note-meta">
           <span>Edited {relativeTime(page.updatedAt)}</span>
@@ -99,6 +104,14 @@ export function NotePane({ page }: { page: Page }) {
           onChange={onEditorChange}
           onReady={onReady}
         />
+
+        {printSheets?.pageId === page.id && printSheets.urls.length > 0 && (
+          <div className="print-sheets" aria-hidden="true">
+            {printSheets.urls.map((url) => (
+              <img key={url} src={url} alt="" />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

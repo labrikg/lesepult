@@ -300,3 +300,10 @@ export function pageToMarkdown(page: PageForExport, options: MarkdownOptions = {
   const markdown = `${header.join("\n")}\n${body.markdown ? `\n${body.markdown}` : ""}`;
   return { markdown, assets: body.assets };
 }
+
+/** The Pad's sheets, appended to a note as images (they're exported as PNG files). */
+export function handwritingMarkdown(linkPaths: string[]): string {
+  if (!linkPaths.length) return "";
+  const images = linkPaths.map((p, i) => `![Sheet ${i + 1}](<${p}>)`);
+  return `\n## Handwritten\n\n${images.join("\n\n")}\n`;
+}

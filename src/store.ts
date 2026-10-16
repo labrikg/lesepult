@@ -23,6 +23,8 @@ import {
 } from "./lib/theme";
 
 export type ViewMode = "pdf" | "split" | "note";
+/** What sits next to the PDF (or fills the window in "note" mode): the typed note or the Pad. */
+export type RightPane = "note" | "pad";
 
 /** Whether the sidebar is hidden is a per-window preference, kept in web storage. */
 const SIDEBAR_KEY = "lesepult.sidebarHidden";
@@ -50,6 +52,8 @@ interface State {
   /** The PDF attached to the open page, if any. */
   pdf: Document | null;
   viewMode: ViewMode;
+  rightPane: RightPane;
+  setRightPane(pane: RightPane): void;
   searchOpen: boolean;
   /** The left sidebar is folded away (⌘. or the button in the top bar). */
   sidebarHidden: boolean;
@@ -73,6 +77,10 @@ interface State {
   notice: string | null;
   /** Saves the open note right away (registered by the note pane); used before exporting. */
   flushNote: (() => Promise<void>) | null;
+  /** Saves the open Pad's strokes right away (registered by the Pad pane). */
+  flushPad: (() => Promise<void>) | null;
+  /** The open page's handwritten sheets as images, for printing after the note. */
+  printSheets: { pageId: string; urls: string[] } | null;
 
   view: MainView;
   /** Bumped whenever cards, dates or to-dos change, so study views reload. */
@@ -176,6 +184,11 @@ export const useStore = create<State>((set, get) => ({
   page: null,
   pdf: null,
   viewMode: "split",
+  rightPane: "note",
+  setRightPane(pane) {
+    set({ rightPane: pane });
+    getDb().then((db) => repo.kvSet(db, "rightPane", pane));
+  },
   searchOpen: false,
   resizingPanes: false,
   sidebarHidden: readSidebarHidden(),
@@ -196,6 +209,8 @@ export const useStore = create<State>((set, get) => ({
   refsVersion: 0,
   notice: null,
   flushNote: null,
+  flushPad: null,
+  printSheets: null,
 
   view: { kind: "page" },
   studyVersion: 0,
@@ -226,6 +241,7 @@ export const useStore = create<State>((set, get) => ({
   }),
   startReview(courseId, cram = false) {
     get().flushNote?.().catch(() => {});
+    get().flushPad?.().catch(() => {});
     set({ review: { courseId, cram } });
   },
   openStats() {
@@ -307,14 +323,21 @@ export const useStore = create<State>((set, get) => ({
     const db = await getDb();
     // Before anything is shown, so the open note loads the repaired text.
     await repairOldPdfText(db).catch((e) => console.warn("repair failed", e));
-    const [tree, lastPage, viewMode, mainView] = await Promise.all([
+    const [tree, lastPage, viewMode, mainView, rightPane] = await Promise.all([
       repo.loadTree(db),
       repo.kvGet(db, "lastPageId"),
       repo.kvGet(db, "viewMode"),
       repo.kvGet(db, "mainView"),
+      repo.kvGet(db, "rightPane"),
     ]);
     await repo.deleteUnusedTags(db);
-    set({ tree, ready: true, viewMode: (viewMode as ViewMode | null) ?? "split", tags: await repo.listTags(db) });
+    set({
+      tree,
+      ready: true,
+      viewMode: (viewMode as ViewMode | null) ?? "split",
+      rightPane: rightPane === "pad" ? "pad" : "note",
+      tags: await repo.listTags(db),
+    });
     if (lastPage) await get().selectPage(lastPage);
     // Reopen Today or a course overview if that was showing.
     if (mainView === "today") set({ view: { kind: "today" } });
@@ -526,6 +549,7 @@ export const useStore = create<State>((set, get) => ({
   sendToNote(blocks) {
     if (!get().page) return;
     if (get().viewMode === "pdf") get().setViewMode("split");
+    if (get().rightPane === "pad") get().setRightPane("note");
     set((s) => ({ noteQueue: [...s.noteQueue, ...blocks] }));
   },
 
@@ -538,6 +562,7 @@ export const useStore = create<State>((set, get) => ({
   focusNoteBlock: guard(async (pageId, blockId) => {
     if (get().selectedPageId !== pageId) await get().selectPage(pageId);
     if (get().viewMode === "pdf") get().setViewMode("split");
+    if (get().rightPane === "pad") get().setRightPane("note");
     set({ focusBlock: { pageId, blockId, nonce: Date.now() } });
   }),
 

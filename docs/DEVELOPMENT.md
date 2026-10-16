@@ -99,6 +99,9 @@ src/
                           mathText.ts: selected text → text with inline LaTeX, umlaut repair,
                           textMatch.ts: matching for PDF search, indexer.ts: reads PDFs' text,
                           useFind.ts + FindBar.tsx: find in the open PDF
+  ink/                    Pad (handwriting): model.ts (sheet units, strokes, eraser maths), inkRepo.ts
+                          (ink_sheets table), render.ts (perfect-freehand outlines, paper, PNG export),
+                          PadPane.tsx (tools, undo, saving) + SheetView.tsx (pointer input per sheet)
   lib/files.ts            PDF import / removal via the Rust commands
   export/                 Markdown converter, library layout, export + print actions
   study/                  Today and course overview, review session, FSRS scheduling (srs.ts),

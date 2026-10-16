@@ -48,6 +48,14 @@
   --find-current: rgba(236, 140, 40, 0.62);
   --find-current-ring: #c8661a;
   --hl-opacity: 0.85;
+  /* Handwriting (Pad): pen inks and highlighter colours; black pen is --ink */
+  --pen-blue: #2557a7;
+  --pen-red: #b8392b;
+  --pen-green: #2e7048;
+  --marker-yellow: #f6d34a;
+  --marker-green: #9fdc8c;
+  --marker-blue: #9cc9f0;
+  --marker-pink: #f5a3c7;
   --mark: #f3d27a;
   --text-selection: rgba(226, 182, 73, 0.4);
 
@@ -134,6 +142,14 @@
 
     --mark: rgba(214, 178, 82, 0.45);
     --text-selection: rgba(226, 182, 73, 0.4);
+
+    --pen-blue: #8db8f0;
+    --pen-red: #f0907e;
+    --pen-green: #8fcf9f;
+    --marker-yellow: #f2d25c;
+    --marker-green: #8ed67a;
+    --marker-blue: #7fb8ea;
+    --marker-pink: #ee8fbb;
 
     --quote-yellow-tint: #332b1c;
     --quote-yellow-swatch: #d6b25a;
