@@ -51,7 +51,7 @@ The [guide](docs/GUIDE.md) describes every feature and shortcut.
 
 ## Install
 
-Download the latest version from the [releases page](https://github.com/labrikg/lesepult/releases/latest).
+Download the latest version from the [releases page](https://github.com/labrikg/lesepult/releases/latest). What changed in each version is in the [changelog](CHANGELOG.md).
 
 **macOS** (Apple Silicon and Intel, macOS 12 or later): open the `.dmg` and drag Lesepult into *Applications*.
 Lesepult isn't signed with a paid Apple developer certificate yet, so macOS blocks the first launch:
