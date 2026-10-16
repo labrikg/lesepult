@@ -1,4 +1,5 @@
 import type { HighlightColor, NormRect } from "../lib/repo";
+import { BULLET_CHARS } from "./mathText";
 
 export const HIGHLIGHT_COLORS: { id: HighlightColor; label: string; fill: string }[] = [
   { id: "yellow", label: "Yellow", fill: "#f3d27a" },
@@ -78,10 +79,26 @@ export function hitTest(rects: NormRect[], x: number, y: number, slack = 0.002):
   );
 }
 
-/** Tidies selected text: joins hyphenated line breaks and collapses whitespace. */
+// A bullet set apart in the PDF without a space character: "▪Text" → "▪ Text".
+const BULLET_GAP = new RegExp(`^([${BULLET_CHARS.replace("-", "")}])(?=\\p{L})`, "u");
+
+/** Tidies selected text: joins hyphenated line breaks and collapses whitespace, keeps real line breaks. */
 export function cleanSelectedText(text: string): string {
-  return text
-    .replace(/(\w)-\s*\n\s*(\w)/g, "$1$2")
-    .replace(/\s+/g, " ")
-    .trim();
+  return (
+    text
+      // "\r" marks a line that only wrapped: a hyphenated word is joined ("colli-" + "sion"),
+      // a real hyphen kept ("PT1-" + "Klausur"), anything else gets a space.
+      .replace(/(\p{L})-[ \t]*\r[ \t]*(?=\p{Ll})/gu, "$1")
+      .replace(/-[ \t]*\r[ \t]*/g, "-")
+      .replace(/[ \t]*\r[ \t]*/g, " ")
+      // "\n" is a real line break: kept, with the line's indentation; spaces inside a line collapse.
+      .split("\n")
+      .map((line) => {
+        const [, indent, rest] = /^([ \t]*)(.*)$/s.exec(line)!;
+        const text = rest.replace(/\s+/g, " ").trim().replace(BULLET_GAP, "$1 ");
+        return indent.replace(/\t/g, "   ") + text;
+      })
+      .filter((line) => line.trim())
+      .join("\n")
+  );
 }

@@ -85,11 +85,22 @@ function plainText(content: unknown): string {
   return content.map((c) => (isObj(c) && typeof c.text === "string" ? c.text : "")).join("");
 }
 
-/** Quoted PDF text: words escaped, formulas kept as `$…$` for Markdown viewers with math. */
+/**
+ * Quoted PDF text: words escaped, formulas kept as `$…$` for Markdown viewers with math. Line
+ * breaks stay line breaks (two trailing spaces), and indentation becomes non-breaking spaces so
+ * Markdown doesn't read an indented line as code.
+ */
 function quotedText(text: string): string {
-  return splitMath(text)
-    .map((p) => (p.math ? `$${p.text}$` : escapeText(fixAccents(p.text)).replace(/\$/g, "\\$")))
-    .join("");
+  return text
+    .split("\n")
+    .map((line) => {
+      const [, indent, rest] = /^([ \t]*)(.*)$/s.exec(line)!;
+      const body = splitMath(rest)
+        .map((p) => (p.math ? `$${p.text}$` : escapeText(fixAccents(p.text)).replace(/\$/g, "\\$")))
+        .join("");
+      return "\u00a0".repeat(indent.replace(/\t/g, "   ").length) + body;
+    })
+    .join("  \n");
 }
 
 /* ---------- Blocks ---------- */

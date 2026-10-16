@@ -90,5 +90,6 @@ export function readSelection(root: HTMLElement): ViewerSelection | null {
  */
 function selectedText(runs: (TextRun | null)[], parts: string[], whole: string | null): string {
   if (runs.length && runs.every((r): r is TextRun => r !== null)) return runsToText(runs);
-  return fixAccents(whole ?? parts.join(""));
+  // Without positions there's no telling a wrapped line from a new one: join them all.
+  return fixAccents(whole ?? parts.join("")).replace(/\r?\n/g, "\r");
 }

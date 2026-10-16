@@ -48,7 +48,7 @@ describe("highlight geometry", () => {
   });
 
   it("cleans up selected text", () => {
-    expect(cleanSelectedText("On a colli-\n sion, probe   a\nsequence ")).toBe(
+    expect(cleanSelectedText("On a colli-\r sion, probe   a\rsequence ")).toBe(
       "On a collision, probe a sequence",
     );
   });

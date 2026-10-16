@@ -95,7 +95,13 @@ function QuoteView({ props: p, onSaveText }: { props: QuoteProps; onSaveText(tex
 
   const save = () => {
     setEditing(false);
-    const text = draft.replace(/\s+/g, " ").trim();
+    // Line breaks and indentation stay as typed; only trailing spaces and empty edges go.
+    const text = draft
+      .replace(/\r\n?/g, "\n")
+      .split("\n")
+      .map((line) => line.trimEnd())
+      .join("\n")
+      .replace(/^\n+|\n+$/g, "");
     if (text && text !== p.text) onSaveText(text);
   };
 

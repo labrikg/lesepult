@@ -157,6 +157,20 @@ describe("block Markdown", () => {
     );
   });
 
+  it("keeps a quote's line breaks and indentation", () => {
+    const { markdown } = blocksToMarkdown([
+      {
+        type: "pdfQuote",
+        props: { text: "Bonussystem\n   Wer mehr als 50% hat\n      – linear von $50\\%$ bis 95%", pageNumber: 46 },
+      },
+    ]);
+    expect(markdown.split("\n").slice(0, 3)).toEqual([
+      "> Bonussystem  ",
+      "> \u00a0\u00a0\u00a0Wer mehr als 50% hat  ",
+      "> \u00a0\u00a0\u00a0\u00a0\u00a0\u00a0– linear von $50\\%$ bis 95%",
+    ]);
+  });
+
   it("exports flashcards as question and answer", () => {
     const { markdown } = blocksToMarkdown([
       { type: "flashcard", props: { front: "Was ist $\\Sigma$?", back: "Das *Alphabet*" } },

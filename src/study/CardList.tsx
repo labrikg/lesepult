@@ -14,7 +14,7 @@ export function CardList({ cards }: { cards: Card[] }) {
         const chip = c.state === 0 ? "new" : due <= now ? "due" : `in ${formatInterval(due - now)}`;
         return (
           <li key={c.id} className="card-row">
-            <span className="card-row-front">{c.front ? <MathText text={c.front} /> : <em>(no question yet)</em>}</span>
+            <span className="card-row-front">{c.front ? <MathText text={c.front} inline /> : <em>(no question yet)</em>}</span>
             <span className={`state-chip${chip === "due" ? " is-due" : ""}`}>{chip}</span>
             <button
               type="button"

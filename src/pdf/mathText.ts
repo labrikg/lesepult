@@ -42,6 +42,52 @@ export function fontKind(font: string): FontKind {
   return "text";
 }
 
+/**
+ * Fonts from TeX (Computer Modern, Latin Modern, AMS, …) where formula detection applies. Slides
+ * from PowerPoint or Keynote (Arial, Calibri, …) have no TeX formulas: "59% → 1" stays text there.
+ * An unknown font (not loaded) counts as TeX, so nothing is lost.
+ */
+export function isTexFont(font: string): boolean {
+  const name = font.replace(/^[A-Z]{6}\+/, "").toUpperCase();
+  if (!name) return true;
+  return /^(CM|LM|MS[AB]M|EU[FRSXB]|RSFS|STIX|ESINT|SF(RM|SS|TT|BX|SL|TI)|TX|PX|NEWTX|NEWPX|STMARY|WASY)/.test(name) || /MATH/.test(name);
+}
+
+/* ---------- Bullets from symbol fonts ---------- */
+
+/**
+ * PowerPoint draws its bullets with glyphs from Wingdings and similar fonts, which come out as
+ * random characters ("§", "¾", "¬" or private-use codes). By font and code, the bullet they show.
+ */
+const DINGBATS: Record<string, Record<number, string>> = {
+  WINGDINGS: {
+    0x6c: "●", 0x6e: "■", 0x6f: "□", 0x71: "❑", 0x72: "❒", 0x75: "◆", 0x76: "❖", 0x77: "◆", 0x9f: "•",
+    0xa1: "○", 0xa7: "▪", 0xa8: "□", 0xd8: "➢", 0xe0: "➔", 0xe8: "➔", 0xf0: "⇨", 0xfb: "✗", 0xfc: "✓",
+    0xfd: "☒", 0xfe: "☑",
+  },
+  WINGDINGS2: { 0x4f: "✗", 0x50: "✓", 0x97: "•", 0x98: "•", 0x99: "•", 0x9e: "•", 0x9f: "•", 0xa2: "▪", 0xbe: "▪" },
+  WINGDINGS3: { 0x75: "▸", 0x7d: "▸", 0x84: "▸", 0xac: "–", 0xc6: "→", 0xd4: "▸" },
+};
+
+/** A run's text with symbol-font bullets turned into the characters they show. */
+export function mapDingbats(text: string, font: string): string {
+  const name = font.replace(/^[A-Z]{6}\+/, "").toUpperCase().replace(/[\s,-]+/g, "");
+  const family = /^WINGDINGS[23]?|^WEBDINGS|DINGBATS|^ZAPF|^MARLETT/.exec(name)?.[0];
+  if (!family) return text;
+  const table = DINGBATS[family.startsWith("WINGDINGS") ? family : ""] ?? {};
+  return [...text]
+    .map((ch) => {
+      if (/\s/.test(ch)) return ch;
+      let code = ch.codePointAt(0)!;
+      if (code >= 0xf000 && code <= 0xf0ff) code -= 0xf000; // private-use copy of the font's codes
+      return table[code] ?? "•";
+    })
+    .join("");
+}
+
+/** Characters that start a list item. */
+export const BULLET_CHARS = "•▪■□▶►▸‣◦○●❑❒❖◆➢➔⇨✓✗☒☑–—*·-";
+
 /* ---------- Umlauts and other accents ---------- */
 
 // Spacing accents (as old TeX fonts emit them) → combining marks.
@@ -136,14 +182,98 @@ interface Piece {
   role: Role;
   /** First piece of a new line. */
   newLine: boolean;
+  /** Which line of the selection it's on. */
+  line: number;
+}
+
+/** Where a line of selected text sits: left edge, right edge and font size, in PDF points. */
+export interface LineBox {
+  start: number;
+  end: number;
+  size: number;
+  text: string;
+  /** Baseline (PDF points, y grows upwards). */
+  y?: number;
+  /** Where the words start when the line begins with a separate item marker ("–", "•"). */
+  textStart?: number;
+}
+
+const MARKER = new RegExp(`^[${BULLET_CHARS}]$`, "u");
+
+/** Item markers that are real text in the PDF (Beamer draws its ▶ and ■ as graphics). */
+const ITEM_START = new RegExp(
+  `^\\s*(?:[${BULLET_CHARS}](?=\\s)|\\d{1,2}[.)](?=\\s)|[a-z]\\)(?=\\s)|[${BULLET_CHARS.replace(/[–—*·-]/g, "")}])`,
+  "u",
+);
+
+/**
+ * Which line breaks of a selection are real (a new bullet, paragraph or heading) and which only
+ * wrap a long line, and how far each line is indented (as a level, 0 = leftmost).
+ * A break is real when the next line starts further left or right (another list level), starts
+ * with an item marker, or follows a line that stops well short of the others and either ends a
+ * sentence or is followed by a capital letter (a ragged line before a formula or a lowercase word
+ * still just wraps).
+ */
+export function lineBreaks(lines: LineBox[]): { hard: boolean[]; level: number[] } {
+  const n = lines.length;
+  const hard = lines.map(() => false);
+  if (!n) return { hard, level: [] };
+  const sizes = lines.map((l) => l.size).sort((a, b) => a - b);
+  const em = sizes[Math.floor(sizes.length / 2)] || 10;
+  // The last line ends where the selection ends, so it doesn't tell how wide the text is.
+  const widest = n > 1 ? Math.max(...lines.slice(0, -1).map((l) => l.end)) : lines[0].end;
+  for (let k = 1; k < n; k++) {
+    const prev = lines[k - 1];
+    const cur = lines[k];
+    // A wrapped item lines up with the words after its marker, not with the marker.
+    const from = prev.textStart !== undefined && cur.textStart === undefined ? prev.textStart : prev.start;
+    // The selection can start in the middle of the first line, so only a step left counts there.
+    const shifted = k === 1 ? cur.start > from + em * 0.8 : Math.abs(cur.start - from) > em * 0.8;
+    const marker = cur.textStart !== undefined;
+    const short = prev.end < widest - em * 3;
+    const ends = /[.!?]\s*$/.test(prev.text);
+    // Latin capitals only: a Greek one (Σ, Γ) at the start of a line is a formula.
+    const capital = /^\s*[A-ZÄÖÜ]/.test(cur.text);
+    hard[k] = shifted || marker || ITEM_START.test(cur.text) || (short && (ends || capital));
+  }
+  // Indent levels from the left edges of lines that begin a block.
+  const edges = lines
+    .map((l, k) => (k > 0 && hard[k] ? l.start : null))
+    .filter((x): x is number => x !== null)
+    .sort((a, b) => a - b);
+  // The first line counts only when it's further left than all the others (so not a selection
+  // that starts mid-line) and close above the next one: the top item of a list, not a slide
+  // title set far above the body.
+  const close = lines[0].y === undefined || lines[1]?.y === undefined || Math.abs(lines[0].y - lines[1].y) < em * 2.5;
+  if (n > 1 && close && edges.length && lines[0].start < edges[0] - em * 0.8) edges.unshift(lines[0].start);
+  const clusters: number[] = [];
+  for (const x of edges) if (!clusters.length || x - clusters[clusters.length - 1] > em * 0.8) clusters.push(x);
+  const levelOf = (x: number, firstLine: boolean) => {
+    if (!clusters.length) return 0;
+    // The first line may start mid-line: take the nearest level at or left of it.
+    let lvl = 0;
+    clusters.forEach((c, i) => {
+      if (c <= x + em * 0.8) lvl = i;
+    });
+    if (!firstLine && x < clusters[0] - em * 0.8) return 0;
+    return lvl;
+  };
+  const level = lines.map((l, k) => levelOf(l.start, k === 0));
+  // Wrapped lines take the level of the line they continue.
+  for (let k = 1; k < n; k++) if (!hard[k]) level[k] = level[k - 1];
+  const min = Math.min(...level);
+  return { hard, level: level.map((l) => l - min) };
 }
 
 /** Joins neighbouring runs of the same font, size and baseline ("nat¨" + "urlichen" → one run). */
 function mergeRuns(runs: TextRun[]): TextRun[] {
   const out: TextRun[] = [];
-  for (const r of runs) {
+  for (const raw of runs) {
+    const r = { ...raw, text: mapDingbats(raw.text, raw.font) };
     const prev = out[out.length - 1];
-    if (prev && prev.font === r.font && prev.size === r.size && Math.abs(prev.y - r.y) < r.size * 0.05 && r.x >= prev.x) {
+    // An item marker stays its own run, so the line knows where its words start.
+    const marker = prev && MARKER.test(prev.text.trim());
+    if (prev && !marker && prev.font === r.font && prev.size === r.size && Math.abs(prev.y - r.y) < r.size * 0.05 && r.x >= prev.x) {
       out[out.length - 1] = { ...prev, text: prev.text + r.text, width: r.x + r.width - prev.x };
     } else out.push({ ...r });
   }
@@ -152,18 +282,37 @@ function mergeRuns(runs: TextRun[]): TextRun[] {
 }
 
 /** Groups runs into lines and decides which runs are sub- or superscripts. */
-function scriptsAndLines(runs: TextRun[]): { run: TextRun; script: Script; newLine: boolean }[] {
-  const out: { run: TextRun; script: Script; newLine: boolean }[] = [];
+function scriptsAndLines(runs: TextRun[]): {
+  items: { run: TextRun; script: Script; newLine: boolean; line: number }[];
+  lines: LineBox[];
+} {
+  const out: { run: TextRun; script: Script; newLine: boolean; line: number }[] = [];
+  const lines: LineBox[] = [];
   let line: TextRun[] = [];
   const flush = () => {
     if (!line.length) return;
     const base = Math.max(...line.map((r) => r.size));
     const ref = line.find((r) => r.size >= base * 0.9 && fontKind(r.font) !== "ext") ?? line[0];
+    const index = lines.length;
+    // Leading spaces don't move where the text starts.
+    const words = line.filter((r) => r.text.trim());
+    const first = words[0] ?? line[0];
+    const markerOnly = words.length > 1 && MARKER.test(first.text.trim());
+    // A marker set apart in the PDF is followed by a space, even without a space character.
+    if (markerOnly && !/^\s/.test(words[1].text)) first.text = `${first.text.trimEnd()} `;
+    lines.push({
+      start: first.x,
+      end: Math.max(...line.map((r) => r.x + r.width)),
+      size: base,
+      text: line.map((r) => r.text).join(""),
+      y: ref.y,
+      ...(markerOnly ? { textStart: words[1].x } : {}),
+    });
     line.forEach((r, i) => {
       let script: Script = "base";
       const shift = r.y - ref.y;
       if (r.size < base * 0.88 && Math.abs(shift) > base * 0.08) script = shift > 0 ? "sup" : "sub";
-      out.push({ run: r, script, newLine: i === 0 && out.length > 0 });
+      out.push({ run: r, script, newLine: i === 0 && out.length > 0, line: index });
     });
     line = [];
   };
@@ -180,23 +329,31 @@ function scriptsAndLines(runs: TextRun[]): { run: TextRun; script: Script; newLi
     line.push(r);
   }
   flush();
-  return out;
+  return { items: out, lines };
 }
 
-function splitPieces(runs: TextRun[]): Piece[] {
+function splitPieces(items: ReturnType<typeof scriptsAndLines>["items"]): Piece[] {
   const pieces: Piece[] = [];
-  for (const { run, script, newLine } of scriptsAndLines(runs)) {
+  for (const { run, script, newLine, line } of items) {
     const kind = fontKind(run.font);
     const parts = run.text.match(/\p{L}{2,}|\s+|\p{L}|[^\s\p{L}]+/gu) ?? [];
     parts.forEach((text, i) => {
-      pieces.push({ text, kind, script, role: classify(text, kind, script), newLine: newLine && i === 0 });
+      pieces.push({
+        text,
+        kind,
+        script,
+        role: classify(text, kind, script, isTexFont(run.font)),
+        newLine: newLine && i === 0,
+        line,
+      });
     });
   }
   return pieces;
 }
 
-function classify(text: string, kind: FontKind, script: Script): Role {
+function classify(text: string, kind: FontKind, script: Script, tex = true): Role {
   if (/^\s+$/.test(text)) return "space";
+  if (!tex) return "text";
   if (kind === "ext" || kind === "symbol" || kind === "blackboard" || kind === "fraktur" || kind === "mathItalic")
     return "math";
   if (script !== "base") return "math";
@@ -299,19 +456,26 @@ function formulaToLatex(pieces: Piece[]): string {
 
 /* ---------- Everything together ---------- */
 
+/** Indentation written per list level in quoted text. */
+export const INDENT = "   ";
+
 /**
- * Selected runs (in reading order) → text with `$…$` formulas. Line breaks become "\n" so
- * hyphenated words can be joined afterwards. A literal "$" in the text is written as "\$".
+ * Selected runs (in reading order) → text with `$…$` formulas. Real line breaks (bullets,
+ * headings, paragraphs; see lineBreaks) become "\n" followed by the line's indentation; lines
+ * that only wrap become "\r", which cleanSelectedText turns into a space (or joins a hyphenated
+ * word). A literal "$" in the text is written as "\$".
  */
 export function runsToText(runs: TextRun[]): string {
-  const pieces = splitPieces(runs.filter((r) => r.text.length > 0));
+  const { items, lines } = scriptsAndLines(runs.filter((r) => r.text.length > 0));
+  const pieces = splitPieces(items);
   absorbGlue(pieces);
+  const { hard, level } = lineBreaks(lines);
 
-  let out = "";
+  let out = INDENT.repeat(level[0] ?? 0);
   let i = 0;
   while (i < pieces.length) {
     const p = pieces[i];
-    if (p.newLine) out += "\n";
+    if (p.newLine) out += hard[p.line] ? `\n${INDENT.repeat(level[p.line] ?? 0)}` : "\r";
     if (p.role !== "math") {
       out += p.role === "space" ? " " : p.text.replace(/\$/g, "\\$");
       i++;

@@ -1775,6 +1775,7 @@ body.is-resizing-panes .split-divider {
   font-size: 14px;
   line-height: 1.45;
   color: var(--ink);
+  white-space: pre-wrap;
 }
 
 .hl-comment textarea {
@@ -2063,6 +2064,25 @@ body.is-resizing-panes .split-divider {
   font-size: 18px;
   line-height: 1.5;
   color: var(--ink);
+  /* Line breaks and indentation of the slide (or typed in "Edit text") stay as they are. */
+  white-space: pre-wrap;
+}
+
+/* Multi-line quote text (MathText): one block per line, indented by its leading spaces; a
+   bulleted line hangs, so its wrapped text lines up after the bullet. */
+.math-line {
+  display: block;
+  padding-left: calc(var(--indent, 0) * 0.42em);
+}
+
+.math-line--item {
+  padding-left: calc(var(--indent, 0) * 0.42em + 1.05em);
+  text-indent: -1.05em;
+}
+
+.math-line--empty {
+  display: block;
+  height: 0.6em;
 }
 
 .pdf-quote-comment {
@@ -2601,6 +2621,7 @@ button.tag-chip-name:hover {
   font-size: 17px;
   line-height: 1.5;
   color: var(--ink);
+  white-space: pre-wrap;
 }
 
 .pdf-quote-hint {
