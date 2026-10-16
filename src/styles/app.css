@@ -3152,6 +3152,12 @@ button.tag-chip-name:hover {
   display: inline-flex;
 }
 
+.deadline-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
 .deadline-form {
   display: flex;
   flex-direction: column;
@@ -3292,8 +3298,14 @@ button.tag-chip-name:hover {
 }
 
 .todo:hover .date-chip.is-unset,
-.date-chip.is-unset:focus-within {
+.date-chip.is-unset:focus-within,
+.todo-add .date-chip.is-unset {
   visibility: visible;
+}
+
+.todo-add .date-chip.is-unset {
+  border: 1px dashed var(--line-strong);
+  padding: 1px 8px;
 }
 
 .date-chip.is-soon {

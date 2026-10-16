@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { GraduationCap, Pencil, Plus, Trash2, CalendarClock, CalendarDays } from "lucide-react";
+import { GraduationCap, Pencil, Plus, Trash2, CalendarClock, CalendarDays, Clock, X } from "lucide-react";
 import * as study from "../lib/studyRepo";
 import type { DeadlineInput, DeadlineKind, DeadlineWithCourse } from "../lib/studyRepo";
 import { countdown, daysBetween, formatDate, todayISO } from "./dates";
@@ -93,13 +93,17 @@ function DeadlineRow({ d, today, showCourse }: { d: DeadlineWithCourse; today: s
         )}
       </div>
       {d.kind !== "exam" && !past && (
-        <label className="deadline-done" title="Done">
+        <label className="deadline-done" title={d.done ? "Done (click to undo)" : "Mark as done (handed in, finished)"}>
           <input
             type="checkbox"
             className="todo-check"
             checked={d.done}
-            aria-label={`Mark “${d.title}” as done`}
-            onChange={(e) => change((db) => study.updateDeadline(db, d.id, { done: e.target.checked }))}
+            aria-label={d.done ? `Mark “${d.title}” as not done` : `Mark “${d.title}” as done`}
+            // The value is read now: by the time the change runs, React has reset the controlled box.
+            onChange={() => {
+              const done = !d.done;
+              change((db) => study.updateDeadline(db, d.id, { done }));
+            }}
           />
         </label>
       )}
@@ -133,8 +137,11 @@ function DeadlineForm({
 }) {
   const [title, setTitle] = useState(initial?.title ?? "");
   const [kind, setKind] = useState<DeadlineKind>(initial?.kind ?? "exam");
-  const [date, setDate] = useState(initial?.date ?? "");
-  const [time, setTime] = useState(initial?.time ?? "");
+  // A new date starts on today, so the date shown is the date saved (an empty date field shows
+  // today's date greyed out on macOS, which looked filled in but wasn't).
+  const [date, setDate] = useState(initial?.date ?? todayISO());
+  // The time is optional and only exists once added: an empty time field shows a made-up time.
+  const [time, setTime] = useState<string | null>(initial?.time ?? null);
   const valid = title.trim() && /^\d{4}-\d{2}-\d{2}$/.test(date);
 
   return (
@@ -172,13 +179,26 @@ function DeadlineForm({
       />
       <div className="deadline-form-row">
         <input className="field" type="date" aria-label="Date" value={date} onChange={(e) => setDate(e.target.value)} />
-        <input
-          className="field"
-          type="time"
-          aria-label="Time (optional)"
-          value={time}
-          onChange={(e) => setTime(e.target.value)}
-        />
+        {time === null ? (
+          <button type="button" className="btn btn--ghost btn--sm" onClick={() => setTime(kind === "exam" ? "10:00" : "23:59")}>
+            <Clock size={14} aria-hidden="true" />
+            Add time
+          </button>
+        ) : (
+          <span className="deadline-time">
+            <input
+              className="field"
+              type="time"
+              aria-label="Time"
+              autoFocus={!initial?.time}
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
+            />
+            <button type="button" className="row-action" aria-label="Remove time" title="No time" onClick={() => setTime(null)}>
+              <X size={13} aria-hidden="true" />
+            </button>
+          </span>
+        )}
         <span className="toolbar-spacer" />
         <button type="button" className="btn btn--ghost btn--sm" onClick={onCancel}>
           Cancel

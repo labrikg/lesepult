@@ -41,7 +41,11 @@ function TodoRow({ todo, today, showCourse }: { todo: Todo; today: string; showC
         className="todo-check"
         checked={todo.done}
         aria-label={todo.done ? `Mark “${todo.title}” as not done` : `Mark “${todo.title}” as done`}
-        onChange={(e) => change((db) => study.updateTodo(db, todo.id, { done: e.target.checked }))}
+        // The value is read now: by the time the change runs, React has reset the controlled box.
+        onChange={() => {
+          const done = !todo.done;
+          change((db) => study.updateTodo(db, todo.id, { done }));
+        }}
       />
       {editing ? (
         <InlineInput
@@ -75,7 +79,10 @@ function TodoRow({ todo, today, showCourse }: { todo: Todo; today: string; showC
           className="date-chip-input"
           aria-label="Due date"
           value={todo.dueDate ?? ""}
-          onChange={(e) => change((db) => study.updateTodo(db, todo.id, { dueDate: e.target.value || null }))}
+          onChange={(e) => {
+            const dueDate = e.target.value || null;
+            change((db) => study.updateTodo(db, todo.id, { dueDate }));
+          }}
         />
       </label>
       <button
@@ -128,13 +135,19 @@ function AddTodo({ courseId, courses }: { courseId?: string; courses?: { id: str
           ))}
         </select>
       )}
-      <input
-        type="date"
-        className="todo-add-date"
-        aria-label="Due date (optional)"
-        value={due}
-        onChange={(e) => setDue(e.target.value)}
-      />
+      {/* Same chip as on the rows: says "Due date" until one is picked (an empty date field
+          would show today's date greyed out, as if one were set). */}
+      <label className={`date-chip${due ? "" : " is-unset"}`} title="Due date (optional)">
+        <CalendarDays size={12} aria-hidden="true" />
+        <span>{due ? formatDate(due, todayISO()) : "Due date"}</span>
+        <input
+          type="date"
+          className="date-chip-input"
+          aria-label="Due date (optional)"
+          value={due}
+          onChange={(e) => setDue(e.target.value)}
+        />
+      </label>
       <button type="submit" className="btn btn--ghost btn--sm" disabled={!title.trim()}>
         Add
       </button>
